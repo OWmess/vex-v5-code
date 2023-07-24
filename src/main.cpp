@@ -2,7 +2,8 @@
 
 
 // Chassis constructor
-Drive chassis(
+///TODO:: 这样写会导致在Drive被销毁后chassis变为空指针，待debug
+Drive chassis=Drive(
   // Left Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
   {1, 19}
@@ -46,7 +47,7 @@ Drive chassis(
   // Uncomment if tracking wheels are plugged into a 3 wire expander
   // 3 Wire Port Expander Smart Port
   // ,1
-);
+).with_odom(1,1);
 
 
 
@@ -73,7 +74,7 @@ void initialize() {
   pros::delay(500);
   // Autonomous Selector using LLEMU
   ez::as::auton_selector.add_autons({
-    Auton("Example Drive\n\nDrive forward and come back.", turn_example),
+    Auton("Example Drive\n\nDrive forward and come back.", drive_example),
     Auton("Example Turn\n\nTurn 3 times.", turn_example),
     Auton("Drive and Turn\n\nDrive forward, turn, come back. ", drive_and_turn),
     Auton("Drive and Turn\n\nSlow down during drive.", wait_until_change_speed),

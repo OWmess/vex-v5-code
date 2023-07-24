@@ -73,14 +73,12 @@ void drive_example() {
   // for slew, only enable it when the drive distance is greater then the slew distance + a few inches
 
 
-  chassis.set_drive_pid(10, DRIVE_SPEED,false,false);
+  chassis.set_drive_pid(100, DRIVE_SPEED,false,false);
   chassis.wait_drive();
-  std::cout<<"waited"<<std::endl;
-  // chassis.set_drive_pid(-50, DRIVE_SPEED,false,false);
-  // chassis.wait_drive();
-
-  // chassis.set_drive_pid(-50, DRIVE_SPEED,false,false);
-  // chassis.wait_drive();
+  chassis.set_drive_pid(-50, DRIVE_SPEED,false,false);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-50, DRIVE_SPEED,false,false);
+  chassis.wait_drive();
 }
 
 
