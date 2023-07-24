@@ -414,7 +414,7 @@ class Drive {
   /**
    * The position of the right motor.
    */
-  int right_sensor();
+  double right_sensor();
 
   /**
    * The velocity of the right motor.
@@ -434,7 +434,7 @@ class Drive {
   /**
    * The position of the left motor.
    */
-  int left_sensor();
+  double left_sensor();
 
   /**
    * The velocity of the left motor.

@@ -2,7 +2,7 @@
 
 
 // Chassis constructor
-Drive chassis=Drive(
+Drive chassis(
   // Left Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
   {1, 19}
@@ -46,7 +46,7 @@ Drive chassis=Drive(
   // Uncomment if tracking wheels are plugged into a 3 wire expander
   // 3 Wire Port Expander Smart Port
   // ,1
-).with_odom(1.f,1.f);
+);
 
 
 
@@ -159,8 +159,8 @@ void opcontrol() {
 	constexpr int NUM_VISION_OBJECTS = 1; // 识别的物体数量
 	pros::Vision vision_sensor(VISION_PORT); // 初始化vision sensor
   pros::lcd::clear();
-  while(true) {
-    drive_and_turn();
+  // while(true) {
+    drive_example();
 	  // std::array<pros::vision_object_s_t, NUM_VISION_OBJECTS> object_arr;// 创建一个数组来存储识别到的物体
     // int detected = vision_sensor.read_by_sig(0, GREEN_SIG, NUM_VISION_OBJECTS, object_arr.data());//
 
@@ -174,7 +174,7 @@ void opcontrol() {
 
 		// pros::lcd::set_text(1,"No green object detected");
     // }
-    pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
+    // pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   
-  }
+  // }
 }

@@ -7,7 +7,7 @@
 /////
 
 
-const int DRIVE_SPEED = 100; // This is 110/127 (around 87% of max speed).  We don't suggest making this 127.
+const int DRIVE_SPEED = 50; // This is 110/127 (around 87% of max speed).  We don't suggest making this 127.
                              // If this is 127 and the robot tries to heading correct, it's only correcting by
                              // making one side slower.  When this is 87%, it's correcting by making one side
                              // faster and one side slower, giving better heading correction.
@@ -73,14 +73,14 @@ void drive_example() {
   // for slew, only enable it when the drive distance is greater then the slew distance + a few inches
 
 
-  chassis.set_drive_pid(100, DRIVE_SPEED,true,false);
+  chassis.set_drive_pid(10, DRIVE_SPEED,false,false);
   chassis.wait_drive();
+  std::cout<<"waited"<<std::endl;
+  // chassis.set_drive_pid(-50, DRIVE_SPEED,false,false);
+  // chassis.wait_drive();
 
-  chassis.set_drive_pid(-50, DRIVE_SPEED,true,false);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(-50, DRIVE_SPEED,true,false);
-  chassis.wait_drive();
+  // chassis.set_drive_pid(-50, DRIVE_SPEED,false,false);
+  // chassis.wait_drive();
 }
 
 
