@@ -2,7 +2,7 @@
 
 
 // Chassis constructor
-Drive chassis (
+Drive chassis=Drive(
   // Left Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
   {1, 19}
@@ -46,7 +46,7 @@ Drive chassis (
   // Uncomment if tracking wheels are plugged into a 3 wire expander
   // 3 Wire Port Expander Smart Port
   // ,1
-);
+).with_odom(1.f,1.f);
 
 
 
@@ -70,10 +70,10 @@ void initialize() {
   // These are already defaulted to these buttons, but you can change the left/right curve buttons here!
   // chassis.set_left_curve_buttons (pros::E_CONTROLLER_DIGITAL_LEFT, pros::E_CONTROLLER_DIGITAL_RIGHT); // If using tank, only the left side is used. 
   // chassis.set_right_curve_buttons(pros::E_CONTROLLER_DIGITAL_Y,    pros::E_CONTROLLER_DIGITAL_A);
-
+  pros::delay(500);
   // Autonomous Selector using LLEMU
   ez::as::auton_selector.add_autons({
-    Auton("Example Drive\n\nDrive forward and come back.", drive_example),
+    Auton("Example Drive\n\nDrive forward and come back.", turn_example),
     Auton("Example Turn\n\nTurn 3 times.", turn_example),
     Auton("Drive and Turn\n\nDrive forward, turn, come back. ", drive_and_turn),
     Auton("Drive and Turn\n\nSlow down during drive.", wait_until_change_speed),

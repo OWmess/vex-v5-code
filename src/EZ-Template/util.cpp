@@ -147,5 +147,13 @@ double clip_num(double input, double max, double min) {
   return input;
 }
 
+
+float to_rad(float angle_deg){
+  return(angle_deg/(180.0/M_PI));
+}
+
+float to_deg(float angle_rad){
+  return(angle_rad*(180.0/M_PI));
+}
 }  // namespace util
 }  // namespace ez

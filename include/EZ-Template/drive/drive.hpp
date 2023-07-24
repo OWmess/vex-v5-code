@@ -13,7 +13,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "EZ-Template/PID.hpp"
 #include "EZ-Template/util.hpp"
 #include "pros/motors.h"
-
+#include "EZ-Template/drive/odom.hpp"
 using namespace ez;
 
 class Drive {
@@ -699,6 +699,20 @@ class Drive {
    */
   double slew_calculate(slew_ &input, double current);
 
+
+  /**
+   * odometry variables and functions
+   */
+  Odom odom;
+  /**
+   * initialize odometry variables
+   */
+  Drive &with_odom(const float &ForwardTracker_center_distance,const float &SidewaysTracker_center_distance);
+
+
+  void drive_to_point(double x, double y,int speed, bool slew_on = false, bool toggle_heading = true);
+
+  void trun_to_point(double x, double y,int speed);
  private:  // !Auton
   bool drive_toggle = true;
   bool print_toggle = true;
