@@ -29,7 +29,7 @@ void Drive::set_exit_condition(int type, int p_small_exit_time, double p_small_e
 void Drive::wait_drive() {
   // Let the PID run at least 1 iteration
   pros::delay(util::DELAY_TIME);
-  if (mode == DRIVE) {
+  if (mode == DRIVE||mode==TRUN_GYRO_FREE) {
     exit_output left_exit = RUNNING;
     exit_output right_exit = RUNNING;
     int cnt_tmp=0;

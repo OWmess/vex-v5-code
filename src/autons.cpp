@@ -7,7 +7,7 @@
 /////
 
 
-const int DRIVE_SPEED = 50; // This is 110/127 (around 87% of max speed).  We don't suggest making this 127.
+const int DRIVE_SPEED = 20; // This is 110/127 (around 87% of max speed).  We don't suggest making this 127.
                              // If this is 127 and the robot tries to heading correct, it's only correcting by
                              // making one side slower.  When this is 87%, it's correcting by making one side
                              // faster and one side slower, giving better heading correction.
@@ -31,6 +31,7 @@ void default_constants() {
   chassis.set_pid_constants(&chassis.backward_drivePID, 0.45, 0, 5, 0);//0.45p
   chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 35, 15);
   chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0);
+  chassis.set_pid_constants(&chassis.turnPID_gyro_free, 0.45, 0, 2, 0);
 }
 
 void one_mogo_constants() {
@@ -72,13 +73,15 @@ void drive_example() {
   // The third parameter is a boolean (true or false) for enabling/disabling a slew at the start of drive motions
   // for slew, only enable it when the drive distance is greater then the slew distance + a few inches
 
+  chassis.set_turn_pid_gyro_free(900, 40);
+  chassis.wait_drive();
 
-  chassis.set_drive_pid(100, DRIVE_SPEED,false,false);
-  chassis.wait_drive();
-  chassis.set_drive_pid(-50, DRIVE_SPEED,false,false);
-  chassis.wait_drive();
-  chassis.set_drive_pid(-50, DRIVE_SPEED,false,false);
-  chassis.wait_drive();
+  // chassis.set_drive_pid(100, DRIVE_SPEED,true,false);
+  // chassis.wait_drive();
+  // chassis.set_drive_pid(-50, DRIVE_SPEED,true,false);
+  // chassis.wait_drive();
+  // chassis.set_drive_pid(-50, DRIVE_SPEED,true,false);
+  // chassis.wait_drive();
 }
 
 

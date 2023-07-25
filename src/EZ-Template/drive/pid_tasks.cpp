@@ -18,7 +18,8 @@ void Drive::ez_auto_task() {
       turn_pid_task();
     else if (get_mode() == SWING)
       swing_pid_task();
-
+    if(get_mode()==TRUN_GYRO_FREE)
+      turn_pid_gyro_free_task();
     if (pros::competition::is_autonomous() && !util::AUTON_RAN)
       util::AUTON_RAN = true;
     else if (!pros::competition::is_autonomous())
@@ -50,7 +51,6 @@ void Drive::drive_pid_task() {
     gyro_out = 0;
     printf("check gyro\n");
   }
-
 
   // Combine heading and drive
   double l_out = l_drive_out + gyro_out;
@@ -100,4 +100,20 @@ void Drive::swing_pid_task() {
     else if (current_swing == RIGHT_SWING)
       set_tank(0, -swing_out);
   }
+}
+
+void Drive::turn_pid_gyro_free_task(){
+    // Compute PID
+  double l_out=leftPID.compute(left_sensor());
+  double r_out=rightPID.compute(right_sensor());
+  double l_max_speed=ez::util::sgn(l_out)*max_speed;
+  double r_max_speed=ez::util::sgn(r_out)*max_speed;
+  ez::util::sgn(r_out);
+  if(abs(l_out)>l_max_speed)
+    l_out=l_max_speed;
+  if(abs(r_out)>r_max_speed)
+    r_out=r_max_speed;
+  std::cout<<"l_out:"<<l_out<<" r_out:"<<r_out<<std::endl;
+  set_tank(l_out, r_out);
+
 }

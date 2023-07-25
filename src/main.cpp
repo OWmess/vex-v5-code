@@ -2,7 +2,6 @@
 
 
 // Chassis constructor
-///TODO:: 这样写会导致在Drive被销毁后chassis变为空指针，待debug
 Drive chassis=Drive(
   // Left Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
@@ -47,7 +46,7 @@ Drive chassis=Drive(
   // Uncomment if tracking wheels are plugged into a 3 wire expander
   // 3 Wire Port Expander Smart Port
   // ,1
-).with_odom(1,1);
+);
 
 
 
@@ -59,12 +58,12 @@ Drive chassis=Drive(
  */
 void initialize() {
   // Print our branding over your terminal :D
-  ez::print_ez_template();
-  pros::delay(500); // Stop the user from doing anything while legacy ports configure.
+  // ez::print_ez_template();
+  // pros::delay(500); // Stop the user from doing anything while legacy ports configure.
 
   // Configure your chassis controls
   chassis.toggle_modify_curve_with_controller(true); // Enables modifying the controller curve with buttons on the joysticks
-  chassis.set_active_brake(0); // Sets the active brake kP. We recommend 0.1.
+  chassis.set_active_brake(0.1); // Sets the active brake kP. We recommend 0.1.
   chassis.set_curve_default(0, 0); // Defaults for curve. If using tank, only the first parameter is used. (Comment this line out if you have an SD card!)  
   default_constants(); // Set the drive to your own constants from autons.cpp!
 
@@ -135,6 +134,10 @@ void autonomous() {
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
 
   ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
+
+
+
+
 }
 
 
@@ -154,27 +157,11 @@ void autonomous() {
  */
 void opcontrol() {
   // This is preference to what you like to drive on.
-  chassis.set_drive_brake(MOTOR_BRAKE_HOLD);
-  constexpr int VISION_PORT = 5; // vision sensor的端口号
-	constexpr int GREEN_SIG = 1; // 绿色的signature
-	constexpr int NUM_VISION_OBJECTS = 1; // 识别的物体数量
-	pros::Vision vision_sensor(VISION_PORT); // 初始化vision sensor
-  pros::lcd::clear();
 
-	  // std::array<pros::vision_object_s_t, NUM_VISION_OBJECTS> object_arr;// 创建一个数组来存储识别到的物体
-    // int detected = vision_sensor.read_by_sig(0, GREEN_SIG, NUM_VISION_OBJECTS, object_arr.data());//
+  while (true)
+  {
+    chassis.tank();
+    pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
+  }
 
-    // if(detected == 1) {
-		// for(auto object : object_arr) {
-		// 		pros::lcd::set_text(1,"coordinates: "
-		// 		+ std::to_string(object.x_middle_coord) + ", " + std::to_string(object.y_middle_coord));
-    //     printf("vision object type:%d\n", object.type);
-		// }
-    // } else {
-
-		// pros::lcd::set_text(1,"No green object detected");
-    // }
-    // pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
-  
-  // }
 }

@@ -92,6 +92,9 @@ void Drive::set_turn_pid(double target, int speed) {
   headingPID.set_target(target);  // Update heading target for next drive motion
   set_max_speed(speed);
 
+
+
+
   // Run task
   set_mode(TURN);
 }
@@ -109,4 +112,39 @@ void Drive::set_swing_pid(e_swing type, double target, int speed) {
 
   // Run task
   set_mode(SWING);
+}
+
+void Drive::set_turn_pid_gyro_free(double target, int speed) {
+  TICK_PER_INCH=get_tick_per_inch();
+  // Print targets
+  if (print_toggle) printf("Turn Started... Target Value: %f\n", target);
+  int direction = target > 0 ? 1 : -1;
+  // Set PID targets
+
+  //左右两轮间距(inch)
+  constexpr double wheel_track=10.0;
+  target=wheel_track*M_PI*target/360.0;
+
+  l_start=left_sensor();
+  r_start=right_sensor();
+  printf("l_start:%f,r_start:%f\n",l_start,r_start);
+  double l_target_encoder, r_target_encoder;
+
+  // Figure actual target value
+  l_target_encoder = l_start + (target * TICK_PER_INCH);
+  r_target_encoder = r_start - (target * TICK_PER_INCH);
+
+  printf("l_target_encoder:%f,r_target_encoder:%f\n",l_target_encoder,r_target_encoder);
+  ///TODO:: 这里的PID参数可能需要调整
+  auto consts=turnPID_gyro_free.get_constants();
+  leftPID.set_constants(consts.kp,consts.ki,consts.kd,consts.start_i);
+  rightPID.set_constants(consts.kp,consts.ki,consts.kd,consts.start_i);
+
+  leftPID.set_target(l_target_encoder);
+  rightPID.set_target(r_target_encoder);
+  set_max_speed(speed);
+
+
+  // Run task
+  set_mode(TRUN_GYRO_FREE);
 }

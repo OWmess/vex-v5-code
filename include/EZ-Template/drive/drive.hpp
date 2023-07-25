@@ -88,7 +88,7 @@ class Drive {
   PID rightPID;
   PID backward_drivePID;
   PID swingPID;
-
+  PID turnPID_gyro_free;
   /**
    * Current mode of the drive.
    */
@@ -699,6 +699,8 @@ class Drive {
    */
   double slew_calculate(slew_ &input, double current);
 
+  void set_turn_pid_gyro_free(double target, int speed);
+
 
   /**
    * odometry variables and functions
@@ -752,7 +754,7 @@ class Drive {
   void swing_pid_task();
   void turn_pid_task();
   void ez_auto_task();
-
+  void turn_pid_gyro_free_task();
   /**
    * Constants for slew
    */
