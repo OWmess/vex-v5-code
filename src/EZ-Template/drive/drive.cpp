@@ -223,8 +223,8 @@ void Drive::set_drive_current_limit(int mA) {
 
 // Motor telemetry
 void Drive::reset_drive_sensor() {
-  left_motors.front().tare_position();
-  right_motors.front().tare_position();
+  // left_motors.front().tare_position();
+  // right_motors.front().tare_position();
   for(auto &i:left_motors)
     i.tare_position();
   for(auto &i:right_motors)
@@ -348,7 +348,7 @@ void Drive::set_drive_brake(pros::motor_brake_mode_e_t brake_type) {
 
 void Drive::initialize() {
   init_curve_sd();
-  imu_calibrate();
+  imu_calibrate(true);
   reset_drive_sensor();
 }
 

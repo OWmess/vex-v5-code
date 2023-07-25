@@ -15,7 +15,7 @@ Drive chassis=Drive(
   /**
    * unused now
   */
-  ,10
+  ,5
 
   // Wheel Diameter (Remember, 4" wheels are actually 4.125!)
   //    (or tracking wheel diameter)
