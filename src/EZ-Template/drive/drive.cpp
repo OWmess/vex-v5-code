@@ -225,6 +225,13 @@ void Drive::set_drive_current_limit(int mA) {
 void Drive::reset_drive_sensor() {
   left_motors.front().tare_position();
   right_motors.front().tare_position();
+  for(auto &i:left_motors)
+    i.tare_position();
+  for(auto &i:right_motors)
+    i.tare_position();
+  
+
+
   if (is_tracker == DRIVE_ADI_ENCODER) {
     left_tracker.reset();
     right_tracker.reset();
