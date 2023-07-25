@@ -108,7 +108,6 @@ void Drive::turn_pid_gyro_free_task(){
   double r_out=rightPID.compute(right_sensor());
   double l_max_speed=ez::util::sgn(l_out)*max_speed;
   double r_max_speed=ez::util::sgn(r_out)*max_speed;
-  ez::util::sgn(r_out);
   if(abs(l_out)>l_max_speed)
     l_out=l_max_speed;
   if(abs(r_out)>r_max_speed)

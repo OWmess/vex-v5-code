@@ -73,7 +73,7 @@ void drive_example() {
   // The third parameter is a boolean (true or false) for enabling/disabling a slew at the start of drive motions
   // for slew, only enable it when the drive distance is greater then the slew distance + a few inches
 
-  chassis.set_turn_pid_gyro_free(900, 40);
+  chassis.set_turn_pid_gyro_free(-90, 40);
   chassis.wait_drive();
 
   // chassis.set_drive_pid(100, DRIVE_SPEED,true,false);

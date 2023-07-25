@@ -701,7 +701,7 @@ class Drive {
 
   void set_turn_pid_gyro_free(double target, int speed);
 
-
+  Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio,double wheel_distance);
   /**
    * odometry variables and functions
    */
@@ -827,4 +827,9 @@ class Drive {
   void l_increase();
   void r_decrease();
   void r_increase();
+
+  /**
+   *
+   */
+  double WHEEL_DISTANCE;
 };

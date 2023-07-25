@@ -23,7 +23,7 @@ Drive chassis=Drive(
 
   // Cartridge RPM
   //   (or tick per rotation if using tracking wheels)
-  ,600
+  ,200
 
   // External Gear Ratio (MUST BE DECIMAL)
   //    (or gear ratio of tracking wheel)
@@ -31,6 +31,8 @@ Drive chassis=Drive(
   // eg. if your drive is 36:60 where the 60t is powered, your RATIO would be 0.6.
   ,1.0
 
+  // wheels distance
+  ,12.0
 
   // Uncomment if using tracking wheels
   /*

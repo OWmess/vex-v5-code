@@ -44,6 +44,12 @@ Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_por
   set_defaults();
 }
 
+Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio,double wheel_distance)
+:Drive(left_motor_ports,right_motor_ports,imu_port,wheel_diameter,ticks,ratio){
+  this->WHEEL_DISTANCE=wheel_distance;
+}
+
+
 // Constructor for tracking wheels plugged into the brain
 Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports,
              int imu_port, double wheel_diameter, double ticks, double ratio,

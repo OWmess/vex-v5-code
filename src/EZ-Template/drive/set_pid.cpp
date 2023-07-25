@@ -116,23 +116,22 @@ void Drive::set_swing_pid(e_swing type, double target, int speed) {
 
 void Drive::set_turn_pid_gyro_free(double target, int speed) {
   TICK_PER_INCH=get_tick_per_inch();
+  //左右两轮间距(inch)
+  target=WHEEL_DISTANCE*M_PI*target/360.0;
   // Print targets
   if (print_toggle) printf("Turn Started... Target Value: %f\n", target);
-  int direction = target > 0 ? 1 : -1;
   // Set PID targets
 
-  //左右两轮间距(inch)
-  constexpr double wheel_track=10.0;
-  target=wheel_track*M_PI*target/360.0;
+  
 
   l_start=left_sensor();
   r_start=right_sensor();
   printf("l_start:%f,r_start:%f\n",l_start,r_start);
   double l_target_encoder, r_target_encoder;
-
   // Figure actual target value
   l_target_encoder = l_start + (target * TICK_PER_INCH);
   r_target_encoder = r_start - (target * TICK_PER_INCH);
+
 
   printf("l_target_encoder:%f,r_target_encoder:%f\n",l_target_encoder,r_target_encoder);
   ///TODO:: 这里的PID参数可能需要调整
