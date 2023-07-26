@@ -49,7 +49,7 @@ void Drive::wait_drive() {
   else if (mode == TURN) {
     exit_output turn_exit = RUNNING;
     while (turn_exit == RUNNING) {
-      turn_exit = turn_exit != RUNNING ? turn_exit : turnPID.exit_condition({left_motors[0], right_motors[0]},true);
+      turn_exit = turn_exit != RUNNING ? turn_exit : turnPID.exit_condition({left_motors[0], right_motors[0]});
       pros::delay(util::DELAY_TIME);
     }
     if (print_toggle) std::cout << "  Turn: " << exit_to_string(turn_exit) << " Exit.\n";
