@@ -14,7 +14,12 @@ const int DRIVE_SPEED = 120; // This is 110/127 (around 87% of max speed).  We d
 const int TURN_SPEED  = 120;
 const int SWING_SPEED = 120;
 
-
+void auton_1(){
+  chassis.set_drive_pid(35,DRIVE_SPEED,true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90,TURN_SPEED);
+  chassis.wait_drive();
+}
 
 ///
 // Constants

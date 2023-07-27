@@ -5,25 +5,25 @@
 Drive chassis=Drive(
   // Left Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  {1, 19}
+  {-1, -2, -3}
 
   // Right Chassis Ports (negative port will reverse it!)
   //   the first port is the sensored port (when trackers are not used!)
-  ,{-2, -20}
+  ,{11, 12, 13}
 
   // IMU Port
   /**
    * unused now
   */
-  ,5
+  ,8
 
   // Wheel Diameter (Remember, 4" wheels are actually 4.125!)
   //    (or tracking wheel diameter)
-  ,4.0
+  ,3.25
 
   // Cartridge RPM
   //   (or tick per rotation if using tracking wheels)
-  ,200
+  ,600
 
   // External Gear Ratio (MUST BE DECIMAL)
   //    (or gear ratio of tracking wheel)
@@ -130,12 +130,27 @@ void autonomous() {
   chassis.reset_gyro(); // Reset gyro position to 0
   chassis.reset_drive_sensor(); // Reset drive sensors to 0
   chassis.set_drive_brake(MOTOR_BRAKE_COAST); // Set motors to hold.  This helps autonomous consistency.
+  auton_1();
 
-  ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
+  // ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
 
   
 }
 
+
+
+/**
+ * \return a vector of 5 bools, which are the state of the 5 buttons on the controller
+*/
+std::vector<int32_t> get_digital_button(){
+
+  auto r1=master.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
+  auto r2=master.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
+  auto l1=master.get_digital(pros::E_CONTROLLER_DIGITAL_L1);
+  auto l2=master.get_digital(pros::E_CONTROLLER_DIGITAL_L2);
+  auto down=master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+  return {r1,r2,l1,l2,down};
+}
 
 
 /**
@@ -153,28 +168,37 @@ void autonomous() {
  */
 void opcontrol() {
   // This is preference to what you like to drive on.
-  static double last_time=pros::millis();
-  static double last_velocity=0;
-    pros::ADIDigitalOut piston ('A');
-  while (true) {
+  pros::ADIDigitalIn press_buttion('H');
+  while (true)
+  {
+    
+    std::cout<<press_buttion.get_value()<<std::endl;
+    chassis.tank(); // Tank control
+    auto buttons_state=get_digital_button();
+    if(buttons_state[0]){
+      set_intake(true,100);
+    }
+    else if(buttons_state[1]){
+      set_intake(false,100);
+    }
+    else{
+      set_intake(false,0);
+    }
+    if(buttons_state[2]){
+      set_piston(true);
+    }
+    else if(buttons_state[3]){
+      set_piston(false);
+    }
+    if(buttons_state[4]){
+      set_lift(true,60);
+    }
 
-    piston.set_value(true);
-    std::cout<<"true"<<std::endl;
-    pros::delay(1000);
-    piston.set_value(false);
-    std::cout<<"false"<<std::endl;
-    pros::delay(1000);
+    // chassis.arcade_standard(ez::SPLIT); // Standard split arcade
+    // chassis.arcade_standard(ez::SINGLE); // Standard single arcade
+    // chassis.arcade_flipped(ez::SPLIT); // Flipped split arcade
+    // chassis.arcade_flipped(ez::SINGLE); // Flipped single arcade
+    pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
-
-
-  // while (true)
-  // {
-  //   // chassis.tank(); // Tank control
-  //   // chassis.arcade_standard(ez::SPLIT); // Standard split arcade
-  //   chassis.arcade_standard(ez::SINGLE); // Standard single arcade
-  //   // chassis.arcade_flipped(ez::SPLIT); // Flipped split arcade
-  //   // chassis.arcade_flipped(ez::SINGLE); // Flipped single arcade
-  //   pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
-  // }
 
 }
