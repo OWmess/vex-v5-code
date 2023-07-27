@@ -11,16 +11,114 @@ const int DRIVE_SPEED = 120; // This is 110/127 (around 87% of max speed).  We d
                              // If this is 127 and the robot tries to heading correct, it's only correcting by
                              // making one side slower.  When this is 87%, it's correcting by making one side
                              // faster and one side slower, giving better heading correction.
-const int TURN_SPEED  = 120;
+const int TURN_SPEED  = 80;
 const int SWING_SPEED = 120;
 
 void auton_1(){
-  chassis.set_drive_pid(35,DRIVE_SPEED,true);
+  ///****
+  set_intake(false,100);
+  chassis.set_drive_pid(30,DRIVE_SPEED,true);
   chassis.wait_drive();
-  chassis.set_turn_pid(90,TURN_SPEED);
+  chassis.set_turn_pid(45,DRIVE_SPEED);
   chassis.wait_drive();
+  chassis.set_drive_pid(-30,60,true);
+  chassis.wait_drive();
+  set_intake(true,120);
+  set_hanger(true);
+  pros::delay(500);
+  chassis.set_drive_pid(15, DRIVE_SPEED, true);
+  chassis.wait_drive();
+
+  chassis.set_turn_pid(145, TURN_SPEED);
+  chassis.wait_drive();
+  set_hanger(false);
+  pros::delay(500);
+  chassis.set_drive_pid(25, 60, true);
+  // chassis.wait_until(20);
+  // chassis.set_max_speed(40);
+  chassis.wait_drive();
+
+  chassis.set_turn_pid(175, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-60, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(270, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-10, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  set_intake(false,120);
+  chassis.set_drive_pid(25, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  pros::delay(100);
+
+  chassis.set_drive_pid(-10, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(180, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(58, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(270, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-45, DRIVE_SPEED, true);
+  chassis.wait_drive();
+
 }
 
+void auton_2(){
+  ///init lift
+    pros::Motor lift(10,pros::E_MOTOR_GEAR_200);
+  set_lift(true,100);
+  pros::delay(100);
+  lift.tare_position();
+  lift.move_absolute(1500,100);
+  ///****
+  set_intake(false,100);
+  chassis.set_drive_pid(30,DRIVE_SPEED,true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(45,DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-30,60,true);
+  chassis.wait_drive();
+  set_intake(true,120);
+  set_hanger(true);
+  pros::delay(500);
+  chassis.set_drive_pid(15, DRIVE_SPEED, true);
+  chassis.wait_drive();
+
+  chassis.set_turn_pid(145, TURN_SPEED);
+  chassis.wait_drive();
+  set_hanger(false);
+  pros::delay(500);
+  chassis.set_drive_pid(25, 60, true);
+  // chassis.wait_until(20);
+  // chassis.set_max_speed(40);
+  chassis.wait_drive();
+
+  chassis.set_turn_pid(175, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-60, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(270, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-10, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  set_intake(false,120);
+  chassis.set_drive_pid(25, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  pros::delay(100);
+
+  chassis.set_drive_pid(-10, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(180, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(58, DRIVE_SPEED, true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(270, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-45, DRIVE_SPEED, true);
+  chassis.wait_drive();
+
+}
 ///
 // Constants
 ///
@@ -31,10 +129,10 @@ void auton_1(){
 void default_constants() {
   chassis.set_slew_min_power(30, 30);
   chassis.set_slew_distance(7, 7);
-  chassis.set_pid_constants(&chassis.headingPID,8, 0.0, 4, 0);
+  chassis.set_pid_constants(&chassis.headingPID,8, 0.001, 20, 0);
   chassis.set_pid_constants(&chassis.forward_drivePID, 0.6, 0, 1, 0);//0.45p
   chassis.set_pid_constants(&chassis.backward_drivePID, 0.35, 0, 0, 0);//0.45p
-  chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 35, 15);
+  chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 45, 10);
   chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0);
   chassis.set_pid_constants(&chassis.turnPID_gyro_free, 0.45, 0, 2, 0);
 }

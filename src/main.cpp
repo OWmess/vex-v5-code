@@ -70,19 +70,20 @@ void initialize() {
   // // chassis.set_left_curve_buttons (pros::E_CONTROLLER_DIGITAL_LEFT, pros::E_CONTROLLER_DIGITAL_RIGHT); // If using tank, only the left side is used. 
   // // chassis.set_right_curve_buttons(pros::E_CONTROLLER_DIGITAL_Y,    pros::E_CONTROLLER_DIGITAL_A);
   // Autonomous Selector using LLEMU
-  ez::as::auton_selector.add_autons({
-    Auton("Example Drive\n\nDrive forward and come back.", drive_example),
-    Auton("Example Turn\n\nTurn 3 times.", turn_example),
-    Auton("Drive and Turn\n\nDrive forward, turn, come back. ", drive_and_turn),
-    Auton("Drive and Turn\n\nSlow down during drive.", wait_until_change_speed),
-    Auton("Swing Example\n\nSwing, drive, swing.", swing_example),
-    Auton("Combine all 3 movements", combining_movements),
-    Auton("Interference\n\nAfter driving forward, robot performs differently if interfered or not.", interfered_example),
-  });
 
   // Initialize chassis and auton selector
+
+
+
   chassis.initialize();
   ez::as::initialize();
+
+    ///init lift
+  pros::Motor lift(10,pros::E_MOTOR_GEAR_200);
+  set_lift(true,100);
+  pros::delay(100);
+  lift.tare_position();
+  lift.move_absolute(1500,100);
   
 }
 
@@ -129,7 +130,8 @@ void autonomous() {
   chassis.reset_pid_targets(); // Resets PID targets to 0
   chassis.reset_gyro(); // Reset gyro position to 0
   chassis.reset_drive_sensor(); // Reset drive sensors to 0
-  chassis.set_drive_brake(MOTOR_BRAKE_COAST); // Set motors to hold.  This helps autonomous consistency.
+  chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
+  
   auton_1();
 
   // ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
@@ -142,14 +144,16 @@ void autonomous() {
 /**
  * \return a vector of 5 bools, which are the state of the 5 buttons on the controller
 */
-std::vector<int32_t> get_digital_button(){
+std::vector<int32_t> get_controller_button(){
 
   auto r1=master.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
   auto r2=master.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
   auto l1=master.get_digital(pros::E_CONTROLLER_DIGITAL_L1);
   auto l2=master.get_digital(pros::E_CONTROLLER_DIGITAL_L2);
+  auto lift=master.get_digital(pros::E_CONTROLLER_DIGITAL_A);
+  auto up=master.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
   auto down=master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-  return {r1,r2,l1,l2,down};
+  return {r1,r2,l1,l2,lift,up,down};
 }
 
 
@@ -168,13 +172,13 @@ std::vector<int32_t> get_digital_button(){
  */
 void opcontrol() {
   // This is preference to what you like to drive on.
-  pros::ADIDigitalIn press_buttion('H');
+
+
   while (true)
   {
-    
-    std::cout<<press_buttion.get_value()<<std::endl;
+
     chassis.tank(); // Tank control
-    auto buttons_state=get_digital_button();
+    auto buttons_state=get_controller_button();
     if(buttons_state[0]){
       set_intake(true,100);
     }
@@ -185,19 +189,24 @@ void opcontrol() {
       set_intake(false,0);
     }
     if(buttons_state[2]){
-      set_piston(true);
+      set_wings(true);
     }
     else if(buttons_state[3]){
-      set_piston(false);
+      set_wings(false);
     }
     if(buttons_state[4]){
       set_lift(true,60);
     }
+    if(buttons_state[5]){
+      set_hanger(true);
+    }else if(buttons_state[6]){
+      set_hanger(false);
+    }
 
-    // chassis.arcade_standard(ez::SPLIT); // Standard split arcade
-    // chassis.arcade_standard(ez::SINGLE); // Standard single arcade
-    // chassis.arcade_flipped(ez::SPLIT); // Flipped split arcade
-    // chassis.arcade_flipped(ez::SINGLE); // Flipped single arcade
+  //   // chassis.arcade_standard(ez::SPLIT); // Standard split arcade
+  //   // chassis.arcade_standard(ez::SINGLE); // Standard single arcade
+  //   // chassis.arcade_flipped(ez::SPLIT); // Flipped split arcade
+  //   // chassis.arcade_flipped(ez::SINGLE); // Flipped single arcade
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
 

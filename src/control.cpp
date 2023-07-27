@@ -17,18 +17,26 @@ void set_lift(bool state,int speed){
   static pros::Motor lift_motor(10,pros::E_MOTOR_GEAR_200);
   static pros::ADIDigitalIn press_buttion('H');
   lift_motor.move(state?speed:-speed);
-  pros::delay(25);
-  while(!press_buttion.get_value()){
+  pros::delay(45);
+  int cnt=0;
+  while(cnt<2) {
     printf("press_buttion.get_value()=%d\n",press_buttion.get_value());
-    pros::delay(ez::util::DELAY_TIME);
+    if(press_buttion.get_value())
+      cnt++;
+    pros::delay(1);
   }
   lift_motor.move(0);
-    lift_motor.set_brake_mode(pros::E_MOTOR_BRAKE_INVALID);
+    lift_motor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   return;
 
 }
 
-void set_piston(bool state){
-  static pros::ADIDigitalOut piston('A');
-  piston.set_value(state);
+void set_wings(bool state){
+  static pros::ADIDigitalOut wings('B');
+  wings.set_value(state);
+}
+
+void set_hanger(bool state){
+  static pros::ADIDigitalOut hanger('A');
+  hanger.set_value(state);
 }
