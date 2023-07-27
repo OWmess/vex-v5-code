@@ -14,7 +14,16 @@ const int DRIVE_SPEED = 120; // This is 110/127 (around 87% of max speed).  We d
 const int TURN_SPEED  = 80;
 const int SWING_SPEED = 120;
 
+/*
+* 防守方自动程序
+*/
 void auton_1(){
+  ///init lift
+  pros::Motor lift(10,pros::E_MOTOR_GEAR_200);
+  set_lift(true,100);
+  lift.tare_position();
+  lift.move_absolute(1500,100);
+  lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   ///****
   set_intake(false,100);
   chassis.set_drive_pid(30,DRIVE_SPEED,true);
@@ -64,58 +73,53 @@ void auton_1(){
 
 }
 
+/*
+* 进攻方自动程序
+*/
 void auton_2(){
-  ///init lift
-    pros::Motor lift(10,pros::E_MOTOR_GEAR_200);
+  pros::Motor lift(10,pros::E_MOTOR_GEAR_200);
   set_lift(true,100);
-  pros::delay(100);
   lift.tare_position();
   lift.move_absolute(1500,100);
+  lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   ///****
+  // set_intake(true,40);
+  chassis.set_drive_pid(65,80,true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90,DRIVE_SPEED);
+  chassis.wait_drive();
   set_intake(false,100);
-  chassis.set_drive_pid(30,DRIVE_SPEED,true);
+  chassis.set_drive_pid(15,80,true);
   chassis.wait_drive();
-  chassis.set_turn_pid(45,DRIVE_SPEED);
+  chassis.set_drive_pid(-5,DRIVE_SPEED,true);
   chassis.wait_drive();
-  chassis.set_drive_pid(-30,60,true);
+  chassis.set_turn_pid(-115,DRIVE_SPEED);
   chassis.wait_drive();
-  set_intake(true,120);
-  set_hanger(true);
-  pros::delay(500);
-  chassis.set_drive_pid(15, DRIVE_SPEED, true);
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(145, TURN_SPEED);
-  chassis.wait_drive();
-  set_hanger(false);
-  pros::delay(500);
-  chassis.set_drive_pid(25, 60, true);
-  // chassis.wait_until(20);
-  // chassis.set_max_speed(40);
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(175, DRIVE_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(-60, DRIVE_SPEED, true);
-  chassis.wait_drive();
-  chassis.set_turn_pid(270, DRIVE_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(-10, DRIVE_SPEED, true);
-  chassis.wait_drive();
-  set_intake(false,120);
-  chassis.set_drive_pid(25, DRIVE_SPEED, true);
+  set_intake(true,100);
+  chassis.set_drive_pid(32,80,true);
   chassis.wait_drive();
   pros::delay(100);
-
-  chassis.set_drive_pid(-10, DRIVE_SPEED, true);
+  chassis.set_turn_pid(-295,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_turn_pid(180, TURN_SPEED);
+  chassis.set_drive_pid(33,60,true);
+  chassis.wait_until(20);
+  set_intake(false,120);
   chassis.wait_drive();
-  chassis.set_drive_pid(58, DRIVE_SPEED, true);
+  pros::delay(100);
+  chassis.set_drive_pid(-18,DRIVE_SPEED,true);
   chassis.wait_drive();
-  chassis.set_turn_pid(270, TURN_SPEED);
+  set_intake(true,120);
+  chassis.set_turn_pid(-0,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(-45, DRIVE_SPEED, true);
+  chassis.set_drive_pid(13,50,true);
+  chassis.wait_drive();
+  pros::delay(100);
+  // chassis.set_drive_pid(-5,DRIVE_SPEED,true);
+  // chassis.wait_drive();
+  chassis.set_turn_pid(90,TURN_SPEED);
+  chassis.wait_drive();
+  set_intake(false,120);
+  chassis.set_drive_pid(25,DRIVE_SPEED,true);
   chassis.wait_drive();
 
 }
@@ -127,7 +131,7 @@ void auton_2(){
 // If the objects are light or the cog doesn't change much, then there isn't a concern here.
 
 void default_constants() {
-  chassis.set_slew_min_power(30, 30);
+  chassis.set_slew_min_power(50, 50);
   chassis.set_slew_distance(7, 7);
   chassis.set_pid_constants(&chassis.headingPID,8, 0.001, 20, 0);
   chassis.set_pid_constants(&chassis.forward_drivePID, 0.6, 0, 1, 0);//0.45p

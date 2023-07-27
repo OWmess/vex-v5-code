@@ -78,12 +78,6 @@ void initialize() {
   chassis.initialize();
   ez::as::initialize();
 
-    ///init lift
-  pros::Motor lift(10,pros::E_MOTOR_GEAR_200);
-  set_lift(true,100);
-  pros::delay(100);
-  lift.tare_position();
-  lift.move_absolute(1500,100);
   
 }
 
@@ -132,8 +126,8 @@ void autonomous() {
   chassis.reset_drive_sensor(); // Reset drive sensors to 0
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
   
-  auton_1();
-
+  // auton_1();
+  auton_2();
   // ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
 
   
