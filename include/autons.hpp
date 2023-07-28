@@ -8,6 +8,8 @@ void auton_1();
 
 void auton_2();
 
+void auton_3();
+
 void drive_example();
 void turn_example();
 void drive_and_turn();

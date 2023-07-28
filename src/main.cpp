@@ -1,6 +1,5 @@
 #include "main.h"
 
-
 // Chassis constructor
 Drive chassis=Drive(
   // Left Chassis Ports (negative port will reverse it!)
@@ -126,8 +125,9 @@ void autonomous() {
   chassis.reset_drive_sensor(); // Reset drive sensors to 0
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
   
-  // auton_1();
-  auton_2();
+  // auton_1();// 防守方案
+  // auton_2();// 攻击方案
+  auton_3();//1分钟全自动方案
   // ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
 
   
@@ -148,6 +148,7 @@ std::vector<int32_t> get_controller_button(){
   auto up=master.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
   auto down=master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
   return {r1,r2,l1,l2,lift,up,down};
+
 }
 
 
@@ -166,7 +167,6 @@ std::vector<int32_t> get_controller_button(){
  */
 void opcontrol() {
   // This is preference to what you like to drive on.
-
 
   while (true)
   {
@@ -189,18 +189,13 @@ void opcontrol() {
       set_wings(false);
     }
     if(buttons_state[4]){
-      set_lift(true,60);
+      set_lift(true,80);
     }
     if(buttons_state[5]){
       set_hanger(true);
     }else if(buttons_state[6]){
       set_hanger(false);
     }
-
-  //   // chassis.arcade_standard(ez::SPLIT); // Standard split arcade
-  //   // chassis.arcade_standard(ez::SINGLE); // Standard single arcade
-  //   // chassis.arcade_flipped(ez::SPLIT); // Flipped split arcade
-  //   // chassis.arcade_flipped(ez::SINGLE); // Flipped single arcade
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
 

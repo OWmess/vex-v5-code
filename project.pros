@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "vex-code",
+    "project_name": "1min",
     "target": "v5",
     "templates": {
       "kernel": {
@@ -313,7 +313,7 @@
       "compress_bin": true,
       "description": "making code ez-pz",
       "remote_name": "EZ-Template",
-      "slot": 1,
+      "slot": 3,
       "icon": "pros"
     }
   }
