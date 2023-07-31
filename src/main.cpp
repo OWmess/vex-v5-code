@@ -49,6 +49,32 @@ Drive chassis=Drive(
   // ,1
 );
 
+Control control=Control(
+  // Intake Motor Ports (negative port will reverse it!)
+  {9, -19}
+
+  // Intake Motor Gearset
+  ,pros::E_MOTOR_GEAR_200
+
+  // Lift Motor Port (negative port will reverse it!)
+  ,10
+
+  // Lift Motor Gearset
+  ,pros::E_MOTOR_GEAR_200
+
+  // Lift Press Button Port
+  ,'H'
+
+  // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
+  ,{'C', 'D'}
+
+  // Hanger Ports:{hanger_arm,hanger_claw} (negative port will reverse it!)
+  ,{'A', 'B'}
+);
+
+
+
+
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -74,8 +100,8 @@ void initialize() {
   chassis.initialize();
   ez::as::initialize();
 
-  set_wings(false);
-  set_hanger(false);
+  control.set_wings(OFF);
+  control.set_hanger(OFF);
   
 }
 
@@ -123,8 +149,8 @@ void autonomous() {
   chassis.reset_gyro(); // Reset gyro position to 0
   chassis.reset_drive_sensor(); // Reset drive sensors to 0
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
-  set_wings(false);
-  set_hanger(false);
+  control.set_wings(OFF);
+  control.set_hanger(OFF);
   pros::delay(200);
   // auton_1();// 防守方案
   // auton_2();// 攻击方案
@@ -174,30 +200,31 @@ void opcontrol() {
     chassis.tank(); // Tank control
     auto buttons_state=get_controller_button();
     if(buttons_state[0]){
-      set_intake(true,100);
+      control.set_intake(INTAKE,100);
     }
     else if(buttons_state[1]){
-      set_intake(false,100);
+      control.set_intake(OUTTAKE,100);
     }
     else{
-      set_intake(false,0);
+      control.set_intake(STOP,0);
     }
     if(buttons_state[2]){
-      set_wings(true);
+      control.set_wings(ON);
     }
     else if(buttons_state[3]){
-      set_wings(false);
+      control.set_wings(OFF);
     }
     if(buttons_state[4]){
-      set_lift(true,80);
+      control.set_lift(80);
     }
     if(buttons_state[5]){
-      set_hanger(false);
+      control.set_hanger(OFF);
     }else if(buttons_state[6]){
-      set_hanger(true);
+      control.set_hanger(ON);
     }
     if(buttons_state[7]){
-      set_lift_mid();
+
+
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }

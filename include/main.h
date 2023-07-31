@@ -83,6 +83,7 @@ void opcontrol(void);
  */
 #include <iostream>
 #include <array>
+#include <memory>
 #endif
 
 #endif  // _PROS_MAIN_H_

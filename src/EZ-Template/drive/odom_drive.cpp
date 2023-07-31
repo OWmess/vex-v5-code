@@ -19,7 +19,6 @@ void Drive::drive_to_point(double x, double y,int speed,bool ibackwards , bool s
     this->wait_drive();
     this->set_drive_pid(distance,speed,slew_on,toggle_heading);
     this->wait_drive();
-
     this->odom.update_position(Odom::Point{x,y});
 }
 

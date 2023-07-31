@@ -20,7 +20,7 @@ const int SWING_SPEED = 120;
 void auton_1(){
   ///init lift
   pros::Motor lift(10,pros::E_MOTOR_GEAR_200);
-  set_lift(true,100);
+  control.set_lift(100);
   lift.tare_position();
   lift.move_absolute(1500,100);//固定拍子角度
   lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
@@ -31,15 +31,15 @@ void auton_1(){
   chassis.wait_drive();
   chassis.set_drive_pid(-30,60,true);
   chassis.wait_drive();
-  set_intake(true,120);//吸球
-  set_hanger(true);//放下挂钩
+  control.set_intake(INTAKE,120);//吸球
+  control.set_hanger(ON);//放下挂钩
   pros::delay(500);
   chassis.set_drive_pid(16, 60, true);
   chassis.wait_drive();
   ///转弯后收起挂钩
   chassis.set_turn_pid(145, TURN_SPEED);
   chassis.wait_drive();
-  set_hanger(false);
+  control.set_hanger(OFF);
   pros::delay(500);
   chassis.set_drive_pid(25, 60, true);
   // chassis.wait_until(20);
@@ -54,7 +54,7 @@ void auton_1(){
   chassis.wait_drive();
   chassis.set_drive_pid(-10, DRIVE_SPEED, true);//射门前后退一些
   chassis.wait_drive();
-  set_intake(false,120);
+  control.set_intake(OUTTAKE,120);
   chassis.set_drive_pid(25, DRIVE_SPEED, true);//射门
   chassis.wait_drive();
   pros::delay(100);
@@ -77,7 +77,7 @@ void auton_1(){
 */
 void auton_2(){
   pros::Motor lift(10,pros::E_MOTOR_GEAR_200);
-  set_lift(true,100);
+  control.set_lift(100);
   lift.tare_position();
   lift.move_absolute(1500,100);//固定拍子角度
   lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
@@ -87,7 +87,7 @@ void auton_2(){
   chassis.wait_drive();
   chassis.set_turn_pid(90,DRIVE_SPEED);
   chassis.wait_drive();
-  set_intake(false,100);
+  control.set_intake(OUTTAKE,100);
   chassis.set_drive_pid(15,80,true);
   chassis.wait_drive();
   chassis.set_drive_pid(-5,DRIVE_SPEED,true);
@@ -95,7 +95,7 @@ void auton_2(){
   //第二个球
   chassis.set_turn_pid(-115,DRIVE_SPEED);//从球门转身到第二个球的角度，可能需要调整
   chassis.wait_drive();
-  set_intake(true,100);
+  control.set_intake(INTAKE,100);
   chassis.set_drive_pid(32,80,true);//取第二个球时走的距离，可能需要调整
   chassis.wait_drive();
   pros::delay(100);
@@ -103,13 +103,13 @@ void auton_2(){
   chassis.wait_drive();
   chassis.set_drive_pid(33,60,true);
   chassis.wait_until(20);//走20in之后吐球
-  set_intake(false,120);
+  control.set_intake(OUTTAKE,120);
   chassis.wait_drive();
   pros::delay(100);
   //第三个球
   chassis.set_drive_pid(-18,DRIVE_SPEED,true);//从球门回到第三个球的距离，可能需要调整
   chassis.wait_drive();
-  set_intake(true,120);
+  control.set_intake(INTAKE,120);
   chassis.set_turn_pid(-0,TURN_SPEED);//直角转弯直接取第三个球，一般不需要调整
   chassis.wait_drive();
   chassis.set_drive_pid(13,50,true);//取第三个球时走的距离，可能需要调整，小心压线！
@@ -119,7 +119,7 @@ void auton_2(){
   // chassis.wait_drive();
   chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();
-  set_intake(false,120);
+  control.set_intake(OUTTAKE,120);
   chassis.set_drive_pid(25,DRIVE_SPEED,true);//第三个球射门
   chassis.wait_drive();
 
@@ -143,7 +143,7 @@ void auton_3(){
   //   if((now_t-start_t)/1000>30){
   //     break;
   //   }
-  //   set_lift(true,60);//第一个参数为电机方向，第二个参数为电机速度,在control.cpp中修改函数
+  //   set_lift(60);//第一个参数为电机方向，第二个参数为电机速度,在control.cpp中修改函数
   //   pros::delay(1000);//每次抛投的延迟，单位为ms
   // }
 //**************/
@@ -185,21 +185,21 @@ void auton_3(){
   chassis.set_turn_pid(-90,TURN_SPEED);
   chassis.wait_drive();
   //重复两次撞正面球门
-  set_wings(true);//true为打开两侧挡板，false为关闭两侧挡板
+  control.set_wings(ON);//true为打开两侧挡板，false为关闭两侧挡板
   pros::delay(500);
   chassis.set_drive_pid(-35,DRIVE_SPEED,true);
   chassis.wait_drive();
-  set_wings(false);
+  control.set_wings(OFF);
   pros::delay(500);
   chassis.set_drive_pid(35,DRIVE_SPEED,true);
   chassis.wait_drive();
 
-  set_wings(true);
+  control.set_wings(ON);
   pros::delay(500);
   chassis.set_drive_pid(-35,DRIVE_SPEED,true);
   chassis.wait_drive();
 
-  set_wings(false);
+  control.set_wings(OFF);
   pros::delay(500);
 
   chassis.set_drive_pid(35,DRIVE_SPEED,true);

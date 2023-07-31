@@ -1,9 +1,9 @@
 #pragma once
 
 #include "EZ-Template/drive/drive.hpp"
-
+#include "control.hpp"
 extern Drive chassis;
-
+extern Control control;
 void auton_1();
 
 void auton_2();
