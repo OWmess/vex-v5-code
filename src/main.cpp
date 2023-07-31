@@ -64,7 +64,6 @@ void initialize() {
   chassis.set_active_brake(0.1); // Sets the active brake kP. We recommend 0.1.
   chassis.set_curve_default(0, 0); // Defaults for curve. If using tank, only the first parameter is used. (Comment this line out if you have an SD card!)  
   default_constants(); // Set the drive to your own constants from autons.cpp!
-
   // // These are already defaulted to these buttons, but you can change the left/right curve buttons here!
   // // chassis.set_left_curve_buttons (pros::E_CONTROLLER_DIGITAL_LEFT, pros::E_CONTROLLER_DIGITAL_RIGHT); // If using tank, only the left side is used. 
   // // chassis.set_right_curve_buttons(pros::E_CONTROLLER_DIGITAL_Y,    pros::E_CONTROLLER_DIGITAL_A);
@@ -72,11 +71,11 @@ void initialize() {
 
   // Initialize chassis and auton selector
 
-
-
   chassis.initialize();
   ez::as::initialize();
 
+  set_wings(false);
+  set_hanger(false);
   
 }
 
@@ -104,9 +103,8 @@ void disabled() {
  */
 void competition_initialize() {
   // . . .
+  
 }
-
-
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -119,12 +117,15 @@ void competition_initialize() {
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
+
 void autonomous() {
   chassis.reset_pid_targets(); // Resets PID targets to 0
   chassis.reset_gyro(); // Reset gyro position to 0
   chassis.reset_drive_sensor(); // Reset drive sensors to 0
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
-  
+  set_wings(false);
+  set_hanger(false);
+  pros::delay(200);
   // auton_1();// 防守方案
   // auton_2();// 攻击方案
   auton_3();//1分钟全自动方案
@@ -147,7 +148,8 @@ std::vector<int32_t> get_controller_button(){
   auto lift=master.get_digital(pros::E_CONTROLLER_DIGITAL_A);
   auto up=master.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
   auto down=master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-  return {r1,r2,l1,l2,lift,up,down};
+  auto right=master.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
+  return {r1,r2,l1,l2,lift,up,down,right};
 
 }
 
@@ -167,10 +169,8 @@ std::vector<int32_t> get_controller_button(){
  */
 void opcontrol() {
   // This is preference to what you like to drive on.
-
   while (true)
   {
-
     chassis.tank(); // Tank control
     auto buttons_state=get_controller_button();
     if(buttons_state[0]){
@@ -192,9 +192,12 @@ void opcontrol() {
       set_lift(true,80);
     }
     if(buttons_state[5]){
-      set_hanger(true);
-    }else if(buttons_state[6]){
       set_hanger(false);
+    }else if(buttons_state[6]){
+      set_hanger(true);
+    }
+    if(buttons_state[7]){
+      set_lift_mid();
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }

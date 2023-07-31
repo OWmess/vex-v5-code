@@ -34,7 +34,7 @@ void auton_1(){
   set_intake(true,120);//吸球
   set_hanger(true);//放下挂钩
   pros::delay(500);
-  chassis.set_drive_pid(15, DRIVE_SPEED, true);
+  chassis.set_drive_pid(16, 60, true);
   chassis.wait_drive();
   ///转弯后收起挂钩
   chassis.set_turn_pid(145, TURN_SPEED);
@@ -46,9 +46,9 @@ void auton_1(){
   // chassis.set_max_speed(40);
   chassis.wait_drive();
 
-  chassis.set_turn_pid(175, DRIVE_SPEED);
+  chassis.set_turn_pid(180, DRIVE_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(-60, DRIVE_SPEED, true);//吸球后冲向球门的距离，关键，小心压线
+  chassis.set_drive_pid(-63, DRIVE_SPEED, true);//吸球后冲向球门的距离，关键，小心压线
   chassis.wait_drive();
   chassis.set_turn_pid(270, DRIVE_SPEED);
   chassis.wait_drive();
@@ -126,7 +126,6 @@ void auton_2(){
 }
 
 void auton_3(){
-  
   chassis.set_drive_pid(25,DRIVE_SPEED,true);
   chassis.wait_drive();
   chassis.set_turn_pid(-90,TURN_SPEED);
