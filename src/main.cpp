@@ -1,5 +1,4 @@
 #include "main.h"
-
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
@@ -66,7 +65,7 @@ Control control=Control(
 *推荐将此模式的执行时间保持在几秒钟以内。
 */
 void initialize() {
-   pros::delay(500); // Stop the user from doing anything while legacy ports configure.
+  pros::delay(500); // Stop the user from doing anything while legacy ports configure.
 
   // Configure your chassis controls
   chassis.toggle_modify_curve_with_controller(true); //允许使用操纵杆上的按钮（左右键）修改控制器曲线
@@ -151,11 +150,11 @@ std::vector<int32_t> get_controller_button(){
   auto r2=master.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
   auto l1=master.get_digital(pros::E_CONTROLLER_DIGITAL_L1);
   auto l2=master.get_digital(pros::E_CONTROLLER_DIGITAL_L2);
-  auto lift=master.get_digital(pros::E_CONTROLLER_DIGITAL_A);
+  auto A=master.get_digital(pros::E_CONTROLLER_DIGITAL_A);
   auto up=master.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
   auto down=master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
   auto right=master.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
-  return {r1,r2,l1,l2,lift,up,down,right};
+  return {r1,r2,l1,l2,A,up,down,right};
 
 }
 
