@@ -45,10 +45,6 @@ void Control::set_intake(Control_State state,int speed){
 void Control::set_lift(int speed,Lift_State state) {
   // static pros::Motor lift_motor(10,pros::E_MOTOR_GEAR_200);
   // static pros::ADIDigitalIn press_buttion('H');
-  if(state==STOP){
-    lift_motor->brake();
-    lift_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-  }
   lift_motor->move(speed);
   pros::delay(100);
   int cnt=0;
@@ -68,7 +64,7 @@ void Control::set_lift(int speed,Lift_State state) {
 
     pros::delay(1);
   }
-  lift.tare_position();
+  lift_motor->tare_position();
   if(state==UP){
     lift_motor->move_relative(lift_up_pos,speed);
   }else if(state==MIDDLE){

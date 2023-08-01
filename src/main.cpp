@@ -1,74 +1,59 @@
 #include "main.h"
 
-// Chassis constructor
+// 底盘构造
 Drive chassis=Drive(
-  // Left Chassis Ports (negative port will reverse it!)
-  //   the first port is the sensored port (when trackers are not used!)
+  // 左侧电机组端口，（负端口将反转电机！）
   {-1, -2, -3}
 
-  // Right Chassis Ports (negative port will reverse it!)
-  //   the first port is the sensored port (when trackers are not used!)
+  // 右侧电机组端口，（负端口将反转电机！）
   ,{11, 12, 13}
 
-  // IMU Port
-  /**
-   * unused now
-  */
+  // 陀螺仪端口
   ,8
 
-  // Wheel Diameter (Remember, 4" wheels are actually 4.125!)
-  //    (or tracking wheel diameter)
+  // 车轮直径（英寸）
   ,3.25
 
-  // Cartridge RPM
-  //   (or tick per rotation if using tracking wheels)
+  // 底盘电机转速
   ,600
 
-  // External Gear Ratio (MUST BE DECIMAL)
-  //    (or gear ratio of tracking wheel)
-  // eg. if your drive is 84:36 where the 36t is powered, your RATIO would be 2.333.
-  // eg. if your drive is 36:60 where the 60t is powered, your RATIO would be 0.6.
+  //外齿轮比（必须是小数）
+  //（或跟踪轮的齿轮比）
+  //例如。如果您的齿比是 84:36，其中 36t 连接电机，则您的 齿比 将为 2.333。
+  //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
   ,1.0
 
-  // wheels distance
+  // 左右两侧轮组的距离
   ,12.0
-
-  // Uncomment if using tracking wheels
-  /*
-  // Left Tracking Wheel Ports (negative port will reverse it!)
-  // ,{1, 2} // 3 wire encoder
-  // ,8 // Rotation sensor
-
-  // Right Tracking Wheel Ports (negative port will reverse it!)
-  // ,{-3, -4} // 3 wire encoder
-  // ,-9 // Rotation sensor
-  */
-
-  // Uncomment if tracking wheels are plugged into a 3 wire expander
-  // 3 Wire Port Expander Smart Port
-  // ,1
 );
 
+// 控制器构造
 Control control=Control(
-  // Intake Motor Ports (negative port will reverse it!)
+  // Intake 电机组端口，（负端口将反转电机！）
   {9, -19}
 
-  // Intake Motor Gearset
+  // Intake 电机组的RPM,
+  //可选项有：
+  //pros::E_MOTOR_GEAR_200（200RPM）
+  //pros::E_MOTOR_GEAR_100（100RPM）
+  //pros::E_MOTOR_GEAR_600（600RPM）
   ,pros::E_MOTOR_GEAR_200
 
-  // Lift Motor Port (negative port will reverse it!)
+  // Lift电机端口（负端口将反转它！）
   ,10
 
-  // Lift Motor Gearset
+  // Lift 电机的RPM,可选项同上
   ,pros::E_MOTOR_GEAR_200
 
-  // Lift Press Button Port
+  // Lift的触碰按钮端口
   ,'H'
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
+  // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
   ,{'C', 'D'}
 
   // Hanger Ports:{hanger_arm,hanger_claw} (negative port will reverse it!)
+  //钩子的电磁阀端口：{爪臂的端口,爪子的端口}（负端口将反转它！）
   ,{'A', 'B'}
 );
 
@@ -77,31 +62,22 @@ Control control=Control(
 
 
 /**
- * Runs initialization code. This occurs as soon as the program is started.
- *
- * All other competition modes are blocked by initialize; it is recommended
- * to keep execution time for this mode under a few seconds.
- */
+*运行初始化代码。发生在程序刚启动的时候，在所有比赛模式、初始化之前
+*推荐将此模式的执行时间保持在几秒钟以内。
+*/
 void initialize() {
    pros::delay(500); // Stop the user from doing anything while legacy ports configure.
 
   // Configure your chassis controls
-  chassis.toggle_modify_curve_with_controller(true); // Enables modifying the controller curve with buttons on the joysticks
-  chassis.set_active_brake(0.1); // Sets the active brake kP. We recommend 0.1.
-  chassis.set_curve_default(0, 0); // Defaults for curve. If using tank, only the first parameter is used. (Comment this line out if you have an SD card!)  
-  default_constants(); // Set the drive to your own constants from autons.cpp!
-  // // These are already defaulted to these buttons, but you can change the left/right curve buttons here!
-  // // chassis.set_left_curve_buttons (pros::E_CONTROLLER_DIGITAL_LEFT, pros::E_CONTROLLER_DIGITAL_RIGHT); // If using tank, only the left side is used. 
-  // // chassis.set_right_curve_buttons(pros::E_CONTROLLER_DIGITAL_Y,    pros::E_CONTROLLER_DIGITAL_A);
-  // Autonomous Selector using LLEMU
-
-  // Initialize chassis and auton selector
+  chassis.toggle_modify_curve_with_controller(true); //允许使用操纵杆上的按钮（左右键）修改控制器曲线
+  chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
+  chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
+  default_constants(); // 设置PID参数。
+  
+  // 初始化底盘和自动阶段程序选择器
 
   chassis.initialize();
-  ez::as::initialize();
-
-  control.set_wings(OFF);
-  control.set_hanger(OFF);
+  as::initialize();
   
 }
 
@@ -111,6 +87,8 @@ void initialize() {
  * Runs while the robot is in the disabled state of Field Management System or
  * the VEX Competition Switch, following either autonomous or opcontrol. When
  * the robot is enabled, this task will exit.
+ * 在机器人处于场地管理系统或VEX竞赛开关的禁用状态时才会运行，
+ * 当处于启用状态时，此任务将退出，并运行自动/手动控制。
  */
 void disabled() {
   // . . .
@@ -126,6 +104,7 @@ void disabled() {
  *
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
+ * 在连接到场地管理系统或VEX竞赛开关时运行，此任务将在比赛开始后退出。
  */
 void competition_initialize() {
   // . . .
@@ -142,13 +121,14 @@ void competition_initialize() {
  * If the robot is disabled or communications is lost, the autonomous task
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
+ * 自动阶段运行的代码
  */
 
 void autonomous() {
-  chassis.reset_pid_targets(); // Resets PID targets to 0
-  chassis.reset_gyro(); // Reset gyro position to 0
-  chassis.reset_drive_sensor(); // Reset drive sensors to 0
-  chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // Set motors to hold.  This helps autonomous consistency.
+  chassis.reset_pid_targets(); // 重置所有PID期望为0
+  chassis.reset_gyro(); // 重置陀螺仪
+  chassis.reset_drive_sensor(); // 重置电机编码器
+  chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
   control.set_wings(OFF);
   control.set_hanger(OFF);
   pros::delay(200);
@@ -157,13 +137,13 @@ void autonomous() {
   auton_3();//1分钟全自动方案
   // ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
 
-  
+
 }
 
 
 
 /**
- * \return a vector of 5 bools, which are the state of the 5 buttons on the controller
+ * \return 返回遥控器上的按钮状态
 */
 std::vector<int32_t> get_controller_button(){
 
@@ -192,12 +172,13 @@ std::vector<int32_t> get_controller_button(){
  * If the robot is disabled or communications is lost, the
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
+ * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-  // This is preference to what you like to drive on.
   while (true)
   {
     chassis.tank(); // Tank control
+    //根据按钮状态控制机器人
     auto buttons_state=get_controller_button();
     if(buttons_state[0]){
       control.set_intake(INTAKE,100);
