@@ -61,7 +61,6 @@ void Control::set_lift(int speed,Lift_State state) {
     }
     if(cnt>=2)
       break;
-
     pros::delay(1);
   }
   lift_motor->tare_position();

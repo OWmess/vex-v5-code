@@ -68,7 +68,7 @@ void initialize() {
   pros::delay(500);
 
   //配置底盘参数
-  chassis.toggle_modify_curve_with_controller(true); //允许使用操纵杆上的按钮（左右键）修改控制器曲线
+  chassis.toggle_modify_curve_with_controller(false); //是否允许使用操纵杆上的按钮（左右键）修改控制器曲线
   chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
   default_constants(); // 设置PID参数。
@@ -77,7 +77,8 @@ void initialize() {
 
   chassis.initialize();
   as::initialize();
-  
+
+
 }
 
 
@@ -91,6 +92,7 @@ void initialize() {
  */
 void disabled() {
   // . . .
+  printf("disabled\n");
 }
 
 
@@ -106,8 +108,9 @@ void disabled() {
  * 在连接到场地管理系统或VEX竞赛开关时运行，此任务将在比赛开始后退出。
  */
 void competition_initialize() {
-  // . . .
-  control.set_wings(OFF);
+  // . . .  
+  printf("competition_initialize\n");
+
 }
 
 /**
