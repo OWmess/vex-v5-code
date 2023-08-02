@@ -11,8 +11,8 @@ const int SWING_SPEED = 120;
  * @brief      设置底盘控制相关常数，如PID参数等
 */
 void default_constants() {
-  chassis.set_slew_min_power(50, 50);//设置最小启动速度，用于缓速启动
-  chassis.set_slew_distance(7, 7);//设置缓速启动的最小距离
+  chassis.set_slew_min_power(50, 50);//设置最小启动速度，用于缓加速
+  chassis.set_slew_distance(7, 7);//设置缓加速的距离
   ///设置PID参数，第一个参数为PID结构体，后面四个参数分别为P、I、D、最大输出
   chassis.set_pid_constants(&chassis.headingPID,8, 0.001, 20, 0);
   chassis.set_pid_constants(&chassis.forward_drivePID, 0.6, 0, 1, 0);

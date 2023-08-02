@@ -43,8 +43,6 @@ void Control::set_intake(Control_State state,int speed){
 
 
 void Control::set_lift(int speed,Lift_State state) {
-  // static pros::Motor lift_motor(10,pros::E_MOTOR_GEAR_200);
-  // static pros::ADIDigitalIn press_buttion('H');
   lift_motor->move(speed);
   pros::delay(100);
   int cnt=0;
@@ -76,15 +74,11 @@ void Control::set_lift(int speed,Lift_State state) {
 }
 
 void Control::set_wings(Control_State state){
-  // static pros::ADIDigitalOut wings1('C');
-  // static pros::ADIDigitalOut wings2('D');
   wings_l->set_value(state==ON?!wings_reversed[0]:wings_reversed[0]);
   wings_r->set_value(state==ON?!wings_reversed[1]:wings_reversed[1]);
 }
 
 void Control::set_hanger(Control_State state){
-  // static pros::ADIDigitalOut hanger1('A');
-  // static pros::ADIDigitalOut hanger2('B');
   hanger_arm->set_value(state==ON?!hanger_reversed[0]:hanger_reversed[0]);
   hanger_claw->set_value(state==ON?!hanger_reversed[1]:hanger_reversed[1]);
 }

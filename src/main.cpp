@@ -17,7 +17,6 @@ Drive chassis=Drive(
   ,600
 
   //外齿轮比（必须是小数）
-  //（或跟踪轮的齿轮比）
   //例如。如果您的齿比是 84:36，其中 36t 连接电机，则您的 齿比 将为 2.333。
   //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
   ,1.0
@@ -146,26 +145,6 @@ void autonomous() {
 
 }
 
-
-
-/**
- * \return 返回遥控器上部分按钮的状态
-*/
-std::vector<int32_t> get_controller_button(){
-
-  auto r1=master.get_digital(pros::E_CONTROLLER_DIGITAL_R1);
-  auto r2=master.get_digital(pros::E_CONTROLLER_DIGITAL_R2);
-  auto l1=master.get_digital(pros::E_CONTROLLER_DIGITAL_L1);
-  auto l2=master.get_digital(pros::E_CONTROLLER_DIGITAL_L2);
-  auto A=master.get_digital(pros::E_CONTROLLER_DIGITAL_A);
-  auto up=master.get_digital(pros::E_CONTROLLER_DIGITAL_UP);
-  auto down=master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-  auto right=master.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);
-  return {r1,r2,l1,l2,A,up,down,right};
-
-}
-
-
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -185,32 +164,31 @@ void opcontrol() {
   {
     chassis.tank(); // Tank control
     //根据按钮状态控制机器人
-    auto buttons_state=get_controller_button();
-    if(buttons_state[0]){
+    if(Controller_Button_State::R1_pressed()){
       control.set_intake(INTAKE,100);
     }
-    else if(buttons_state[1]){
+    else if(Controller_Button_State::R2_pressed()){
       control.set_intake(OUTTAKE,100);
     }
     else{
       control.set_intake(STOP,0);
     }
-    if(buttons_state[2]){
+    if(Controller_Button_State::L1_pressed()){
       control.set_wings(ON);
     }
-    else if(buttons_state[3]){
+    else if(Controller_Button_State::L2_pressed()){
       control.set_wings(OFF);
     }
-    if(buttons_state[4]){
+    if(Controller_Button_State::A_pressed()){
       control.set_lift(80);
     }
-    if(buttons_state[5]){
+    if(Controller_Button_State::UP_pressed()){
       control.set_hanger(OFF);
-    }else if(buttons_state[6]){
+    }else if(Controller_Button_State::DOWN_pressed()){
       control.set_hanger(ON);
     }
-    if(buttons_state[7]){
-      
+    if(Controller_Button_State::RIGHT_pressed()){
+      control.set_lift(80,MIDDLE);
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }

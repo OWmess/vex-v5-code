@@ -29,34 +29,45 @@ public:
     const std::vector<int8_t> &hanger_ports);
 
     /**
-     * \param state set the state of the intakes
-     * \param speed speed of the intake motor
+     * \param state 设置intake的模式
+     * - INTAKE: 吸取
+     * - OUTTAKE: 放出
+     * \param speed 设置电机intake的速度
+     * - -127~127
     */
     void set_intake(Control_State state,int speed);
 
     /**
-     * \param speed speed of the lift motor
-     * \param state set the state of the lift
+     * \param speed 设置lift电机的速度
+     * - -127~127
+     * \param state 设置lift的模式，不填时默认为放下
+     * - UP: 升起
+     * - MIDDLE: 中间
+     * - DOWN: 放下
     */
     void set_lift(int speed,Lift_State state=DOWN);
 
     /**
-     * \param state set the state of the wings
+     * \param state 设置两侧挡板的状态
+     * - ON: 打开挡板
+     * - OFF: 关闭挡板
     */
     void set_wings(Control_State state);
 
     /**
-     * \param state set the state of the hanger
+     * \param state 设置钩子的状态
+     *  -  ON: 放下钩子
+     *  -  OFF: 收回钩子
     */
     void set_hanger(Control_State state);
 
     /**
-     *  \param 设置升降机在高处的位置
+     *  \param 设置升降机在升起时的位置
     */
     void set_lift_up_pos(double pos);
     
     /**
-     * \param 设置升降机在中间的位置
+     * \param 设置升降机在中间时的位置
     */
     void set_lift_middle_pos(double pos);
 private:
@@ -71,4 +82,20 @@ private:
     double lift_middle_pos;
     std::array<bool,2> wings_reversed;
     std::array<bool,2> hanger_reversed;
+};
+
+class Controller_Button_State{
+public:
+  inline static bool A_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_A);}
+  inline static bool B_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_B);}
+  inline static bool X_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_X);}
+  inline static bool Y_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_Y);}
+  inline static bool R1_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_R1);}
+  inline static bool R2_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_R2);}
+  inline static bool L1_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_L1);}
+  inline static bool L2_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_L2);}
+  inline static bool UP_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_UP);}
+  inline static bool DOWN_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);}
+  inline static bool LEFT_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_LEFT);}
+  inline static bool RIGHT_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_RIGHT);}
 };
