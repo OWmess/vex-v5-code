@@ -11,10 +11,16 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
 
   lift_motor=std::make_shared<pros::Motor>(abs(lift_motor_port),lift_gearset,util::is_reversed(lift_motor_port));
   lift_press_button=std::make_shared<pros::ADIDigitalIn>(lift_press_button_port);
+
   wings_l=std::make_shared<pros::ADIDigitalOut>(abs(wings_ports[0]),util::is_reversed(wings_ports[0]));
   wings_r=std::make_shared<pros::ADIDigitalOut>(abs(wings_ports[1]),util::is_reversed(wings_ports[1]));
   hanger_arm=std::make_shared<pros::ADIDigitalOut>(abs(hanger_ports[0]),util::is_reversed(hanger_ports[0]));
   hanger_claw=std::make_shared<pros::ADIDigitalOut>(abs(hanger_ports[1]),util::is_reversed(hanger_ports[1]));
+
+  wings_reversed[0]=util::is_reversed(wings_ports[0]);
+  wings_reversed[1]=util::is_reversed(wings_ports[1]);
+  hanger_reversed[0]=util::is_reversed(hanger_ports[0]);
+  hanger_reversed[1]=util::is_reversed(hanger_ports[1]);
 
   lift_up_pos=100.0;
   lift_middle_pos=1600;
@@ -73,15 +79,15 @@ void Control::set_lift(int speed,Lift_State state) {
 void Control::set_wings(Control_State state){
   // static pros::ADIDigitalOut wings1('C');
   // static pros::ADIDigitalOut wings2('D');
-  wings_l->set_value(state==ON?true:false);
-  wings_r->set_value(state==ON?true:false);
+  wings_l->set_value(state==ON?!wings_reversed[0]:wings_reversed[0]);
+  wings_r->set_value(state==ON?!wings_reversed[1]:wings_reversed[1]);
 }
 
 void Control::set_hanger(Control_State state){
   // static pros::ADIDigitalOut hanger1('A');
   // static pros::ADIDigitalOut hanger2('B');
-  hanger_arm->set_value(state==ON?true:false);
-  hanger_claw->set_value(state==ON?true:false);
+  hanger_arm->set_value(state==ON?!hanger_reversed[0]:hanger_reversed[0]);
+  hanger_claw->set_value(state==ON?!hanger_reversed[1]:hanger_reversed[1]);
 }
 
 void Control::set_lift_up_pos(double pos){

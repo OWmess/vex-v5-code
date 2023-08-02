@@ -69,4 +69,6 @@ private:
     std::shared_ptr<pros::ADIDigitalIn> lift_press_button;
     double lift_up_pos;
     double lift_middle_pos;
+    std::array<bool,2> wings_reversed;
+    std::array<bool,2> hanger_reversed;
 };

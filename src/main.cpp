@@ -49,7 +49,7 @@ Control control=Control(
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{'C', 'D'}
+  ,{-'C', 'D'}
 
   // Hanger Ports:{hanger_arm,hanger_claw} (negative port will reverse it!)
   //钩子的电磁阀端口：{爪臂的端口,爪子的端口}（负端口将反转它！）
@@ -107,7 +107,7 @@ void disabled() {
  */
 void competition_initialize() {
   // . . .
-  
+  control.set_wings(OFF);
 }
 
 /**
@@ -203,8 +203,7 @@ void opcontrol() {
       control.set_hanger(ON);
     }
     if(buttons_state[7]){
-
-
+      
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
