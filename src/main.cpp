@@ -65,9 +65,9 @@ Control control=Control(
 *推荐将此模式的执行时间保持在几秒钟以内。
 */
 void initialize() {
-  pros::delay(500); // Stop the user from doing anything while legacy ports configure.
+  pros::delay(500);
 
-  // Configure your chassis controls
+  //配置底盘参数
   chassis.toggle_modify_curve_with_controller(true); //允许使用操纵杆上的按钮（左右键）修改控制器曲线
   chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
@@ -134,7 +134,7 @@ void autonomous() {
   // auton_1();// 防守方案
   // auton_2();// 攻击方案
   auton_3();//1分钟全自动方案
-  // ez::as::auton_selector.call_selected_auton(); // Calls selected auton from autonomous selector.
+  // ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
 
 
 }
@@ -142,7 +142,7 @@ void autonomous() {
 
 
 /**
- * \return 返回遥控器上的按钮状态
+ * \return 返回遥控器上部分按钮的状态
 */
 std::vector<int32_t> get_controller_button(){
 

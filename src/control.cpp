@@ -20,10 +20,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   lift_middle_pos=1600;
 }
 
-/**
- * \param state true for intake, false for outtake
- * \param speed speed of the intakes
-*/
+
 void Control::set_intake(Control_State state,int speed){
   if(state==STOP){
     for(auto &intake_motor:intake_motors){
@@ -38,10 +35,7 @@ void Control::set_intake(Control_State state,int speed){
 
 }
 
-/**
- * \param state true for lift up, false for lift down
- * \param speed speed of the lift
-*/
+
 void Control::set_lift(int speed,Lift_State state) {
   // static pros::Motor lift_motor(10,pros::E_MOTOR_GEAR_200);
   // static pros::ADIDigitalIn press_buttion('H');
