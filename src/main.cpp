@@ -74,7 +74,11 @@ void initialize() {
   default_constants(); // 设置PID参数。
   
   // 初始化底盘和自动阶段程序选择器
-
+  ez::as::auton_selector.add_autons({
+    Auton("Guard.", auton_1),
+    Auton("Attack.", auton_2),
+    Auton("1min. ", auton_3),
+  });
   chassis.initialize();
   as::initialize();
 
@@ -136,8 +140,8 @@ void autonomous() {
   pros::delay(200);
   // auton_1();// 防守方案
   // auton_2();// 攻击方案
-  auton_3();//1分钟全自动方案
-  // ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
+  // auton_3();//1分钟全自动方案
+  ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
 
 
 }

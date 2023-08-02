@@ -28,6 +28,8 @@ void default_constants() {
 * 防守方自动程序
 */
 void auton_1(){
+  while(1)
+  printf("auton_1\n");
   ///init lift
   control.set_lift(100,MIDDLE);
   ///****
@@ -82,6 +84,8 @@ void auton_1(){
 * 进攻方自动程序
 */
 void auton_2(){
+  while(1)
+  printf("auton_2\n");
   control.set_lift(100,MIDDLE);
   ///****
   // 直走到球门吐第一个球
@@ -128,6 +132,8 @@ void auton_2(){
 }
 
 void auton_3(){
+  while(1)
+  printf("auton_3\n");
   chassis.set_drive_pid(25,DRIVE_SPEED,true);
   chassis.wait_drive();
   chassis.set_turn_pid(-90,TURN_SPEED);
