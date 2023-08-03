@@ -11,3 +11,5 @@ void auton_2();
 void auton_3();
 
 void default_constants();
+
+void test_pid();

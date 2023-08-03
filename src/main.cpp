@@ -57,8 +57,6 @@ Control control=Control(
 
 
 
-
-
 /**
 *运行初始化代码。发生在程序刚启动的时候，在所有比赛模式、初始化之前
 *推荐将此模式的执行时间保持在几秒钟以内。
@@ -77,6 +75,7 @@ void initialize() {
     Auton("Guard.", auton_1),
     Auton("Attack.", auton_2),
     Auton("1min. ", auton_3),
+    Auton("test pid",test_pid),
   });
   chassis.initialize();
   as::initialize();
@@ -162,7 +161,7 @@ void autonomous() {
 void opcontrol() {
   while (true)
   {
-    chassis.tank(); // Tank control
+    chassis.tank(); // Tank 模式
     //根据按钮状态控制机器人
     if(Controller_Button_State::R1_pressed()){
       control.set_intake(INTAKE,100);

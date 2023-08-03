@@ -60,12 +60,12 @@ class PID {
    * Struct for exit condition.
    */
   struct exit_condition_ {
-    int small_exit_time = 0;
-    double small_error = 0;
-    int big_exit_time = 0;
-    double big_error = 0;
-    int velocity_exit_time = 0;
-    int mA_timeout = 0;
+    int small_exit_time = 0;// 达到目标误差后的小退出时间
+    double small_error = 0;// 达到目标误差的小误差范围
+    int big_exit_time = 0;// 接近目标误差后的大退出时间
+    double big_error = 0;// 接近目标误差的大误差范围
+    int velocity_exit_time = 0;// 速度退出时间
+    int mA_timeout = 0;// 电流超时时间
   };
 
   /**
@@ -175,9 +175,9 @@ class PID {
   long prev_time;
 
  private:
-  int i = 0, j = 0, k = 0, l = 0;
+  int i = 0, j = 0, k = 0, l = 0;//用于退出条件的计时
   bool is_mA = false;
-  void reset_timers();
+  void reset_timers();//重置所有计时器的函数
   std::string name;
   bool is_name = false;
   void print_exit(ez::exit_output exit_type);
