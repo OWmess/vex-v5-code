@@ -1,5 +1,12 @@
 #include "main.h"
 
+/**
+ * @brief 投球机位于顶部和中间位置时的编码器值，编码器0点为底部
+*/
+#define LIFT_UP_POS      100.0 
+#define LIFT_MIDDLE_POS  1600.0 
+
+
 Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &lift_motor_port,
     pros::motor_gearset_e_t lift_gearset,const int8_t lift_press_button_port,const std::vector<int8_t> &wings_ports,
     const std::vector<int8_t> &hanger_ports){
@@ -22,8 +29,8 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   hanger_reversed[0]=util::is_reversed(hanger_ports[0]);
   hanger_reversed[1]=util::is_reversed(hanger_ports[1]);
 
-  lift_up_pos=100.0;
-  lift_middle_pos=1600;
+  set_lift_up_pos(LIFT_UP_POS);
+  set_lift_middle_pos(LIFT_MIDDLE_POS);
 }
 
 
