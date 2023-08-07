@@ -143,6 +143,7 @@ void autonomous() {
   ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
 
 
+  
 }
 
 /**
@@ -160,6 +161,7 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
+  int i=0;
   while (true)
   {
     chassis.tank(); // Tank 模式
@@ -189,6 +191,10 @@ void opcontrol() {
     }
     if(Controller_Button_State::RIGHT_pressed()){
       control.set_lift(80,MIDDLE);
+    }
+    printf("(%d)while sending...\n",i++);
+    if(i>10000){
+      i=0;
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
