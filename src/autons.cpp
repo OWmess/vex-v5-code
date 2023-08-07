@@ -3,7 +3,7 @@
 /**
  * 设置正常运行时的底盘速度
 */
-#define DRIVE_SPEED  80
+#define DRIVE_SPEED  100
 #define TURN_SPEED   80
 #define SWING_SPEED  80
 
@@ -15,7 +15,7 @@ void default_constants() {
   chassis.set_slew_min_power(50, 50);//设置最小启动速度，用于缓加速
   chassis.set_slew_distance(7, 7);//设置缓加速的距离
   ///设置PID参数，第一个参数为PID结构体，后面四个参数分别为P、I、D、最大输出
-  chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 10, 0);
+  chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 13, 0);
   chassis.set_pid_constants(&chassis.forward_drivePID, 2, 0, 4, 0);
   chassis.set_pid_constants(&chassis.backward_drivePID, 0.35, 0, 1, 0);
   chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 45, 10);
@@ -216,14 +216,14 @@ void test_pid(){
   chassis.wait_until(15);
   chassis.set_max_speed(60);
   chassis.wait_drive();
-  chassis.set_turn_pid(-90,TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_turn_pid(90,TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_turn_pid(0,TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(-35,DRIVE_SPEED,true);
-  chassis.wait_drive();
-  chassis.set_swing_pid(RIGHT_SWING,90,SWING_SPEED);
+  // chassis.set_turn_pid(-90,TURN_SPEED);
+  // chassis.wait_drive();
+  // chassis.set_turn_pid(90,TURN_SPEED);
+  // chassis.wait_drive();
+  // chassis.set_turn_pid(0,TURN_SPEED);
+  // chassis.wait_drive();
+  // chassis.set_drive_pid(-35,DRIVE_SPEED,true);
+  // chassis.wait_drive();
+  chassis.set_swing_pid(LEFT_SWING,90,SWING_SPEED);
   chassis.wait_drive();
 }
