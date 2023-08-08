@@ -161,7 +161,7 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-  chassis.set_drive_pid(1000,100);
+  chassis.set_drive_pid(100,100);
   chassis.wait_drive();
 
 }

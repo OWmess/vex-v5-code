@@ -848,6 +848,11 @@ class Drive {
   std::vector<double> l_sensor_vec;
   std::vector<double> r_sensor_vec;
   std::vector<double> gyro_vec;
+  inline void clear_vec(){
+    l_sensor_vec.clear();
+    r_sensor_vec.clear();
+    gyro_vec.clear();
+  }
 public:
   /**
    * 用于记录pid数据
