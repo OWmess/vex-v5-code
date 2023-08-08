@@ -81,7 +81,6 @@ void initialize() {
   chassis.initialize();
   as::initialize();
 
-
 }
 
 
@@ -160,6 +159,9 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
+  pros::Motor lift(-1);
+  lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+  
   while (true)
   {
     chassis.tank(); // Tank 模式
@@ -170,9 +172,6 @@ void opcontrol() {
     else if(Controller_Button_State::R2_pressed()){
       control.set_intake(OUTTAKE,100);
     }
-    else{
-      control.set_intake(STOP,0);
-    }
     if(Controller_Button_State::L1_pressed()){
       control.set_wings(ON);
     }
@@ -180,16 +179,19 @@ void opcontrol() {
       control.set_wings(OFF);
     }
     if(Controller_Button_State::A_pressed()){
-      control.set_lift(80);
+      lift.move(100);
     }
     if(Controller_Button_State::UP_pressed()){
-      control.set_hanger(OFF);
+      lift.move(-100);
     }else if(Controller_Button_State::DOWN_pressed()){
-      control.set_hanger(ON);
+      lift.move(100);
+    }else{
+      lift.brake();
     }
     if(Controller_Button_State::RIGHT_pressed()){
       control.set_lift(80,MIDDLE);
     }
+    
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
 
