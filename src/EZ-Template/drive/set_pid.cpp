@@ -63,11 +63,15 @@ void Drive::set_drive_pid(double target, int speed, bool slew_on, bool toggle_he
     leftPID.set_constants(consts.kp, consts.ki, consts.kd, consts.start_i);
     rightPID.set_constants(consts.kp, consts.ki, consts.kd, consts.start_i);
     is_backwards = true;
+    if(pid_logger)
+      logger.create_log(DriveMode::BACKWARD, consts, l_target_encoder, r_target_encoder);
   } else {
     auto consts = forward_drivePID.get_constants();
     leftPID.set_constants(consts.kp, consts.ki, consts.kd, consts.start_i);
     rightPID.set_constants(consts.kp, consts.ki, consts.kd, consts.start_i);
     is_backwards = false;
+    if(pid_logger)
+      logger.create_log(DriveMode::FORWARD, consts, l_target_encoder, r_target_encoder);
   }
 
   // Set PID targets
@@ -91,9 +95,8 @@ void Drive::set_turn_pid(double target, int speed) {
   turnPID.set_target(target);
   headingPID.set_target(target);  // Update heading target for next drive motion
   set_max_speed(speed);
-
-
-
+  if(pid_logger)
+    logger.create_log(DriveMode::TURN, turnPID.get_constants(), target);
 
   // Run task
   set_mode(TURN);
@@ -109,7 +112,9 @@ void Drive::set_swing_pid(e_swing type, double target, int speed) {
   swingPID.set_target(target);
   headingPID.set_target(target);  // Update heading target for next drive motion
   set_max_speed(speed);
-
+  if(pid_logger)
+    logger.create_log(DriveMode::SWING, swingPID.get_constants(), target);
+    
   // Run task
   set_mode(SWING);
 }

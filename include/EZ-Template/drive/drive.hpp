@@ -14,6 +14,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "EZ-Template/util.hpp"
 #include "pros/motors.h"
 #include "EZ-Template/drive/odom.hpp"
+#include "EZ-Template/PID_Logger.hpp"
 using namespace ez;
 
 class Drive {
@@ -829,7 +830,29 @@ class Drive {
   void r_increase();
 
   /**
-   *
+   * 左右轮的轮间距
    */
   double WHEEL_DISTANCE;
+  /**
+   * 是否记录pid数据
+  */
+  bool pid_logger=false;
+
+  /**
+   * 用于记录pid数据到文件
+   */
+  PIDLogger logger;
+  /**
+   * 暂存左右电机编码值或陀螺仪角度，用于pid数据记录
+  */
+  std::vector<double> l_sensor_vec;
+  std::vector<double> r_sensor_vec;
+  std::vector<double> gyro_vec;
+public:
+  /**
+   * 用于记录pid数据
+   */
+  constexpr void set_pid_logger(bool logger);
+
+
 };

@@ -161,42 +161,7 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-  int i=0;
-  while (true)
-  {
-    chassis.tank(); // Tank 模式
-    //根据按钮状态控制机器人
-    if(Controller_Button_State::R1_pressed()){
-      control.set_intake(INTAKE,100);
-    }
-    else if(Controller_Button_State::R2_pressed()){
-      control.set_intake(OUTTAKE,100);
-    }
-    else{
-      control.set_intake(STOP,0);
-    }
-    if(Controller_Button_State::L1_pressed()){
-      control.set_wings(ON);
-    }
-    else if(Controller_Button_State::L2_pressed()){
-      control.set_wings(OFF);
-    }
-    if(Controller_Button_State::A_pressed()){
-      control.set_lift(80);
-    }
-    if(Controller_Button_State::UP_pressed()){
-      control.set_hanger(OFF);
-    }else if(Controller_Button_State::DOWN_pressed()){
-      control.set_hanger(ON);
-    }
-    if(Controller_Button_State::RIGHT_pressed()){
-      control.set_lift(80,MIDDLE);
-    }
-    printf("(%d)while sending...\n",i++);
-    if(i>10000){
-      i=0;
-    }
-    pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
-  }
+  chassis.set_drive_pid(1000,100);
+  chassis.wait_drive();
 
 }

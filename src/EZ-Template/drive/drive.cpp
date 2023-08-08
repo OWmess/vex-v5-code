@@ -34,13 +34,12 @@ Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_por
     pros::Motor temp(abs(i), util::is_reversed(i));
     right_motors.push_back(temp);
   }
-
+  
   // Set constants for tick_per_inch calculation
   WHEEL_DIAMETER = wheel_diameter;
   RATIO = ratio;
   CARTRIDGE = ticks;
   TICK_PER_INCH = get_tick_per_inch();
-
   set_defaults();
 }
 
@@ -354,3 +353,5 @@ void Drive::initialize() {
 
 void Drive::toggle_auto_drive(bool toggle) { drive_toggle = toggle; }
 void Drive::toggle_auto_print(bool toggle) { print_toggle = toggle; }
+
+constexpr void Drive::set_pid_logger(bool toggle) { pid_logger = toggle; }

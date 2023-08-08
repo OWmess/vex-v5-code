@@ -6,7 +6,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "main.h"
 #include "pros/misc.hpp"
-
+#include <chrono>
 using namespace ez;
 
 void Drive::ez_auto_task() {
@@ -33,10 +33,15 @@ void Drive::ez_auto_task() {
 // Drive PID task
 void Drive::drive_pid_task() {
   // Compute PID
-  leftPID.compute(left_sensor());
-  rightPID.compute(right_sensor());
-  headingPID.compute(get_gyro());
-
+  double l_sensor = left_sensor();
+  double r_sensor = right_sensor();
+  double gyro_pos = get_gyro();
+  leftPID.compute(l_sensor);
+  rightPID.compute(r_sensor);
+  headingPID.compute(gyro_pos);
+  l_sensor_vec.emplace_back(l_sensor);
+  r_sensor_vec.emplace_back(r_sensor);
+  gyro_vec.emplace_back(gyro_pos);
   // Compute slew
   double l_slew_out = slew_calculate(left_slew, left_sensor());
   double r_slew_out = slew_calculate(right_slew, right_sensor());
@@ -63,7 +68,9 @@ void Drive::drive_pid_task() {
 // Turn PID task
 void Drive::turn_pid_task() {
   // Compute PID
-  turnPID.compute(get_gyro());
+  double gyro_pos=get_gyro();
+  turnPID.compute(gyro_pos);
+  gyro_vec.emplace_back(gyro_pos);
 
   // Clip gyroPID to max speed
   double gyro_out = util::clip_num(turnPID.output, max_speed, -max_speed);
@@ -82,8 +89,9 @@ void Drive::turn_pid_task() {
 // Swing PID task
 void Drive::swing_pid_task() {
   // Compute PID
-  swingPID.compute(get_gyro());
-
+  double gyro_pos=get_gyro();
+  swingPID.compute(gyro_pos);
+  gyro_vec.emplace_back(gyro_pos);
   // Clip swingPID to max speed
   double swing_out = util::clip_num(swingPID.output, max_speed, -max_speed);
 

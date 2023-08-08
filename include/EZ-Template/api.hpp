@@ -13,4 +13,4 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "EZ-Template/sdcard.hpp"
 #include "EZ-Template/util.hpp"
 #include "EZ-Template/drive/odom.hpp"
-#include "EZ-Template/display/PID_tuning.hpp"
+#include "EZ-Template/PID_Logger.hpp"
