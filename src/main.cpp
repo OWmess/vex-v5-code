@@ -142,7 +142,7 @@ void autonomous() {
   ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
 
 
-  
+
 }
 
 /**
@@ -160,10 +160,6 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-<<<<<<< HEAD
-  chassis.set_drive_pid(100,100);
-  chassis.wait_drive();
-=======
   pros::Motor lift(-1);
   lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   
@@ -199,6 +195,4 @@ void opcontrol() {
     
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
->>>>>>> main
-
 }
