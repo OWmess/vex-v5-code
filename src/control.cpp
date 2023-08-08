@@ -54,7 +54,7 @@ void Control::set_lift(int speed,Lift_State state) {
   pros::delay(100);
   int cnt=0;
   auto start_t=pros::millis();
-  while(true) {
+  while(false) {
     if(pros::millis()-start_t>3000){
       printf("lift time out\n");
       break;

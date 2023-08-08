@@ -120,7 +120,6 @@ void Drive::turn_pid_gyro_free_task(){
     l_out=l_max_speed;
   if(abs(r_out)>r_max_speed)
     r_out=r_max_speed;
-  std::cout<<"l_out:"<<l_out<<" r_out:"<<r_out<<std::endl;
   set_tank(l_out, r_out);
 
 }

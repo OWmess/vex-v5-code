@@ -3,33 +3,33 @@
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {-1, -2, -3}
+  {-10, -20, -9}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{11, 12, 13}
+  ,{11, 3, 2}
 
   // 陀螺仪端口
-  ,8
+  ,4
 
   // 车轮直径（英寸）
   ,3.25
 
-  // 底盘电机转速
+  // 底盘电机转速(100、200、600RPM)
   ,600
 
   //外齿轮比（必须是小数）
   //例如。如果您的齿比是 84:36，其中 36t 连接电机，则您的 齿比 将为 2.333。
   //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
-  ,1.0
+  ,60.0/36.0
 
   // 左右两侧轮组的距离
   ,12.0
 );
 
-// 控制器构造
+// 上层机构控制器构造
 Control control=Control(
   // Intake 电机组端口，（负端口将反转电机！）
-  {9, -19}
+  {13, -19}
 
   // Intake 电机组的RPM,
   //可选项有：
@@ -39,7 +39,7 @@ Control control=Control(
   ,pros::E_MOTOR_GEAR_200
 
   // Lift电机端口（负端口将反转它！）
-  ,10
+  ,-1
 
   // Lift 电机的RPM,可选项同上
   ,pros::E_MOTOR_GEAR_200
@@ -80,7 +80,6 @@ void initialize() {
   });
   chassis.initialize();
   as::initialize();
-
 
 }
 
@@ -161,7 +160,45 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
+<<<<<<< HEAD
   chassis.set_drive_pid(100,100);
   chassis.wait_drive();
+=======
+  pros::Motor lift(-1);
+  lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+  
+  while (true)
+  {
+    chassis.tank(); // Tank 模式
+    //根据按钮状态控制机器人
+    if(Controller_Button_State::R1_pressed()){
+      control.set_intake(INTAKE,100);
+    }
+    else if(Controller_Button_State::R2_pressed()){
+      control.set_intake(OUTTAKE,100);
+    }
+    if(Controller_Button_State::L1_pressed()){
+      control.set_wings(ON);
+    }
+    else if(Controller_Button_State::L2_pressed()){
+      control.set_wings(OFF);
+    }
+    if(Controller_Button_State::A_pressed()){
+      lift.move(100);
+    }
+    if(Controller_Button_State::UP_pressed()){
+      lift.move(-100);
+    }else if(Controller_Button_State::DOWN_pressed()){
+      lift.move(100);
+    }else{
+      lift.brake();
+    }
+    if(Controller_Button_State::RIGHT_pressed()){
+      control.set_lift(80,MIDDLE);
+    }
+    
+    pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
+  }
+>>>>>>> main
 
 }
