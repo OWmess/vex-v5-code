@@ -9,14 +9,16 @@
 
 Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &lift_motor_port,
     pros::motor_gearset_e_t lift_gearset,const int8_t lift_press_button_port,const std::vector<int8_t> &wings_ports,
-    const std::vector<int8_t> &hanger_ports){
+    const std::vector<int8_t> &hanger_ports):task([this](){this->control_task();}){
   
   for(auto port:intake_motor_ports){
     pros::Motor temp{static_cast<int8_t>(abs(port)),intake_gearset,util::is_reversed(port)};
     intake_motors.push_back(temp);
+    intake_motors.back().set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   }
 
   lift_motor=std::make_shared<pros::Motor>(abs(lift_motor_port),lift_gearset,util::is_reversed(lift_motor_port));
+  lift_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   lift_press_button=std::make_shared<pros::ADIDigitalIn>(lift_press_button_port);
 
   wings_l=std::make_shared<pros::ADIDigitalOut>(abs(wings_ports[0]),util::is_reversed(wings_ports[0]));
@@ -31,18 +33,18 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
 
   set_lift_up_pos(LIFT_UP_POS);
   set_lift_middle_pos(LIFT_MIDDLE_POS);
+  
 }
 
 
 void Control::set_intake(Control_State state,int speed){
   if(state==STOP){
-    for(auto &intake_motor:intake_motors){
-      intake_motor.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    for(pros::Motor &intake_motor:intake_motors){
       intake_motor.brake();
     }
     return;
   }
-  for(auto &intake_motor:intake_motors){
+  for(pros::Motor &intake_motor:intake_motors){
     intake_motor.move(state==INTAKE?speed:-speed);
   }
 
@@ -53,7 +55,7 @@ void Control::set_lift(int speed,Lift_State state) {
   lift_motor->move(speed);
   pros::delay(100);
   int cnt=0;
-  auto start_t=pros::millis();
+  double start_t=pros::millis();
   while(false) {
     if(pros::millis()-start_t>3000){
       printf("lift time out\n");
@@ -75,7 +77,6 @@ void Control::set_lift(int speed,Lift_State state) {
     lift_motor->move_relative(lift_middle_pos,speed);
   }
   lift_motor->brake();
-  lift_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   return;
 
 }
@@ -96,4 +97,31 @@ void Control::set_lift_up_pos(double pos){
 
 void Control::set_lift_middle_pos(double pos){
   lift_middle_pos=pos;
+}
+
+void Control::control_task(){
+  static Control_State last_intake_state=intake_state;
+  static Lift_State last_lift_state=lift_state;
+  static Control_State last_wings_state=wings_state;
+  while(true){
+    if(intake_state!=last_intake_state){
+      set_intake(intake_state,100);
+      last_intake_state=intake_state;
+    }
+    if(lift_state!=last_lift_state){
+      set_lift(100,lift_state);
+      last_lift_state=lift_state;
+    }
+    if(wings_state!=last_wings_state){
+      set_wings(wings_state);
+      last_wings_state=wings_state;
+    }
+
+    pros::delay(ez::util::DELAY_TIME);
+  }
+
+}
+
+Control_State Control::reverse_intake(Control_State loggle){
+  return loggle==INTAKE?OUTTAKE:INTAKE;
 }

@@ -56,7 +56,9 @@ Control control=Control(
   ,{'A', 'B'}
 );
 
-
+Control_State Control::intake_state=INTAKE;
+Lift_State Control::lift_state=MIDDLE;
+Control_State Control::wings_state=OFF;
 
 /**
 *运行初始化代码。发生在程序刚启动的时候，在所有比赛模式、初始化之前
@@ -69,6 +71,7 @@ void initialize() {
   chassis.toggle_modify_curve_with_controller(false); //是否允许使用操纵杆上的按钮（左右键）修改控制器曲线
   chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
+  chassis.set_joystick_threshold(5);//设置摇杆死区的阈值，摇杆的范围在[-127,127]
   default_constants(); // 设置PID参数。
   
   // 初始化底盘和自动阶段程序选择器
@@ -133,9 +136,6 @@ void autonomous() {
   chassis.reset_gyro(); // 重置陀螺仪
   chassis.reset_drive_sensor(); // 重置电机编码器
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
-  control.set_wings(OFF);
-  control.set_hanger(OFF);
-  pros::delay(200);
   // auton_1();// 防守方案
   // auton_2();// 攻击方案
   // auton_3();//1分钟全自动方案
@@ -162,22 +162,30 @@ void autonomous() {
 void opcontrol() {
   pros::Motor lift(-1);
   lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-  
+  //用于翻转intake状态的lambda函数
+  Control_State default_intake_state=Control::intake_state;
   while (true)
   {
     chassis.tank(); // Tank 模式
     //根据按钮状态控制机器人
-    if(Controller_Button_State::R1_pressed()){
-      control.set_intake(INTAKE,100);
+    if(Controller_Button_State::R1_pressed()){//R1按下时，打开或关闭intake
+        if(Control::intake_state==INTAKE||Control::intake_state==OUTTAKE){//如果intake正在运行，则停止
+          Control::intake_state=STOP;
+        }else{//如果intake没有运行，则打开
+          Control::intake_state=default_intake_state;
+        }
+        pros::delay(300);
+    }else if(Controller_Button_State::R2_pressed()&&Control::intake_state!=STOP){//R2按下时，翻转intake
+      Control::intake_state=Control::reverse_intake(default_intake_state);
+    }else if(Control::intake_state!=STOP){//如果intake没有停止，则恢复默认状态
+      Control::intake_state=default_intake_state;
     }
-    else if(Controller_Button_State::R2_pressed()){
-      control.set_intake(OUTTAKE,100);
+
+    if(Controller_Button_State::L1_pressed()){//L1按下时，打开翅膀
+      Control::wings_state=ON;
     }
-    if(Controller_Button_State::L1_pressed()){
-      control.set_wings(ON);
-    }
-    else if(Controller_Button_State::L2_pressed()){
-      control.set_wings(OFF);
+    else if(Controller_Button_State::L2_pressed()){//L2按下时，关闭翅膀
+      Control::wings_state=OFF;
     }
     if(Controller_Button_State::A_pressed()){
       lift.move(100);
@@ -190,9 +198,11 @@ void opcontrol() {
       lift.brake();
     }
     if(Controller_Button_State::RIGHT_pressed()){
-      control.set_lift(80,MIDDLE);
+      // control.set_lift(80,MIDDLE);
     }
     
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
+
+
 }

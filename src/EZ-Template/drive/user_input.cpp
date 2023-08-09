@@ -167,13 +167,15 @@ double Drive::left_curve_function(double x) {
 
 // Right curve fnuction
 double Drive::right_curve_function(double x) {
+  double result = x;
   if (right_curve_scale != 0) {
     // if (CURVE_TYPE)
-    return (powf(2.718, -(right_curve_scale / 10)) + powf(2.718, (fabs(x) - 127) / 10) * (1 - powf(2.718, -(right_curve_scale / 10)))) * x;
+    result = (powf(2.718, -(right_curve_scale / 10)) + powf(2.718, (fabs(x) - 127) / 10) * (1 - powf(2.718, -(right_curve_scale / 10)))) * x;
     // else
     // return powf(2.718, ((abs(x)-127)*RIGHT_CURVE_SCALE)/100)*x;
   }
-  return x;
+
+  return result;
 }
 
 // Set active brake constant

@@ -70,6 +70,17 @@ public:
      * \param 设置升降机在中间时的位置
     */
     void set_lift_middle_pos(double pos);
+
+    static Control_State reverse_intake(Control_State loggle);
+private:
+    /**
+     * \brief 维护上层机构的task
+    */
+    void control_task();
+public:
+    static Control_State intake_state;
+    static Control_State wings_state;
+    static Lift_State lift_state;
 private:
     std::vector<pros::Motor> intake_motors;
     std::shared_ptr<pros::Motor> lift_motor;
@@ -82,7 +93,9 @@ private:
     double lift_middle_pos;
     std::array<bool,2> wings_reversed;
     std::array<bool,2> hanger_reversed;
+    pros::Task task;
 };
+
 
 class Controller_Button_State{
 public:
