@@ -28,14 +28,75 @@ public:
     pros::motor_gearset_e_t lift_gearset,const int8_t lift_press_button_port,const std::vector<int8_t> &wings_ports,
     const std::vector<int8_t> &hanger_ports);
 
+
+    /**
+     *  \param 设置升降机在升起时的位置
+    */
+    void set_lift_up_pos(double pos);
+    
+    /**
+     * \param 设置升降机在中间时的位置
+    */
+    void set_lift_middle_pos(double pos);
+
+    inline static Control_State reverse_intake(Control_State loggle){
+        return loggle==INTAKE?OUTTAKE:INTAKE;
+    }
     /**
      * \param state 设置intake的模式
      * - INTAKE: 吸取
      * - OUTTAKE: 放出
+    */
+    inline static void set_intake_state(Control_State state){
+        intake_state=state;
+    }
+    /**
+     * \param state 设置wings的模式
+     * - ON: 放出
+     * - OFF: 收起
+    */
+    inline static void set_wings_state(Control_State state){
+        wings_state=state;
+    }
+    /**
+     * \param state 设置lift的模式
+     * - UP: 升起
+     * - MIDDLE: 中间
+     * - DOWN: 放下
+    */
+    inline static void set_lift_state(Lift_State state){
+        lift_state=state;
+    }
+
+    /**
+     * \return 返回intake的当前模式
+    */
+    inline static Control_State get_intake_state(){
+        return intake_state;
+    }
+    /**
+     * \return 返回wings的当前模式
+    */
+    inline static Control_State get_wings_state(){
+        return wings_state;
+    }
+    /**
+     * \return 返回lift的当前模式
+    */
+    inline static Lift_State get_lift_state(){
+        return lift_state;
+    }
+private:
+
+    /**
      * \param speed 设置电机intake的速度
      * - -127~127
+     * 
+     * \param state 设置intake的模式
+     * - INTAKE: 吸取
+     * - OUTTAKE: 放出
     */
-    void set_intake(Control_State state,int speed);
+    void set_intake(int speed,Control_State state);
 
     /**
      * \param speed 设置lift电机的速度
@@ -55,32 +116,12 @@ public:
     void set_wings(Control_State state);
 
     /**
-     * \param state 设置钩子的状态
-     *  -  ON: 放下钩子
-     *  -  OFF: 收回钩子
-    */
-    void set_hanger(Control_State state);
-
-    /**
-     *  \param 设置升降机在升起时的位置
-    */
-    void set_lift_up_pos(double pos);
-    
-    /**
-     * \param 设置升降机在中间时的位置
-    */
-    void set_lift_middle_pos(double pos);
-
-    static Control_State reverse_intake(Control_State loggle);
-private:
-    /**
      * \brief 维护上层机构的task
     */
     void control_task();
+
 public:
-    static Control_State intake_state;
-    static Control_State wings_state;
-    static Lift_State lift_state;
+
 private:
     std::vector<pros::Motor> intake_motors;
     std::shared_ptr<pros::Motor> lift_motor;
@@ -94,6 +135,11 @@ private:
     std::array<bool,2> wings_reversed;
     std::array<bool,2> hanger_reversed;
     pros::Task task;
+
+    static Control_State intake_state;
+    static Control_State wings_state;
+    static Lift_State lift_state;
+
 };
 
 

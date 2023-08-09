@@ -712,11 +712,18 @@ class Drive {
    */
   Drive &with_odom(const float &ForwardTracker_center_distance,const float &SidewaysTracker_center_distance);
 
-
   void drive_to_point(double x, double y,int speed,bool ibackwards=false ,bool slew_on = false, bool toggle_heading = true);
 
   void trun_to_point(double x, double y,int speed);
+
+  /**
+   * 设置最小行驶功率
+   * \param left_motor 左侧
+   * \param right_motor 右侧
+  */
+  void set_tank_min_power(int left_motor,int right_motor);
  private:  // !Auton
+
   bool drive_toggle = true;
   bool print_toggle = true;
   int swing_min = 0;
@@ -833,6 +840,12 @@ class Drive {
    * 左右轮的轮间距
    */
   double WHEEL_DISTANCE;
+
+  int l_tank_min_power=0;
+  int r_tank_min_power=0;
+
+
+
   /**
    * 是否记录pid数据
   */

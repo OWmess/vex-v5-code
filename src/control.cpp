@@ -6,6 +6,9 @@
 #define LIFT_UP_POS      100.0 
 #define LIFT_MIDDLE_POS  1600.0 
 
+Control_State Control::intake_state=INTAKE;
+Lift_State Control::lift_state=MIDDLE;
+Control_State Control::wings_state=OFF;
 
 Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &lift_motor_port,
     pros::motor_gearset_e_t lift_gearset,const int8_t lift_press_button_port,const std::vector<int8_t> &wings_ports,
@@ -37,7 +40,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
 }
 
 
-void Control::set_intake(Control_State state,int speed){
+void Control::set_intake(int speed,Control_State state){
   if(state==STOP){
     for(pros::Motor &intake_motor:intake_motors){
       intake_motor.brake();
@@ -86,10 +89,7 @@ void Control::set_wings(Control_State state){
   wings_r->set_value(state==ON?!wings_reversed[1]:wings_reversed[1]);
 }
 
-void Control::set_hanger(Control_State state){
-  hanger_arm->set_value(state==ON?!hanger_reversed[0]:hanger_reversed[0]);
-  hanger_claw->set_value(state==ON?!hanger_reversed[1]:hanger_reversed[1]);
-}
+
 
 void Control::set_lift_up_pos(double pos){
   lift_up_pos=pos;
@@ -104,24 +104,15 @@ void Control::control_task(){
   static Lift_State last_lift_state=lift_state;
   static Control_State last_wings_state=wings_state;
   while(true){
-    if(intake_state!=last_intake_state){
-      set_intake(intake_state,100);
-      last_intake_state=intake_state;
-    }
-    if(lift_state!=last_lift_state){
-      set_lift(100,lift_state);
-      last_lift_state=lift_state;
-    }
-    if(wings_state!=last_wings_state){
-      set_wings(wings_state);
-      last_wings_state=wings_state;
-    }
+      set_intake(100,intake_state);
 
-    pros::delay(ez::util::DELAY_TIME);
+      // set_lift(100,lift_state);
+
+      set_wings(wings_state);
+
+    pros::delay(50);
   }
 
 }
 
-Control_State Control::reverse_intake(Control_State loggle){
-  return loggle==INTAKE?OUTTAKE:INTAKE;
-}
+

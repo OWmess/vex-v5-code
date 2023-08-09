@@ -49,16 +49,15 @@ Control control=Control(
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{-'C', 'D'}
+  ,{-'A', 'B'}
 
   // Hanger Ports:{hanger_arm,hanger_claw} (negative port will reverse it!)
   //钩子的电磁阀端口：{爪臂的端口,爪子的端口}（负端口将反转它！）
-  ,{'A', 'B'}
+  ,{'C', 'D'}
 );
 
-Control_State Control::intake_state=INTAKE;
-Lift_State Control::lift_state=MIDDLE;
-Control_State Control::wings_state=OFF;
+
+
 
 /**
 *运行初始化代码。发生在程序刚启动的时候，在所有比赛模式、初始化之前
@@ -72,6 +71,7 @@ void initialize() {
   chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
   chassis.set_joystick_threshold(5);//设置摇杆死区的阈值，摇杆的范围在[-127,127]
+  chassis.set_tank_min_power(30,30);//设置坦克模式下的最小功率，范围在[0,127]
   default_constants(); // 设置PID参数。
   
   // 初始化底盘和自动阶段程序选择器
@@ -81,6 +81,9 @@ void initialize() {
     Auton("1min. ", auton_3),
     Auton("test pid",test_pid),
   });
+  Control::set_intake_state(INTAKE);
+  Control::set_lift_state(MIDDLE);
+  Control::set_wings_state(OFF);
   chassis.initialize();
   as::initialize();
 
@@ -163,29 +166,30 @@ void opcontrol() {
   pros::Motor lift(-1);
   lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   //用于翻转intake状态的lambda函数
-  Control_State default_intake_state=Control::intake_state;
+  Control_State default_intake_state=control.get_intake_state();
+  control.set_intake_state(STOP);
   while (true)
   {
     chassis.tank(); // Tank 模式
     //根据按钮状态控制机器人
     if(Controller_Button_State::R1_pressed()){//R1按下时，打开或关闭intake
-        if(Control::intake_state==INTAKE||Control::intake_state==OUTTAKE){//如果intake正在运行，则停止
-          Control::intake_state=STOP;
+        if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
+          control.set_intake_state(STOP);
         }else{//如果intake没有运行，则打开
-          Control::intake_state=default_intake_state;
+          control.set_intake_state(default_intake_state);
         }
         pros::delay(300);
-    }else if(Controller_Button_State::R2_pressed()&&Control::intake_state!=STOP){//R2按下时，翻转intake
-      Control::intake_state=Control::reverse_intake(default_intake_state);
-    }else if(Control::intake_state!=STOP){//如果intake没有停止，则恢复默认状态
-      Control::intake_state=default_intake_state;
+    }else if(Controller_Button_State::R2_pressed()&&control.get_intake_state()!=STOP){//R2按下时，翻转intake
+      control.set_intake_state(Control::reverse_intake(default_intake_state));
+    }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
+      control.set_intake_state(default_intake_state);
     }
 
     if(Controller_Button_State::L1_pressed()){//L1按下时，打开翅膀
-      Control::wings_state=ON;
+      control.set_wings_state(ON);
     }
     else if(Controller_Button_State::L2_pressed()){//L2按下时，关闭翅膀
-      Control::wings_state=OFF;
+      control.set_wings_state(OFF);
     }
     if(Controller_Button_State::A_pressed()){
       lift.move(100);
