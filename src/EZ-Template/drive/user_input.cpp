@@ -209,7 +209,7 @@ void Drive::tank() {
 
   // Toggle for controller curve
   modify_curve_with_controller();
-
+  
   // Put the joysticks through the curve function
   int l_stick = left_curve_function(master.get_analog(ANALOG_LEFT_Y));
   int r_stick = left_curve_function(master.get_analog(ANALOG_RIGHT_Y));

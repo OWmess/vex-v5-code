@@ -100,9 +100,6 @@ void Control::set_lift_middle_pos(double pos){
 }
 
 void Control::control_task(){
-  static Control_State last_intake_state=intake_state;
-  static Lift_State last_lift_state=lift_state;
-  static Control_State last_wings_state=wings_state;
   while(true){
       set_intake(100,intake_state);
 
