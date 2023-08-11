@@ -655,6 +655,13 @@ class Drive {
    */
   void modify_curve_with_controller();
 
+  /**
+   * 行驶到白线
+   * \param left_power 左侧电机功率
+   * \param right_power 右侧电机功率
+   * \param toggle_heading 是否开启方向修正
+  */
+  void drive_to_white_line(int left_power,int right_power,const char* sensor_port,int sensor_threshold,bool toggle_heading=true);
   // Slew
   struct slew_ {
     int sign = 0;
@@ -763,6 +770,7 @@ class Drive {
   void turn_pid_task();
   void ez_auto_task();
   void turn_pid_gyro_free_task();
+  void drive_to_white_line_task();
   /**
    * Constants for slew
    */
@@ -841,11 +849,22 @@ class Drive {
    */
   double WHEEL_DISTANCE;
 
+  /**
+   * 手控tank模式的最小功率
+  */
   int l_tank_min_power=0;
   int r_tank_min_power=0;
 
-
-
+  /**
+   * 碰白线的左右电机速度
+  */
+  int white_line_left_power=0;
+  int white_line_right_power=0;
+  /**
+   * 传感器端口与阈值
+  */
+  char* white_line_sensor_port;
+  int white_line_sensor_threshold;
   /**
    * 是否记录pid数据
   */

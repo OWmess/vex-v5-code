@@ -18,8 +18,13 @@ void Drive::ez_auto_task() {
       turn_pid_task();
     else if (get_mode() == SWING)
       swing_pid_task();
-    if(get_mode()==TRUN_GYRO_FREE)
+    else if(get_mode()==TRUN_GYRO_FREE)
       turn_pid_gyro_free_task();
+    else if(get_mode()==WHITE_LINE){
+      drive_to_white_line_task();
+      set_mode(DISABLE);
+    }
+    
     if (pros::competition::is_autonomous() && !util::AUTON_RAN)
       util::AUTON_RAN = true;
     else if (!pros::competition::is_autonomous())
@@ -57,6 +62,7 @@ void Drive::drive_pid_task() {
     printf("check gyro\n");
   }
 
+  
   // Combine heading and drive
   double l_out = l_drive_out + gyro_out;
   double r_out = r_drive_out - gyro_out;
@@ -121,5 +127,21 @@ void Drive::turn_pid_gyro_free_task(){
   if(abs(r_out)>r_max_speed)
     r_out=r_max_speed;
   set_tank(l_out, r_out);
+
+}
+
+void Drive::drive_to_white_line_task(){
+  headingPID.compute(get_gyro());
+  while(true){
+    double gyro_out = heading_on ? headingPID.output : 0;
+    double l_out=white_line_left_power;
+    double r_out=white_line_right_power;
+    if(heading_on){
+      l_out+=gyro_out;
+      r_out-=gyro_out;
+    }
+    set_tank(white_line_left_power+gyro_out, white_line_right_power-gyro_out);
+    pros::delay(ez::util::DELAY_TIME);
+  }
 
 }

@@ -59,7 +59,7 @@ void Control::set_lift(int speed,Lift_State state) {
   pros::delay(100);
   int cnt=0;
   double start_t=pros::millis();
-  while(false) {
+  while(true) {
     if(pros::millis()-start_t>3000){
       printf("lift time out\n");
       break;
@@ -69,9 +69,9 @@ void Control::set_lift(int speed,Lift_State state) {
       cnt++;
       break;
     }
-    if(cnt>=2)
+    if(cnt>=1)
       break;
-    pros::delay(1);
+    pros::delay(10);
   }
   lift_motor->tare_position();
   if(state==UP){
@@ -100,12 +100,22 @@ void Control::set_lift_middle_pos(double pos){
 }
 
 void Control::control_task(){
+  static Control_State last_intake_state=intake_state;
+  static Lift_State last_lift_state=lift_state;
+  static Control_State last_wings_state=wings_state;
   while(true){
-      set_intake(100,intake_state);
-
-      // set_lift(100,lift_state);
-
-      set_wings(wings_state);
+      if(last_intake_state!=intake_state){
+        set_intake(100,intake_state);
+        last_intake_state=intake_state;
+      }
+      if(last_lift_state!=lift_state){
+        set_lift(100,lift_state);
+        last_lift_state=lift_state;
+      }
+      if(last_wings_state!=wings_state){
+        set_wings(wings_state);
+        last_wings_state=wings_state;
+      }
 
     pros::delay(50);
   }

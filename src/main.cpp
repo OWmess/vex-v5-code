@@ -45,7 +45,7 @@ Control control=Control(
   ,pros::E_MOTOR_GEAR_200
 
   // Lift的触碰按钮端口
-  ,'H'
+  ,'C'
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
@@ -179,7 +179,7 @@ void opcontrol() {
           control.set_intake_state(default_intake_state);
         }
         pros::delay(300);
-    }else if(Controller_Button_State::R2_pressed()&&control.get_intake_state()!=STOP){//R2按下时，翻转intake
+    }else if(Controller_Button_State::R2_pressed()){//R2按下时，翻转intake
       control.set_intake_state(Control::reverse_intake(default_intake_state));
     }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
       control.set_intake_state(default_intake_state);
@@ -202,9 +202,11 @@ void opcontrol() {
       lift.brake();
     }
     if(Controller_Button_State::RIGHT_pressed()){
-      // control.set_lift(80,MIDDLE);
+      control.set_lift_state(DOWN);
     }
-    
+    if(Controller_Button_State::LEFT_pressed()){
+      control.set_lift_state(UP);
+    }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
 

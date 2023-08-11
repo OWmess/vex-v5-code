@@ -152,3 +152,14 @@ void Drive::set_turn_pid_gyro_free(double target, int speed) {
   // Run task
   set_mode(TRUN_GYRO_FREE);
 }
+
+
+void Drive::drive_to_white_line(int left_power,int right_power,const char* sensor_port,int sensor_threshold,bool toggle_heading=true){
+  if (print_toggle) printf("Drive to white line Started...\n");
+  white_line_sensor_port=sensor_port;
+  white_line_sensor_threshold=sensor_threshold;
+  heading_on = toggle_heading;
+  white_line_left_power=left_power;
+  white_line_right_power=right_power;
+  set_mode(WHITE_LINE);
+}
