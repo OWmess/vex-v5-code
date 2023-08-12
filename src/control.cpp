@@ -5,7 +5,7 @@
 */
 #define CATAPULT_UP_POS      500.0 
 #define CATAPULT_MIDDLE_POS  1530.0 
-#define CATAPULT_DOWN_POS    25.0
+#define CATAPULT_DOWN_POS    0.0
 
 Control_State Control::intake_state=INTAKE;
 Catapult_State Control::catapult_state=MIDDLE;
@@ -75,7 +75,7 @@ void Control::set_catapult(int speed,Catapult_State state) {
       if(catapult_press_button->get_value()){
         cnt++;
       }
-      if(cnt>=2)
+      if(cnt>=1)
         break;
       pros::delay(1);
     }
@@ -85,7 +85,10 @@ void Control::set_catapult(int speed,Catapult_State state) {
   if(state==DOWN){
     wait_until_not_pressed();
     wait_until_pressed();
-    catapult_motor->move_relative(catapult_down_pos,speed);
+    if(catapult_down_pos!=0)
+      catapult_motor->move_relative(catapult_down_pos,speed);
+    else
+      catapult_motor->brake();
   }else if(state==MIDDLE){
     if(catapult_press_button->get_value()){
       wait_until_not_pressed();

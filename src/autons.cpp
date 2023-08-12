@@ -15,10 +15,13 @@ void default_constants() {
   chassis.set_slew_min_power(50, 50);//设置最小启动速度，用于缓加速
   chassis.set_slew_distance(7, 7);//设置缓加速的距离
   ///设置PID参数，第一个参数为PID结构体，后面四个参数分别为P、I、D、最大输出
-  chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 13, 0);
-  chassis.set_pid_constants(&chassis.forward_drivePID, 2, 0, 4, 0);
-  chassis.set_pid_constants(&chassis.backward_drivePID, 0.35, 0, 1, 0);
-  chassis.set_pid_constants(&chassis.turnPID, 5, 0.003, 45, 10);
+  // chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 13, 0);
+  // chassis.set_pid_constants(&chassis.forward_drivePID, 2, 0, 4, 0);
+  // chassis.set_pid_constants(&chassis.backward_drivePID, 0.35, 0, 1, 0);
+    chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 13, 0);
+  chassis.set_pid_constants(&chassis.forward_drivePID, 1, 0, 2, 0);
+  chassis.set_pid_constants(&chassis.backward_drivePID, 0.5, 0, 4, 0);
+  chassis.set_pid_constants(&chassis.turnPID, 4, 0.01,25, 15);
   chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0);
   chassis.set_pid_constants(&chassis.turnPID_gyro_free, 0.45, 0, 2, 0);
 
@@ -31,51 +34,42 @@ void default_constants() {
 */
 void auton_1(){
   ///init catapult
-  control.set_catapult_state(MIDDLE);
+  control.set_catapult_state(DOWN);
+  
   ///****
-  chassis.set_drive_pid(30,DRIVE_SPEED,true);
+  chassis.set_turn_pid(40,40);
+  control.set_intake_state(INTAKE);
   chassis.wait_drive();
-  chassis.set_turn_pid(45,DRIVE_SPEED);
+  chassis.set_drive_pid(12,25,true);
   chassis.wait_drive();
-  chassis.set_drive_pid(-30,60,true);
-  chassis.wait_drive();
-  control.set_intake_state(INTAKE);//吸球
-  pros::delay(500);
-  chassis.set_drive_pid(16, 60, true);
-  chassis.wait_drive();
-  ///转弯后收起挂钩
-  chassis.set_turn_pid(145, TURN_SPEED);
-  chassis.wait_drive();
-  pros::delay(500);
-  chassis.set_drive_pid(25, 60, true);
-  // chassis.wait_until(20);
-  // chassis.set_max_speed(40);
-  chassis.wait_drive();
+  pros::delay(800);
+  control.set_catapult_state(MIDDLE);
+  pros::delay(200);
 
-  chassis.set_turn_pid(180, DRIVE_SPEED);
+  chassis.set_drive_pid(-20,DRIVE_SPEED,true);
   chassis.wait_drive();
-  chassis.set_drive_pid(-63, DRIVE_SPEED, true);//吸球后冲向球门的距离，关键，小心压线
+  chassis.set_turn_pid(-3,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_turn_pid(270, DRIVE_SPEED);
+  chassis.set_drive_pid(10,DRIVE_SPEED,true);
   chassis.wait_drive();
-  chassis.set_drive_pid(-10, DRIVE_SPEED, true);//射门前后退一些
+  pros::delay(300);
+  chassis.set_turn_pid(10,TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-49,DRIVE_SPEED,true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90,TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(20,DRIVE_SPEED,true);
   chassis.wait_drive();
   control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(25, DRIVE_SPEED, true);//射门
-  chassis.wait_drive();
-  pros::delay(100);
+  pros::delay(50);
 
-  chassis.set_drive_pid(-10, DRIVE_SPEED, true);
+  chassis.set_drive_pid(-40,DRIVE_SPEED,true);
   chassis.wait_drive();
-  chassis.set_turn_pid(180, TURN_SPEED);
+  chassis.set_swing_pid(RIGHT_SWING,-12,SWING_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(58, DRIVE_SPEED, true);//从球门回退到起点
+  chassis.set_drive_pid(50,80,true);
   chassis.wait_drive();
-  chassis.set_turn_pid(270, TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(-45, DRIVE_SPEED, true);//碰杆
-  chassis.wait_drive();
-
 }
 
 /**
@@ -132,7 +126,7 @@ void auton_3(){
   chassis.wait_drive();
   chassis.set_turn_pid(-90,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(20,DRIVE_SPEED,true);
+  chassis.set_drive_pid(10,DRIVE_SPEED,true);
   chassis.wait_drive();
   pros::delay(500);
 
@@ -210,18 +204,8 @@ void auton_3(){
 }
 
 void test_pid(){
-  chassis.set_drive_pid(35,DRIVE_SPEED,true);
-  chassis.wait_until(15);
-  chassis.set_max_speed(60);
+  control.set_catapult_state(DOWN);
+  chassis.set_swing_pid(LEFT_SWING,-90,DRIVE_SPEED);
   chassis.wait_drive();
-  // chassis.set_turn_pid(-90,TURN_SPEED);
-  // chassis.wait_drive();
-  // chassis.set_turn_pid(90,TURN_SPEED);
-  // chassis.wait_drive();
-  // chassis.set_turn_pid(0,TURN_SPEED);
-  // chassis.wait_drive();
-  // chassis.set_drive_pid(-35,DRIVE_SPEED,true);
-  // chassis.wait_drive();
-  chassis.set_swing_pid(LEFT_SWING,90,SWING_SPEED);
-  chassis.wait_drive();
+
 }

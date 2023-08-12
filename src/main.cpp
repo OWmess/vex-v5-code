@@ -9,7 +9,7 @@ Drive chassis=Drive(
   ,{11, 3, 2}
 
   // 陀螺仪端口
-  ,4
+  ,5
 
   // 车轮直径（英寸）
   ,3.25
@@ -77,11 +77,11 @@ void initialize() {
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
     Auton("Guard.", auton_1),
+    Auton("test pid",test_pid),
     Auton("Attack.", auton_2),
     Auton("1min. ", auton_3),
-    Auton("test pid",test_pid),
   });
-  control.set_intake_state(INTAKE);
+  control.set_intake_state(STOP);
   control.set_catapult_state(MIDDLE);
   control.set_wings_state(OFF);
   chassis.initialize();
@@ -164,7 +164,8 @@ void autonomous() {
  */
 void opcontrol() {
   //用于翻转intake状态的lambda函数
-  Control_State default_intake_state=control.get_intake_state();
+  
+  Control_State default_intake_state=INTAKE;
   control.set_intake_state(STOP);
   while (true)
   {
@@ -177,7 +178,7 @@ void opcontrol() {
           control.set_intake_state(default_intake_state);
         }
         pros::delay(300);
-    }else if(Controller_Button_State::R2_pressed()&&control.get_intake_state()!=STOP){//R2按下时，翻转intake
+    }else if(Controller_Button_State::R2_pressed()){//R2按下时，翻转intake
       control.set_intake_state(Control::reverse_intake(default_intake_state));
     }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
       control.set_intake_state(default_intake_state);
@@ -194,13 +195,6 @@ void opcontrol() {
     }else if(Controller_Button_State::B_pressed()){
       control.set_catapult_state(DOWN);
     }
-    // if(Controller_Button_State::UP_pressed()){
-    //   catapult.move(-100);
-    // }else if(Controller_Button_State::DOWN_pressed()){
-    //   catapult.move(100);
-    // }else{
-    //   catapult.brake();
-    // }
     if(Controller_Button_State::RIGHT_pressed()){
       control.set_hanger_state(OFF);
     }else if(Controller_Button_State::LEFT_pressed()){
