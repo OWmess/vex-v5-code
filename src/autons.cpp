@@ -30,8 +30,8 @@ void default_constants() {
 * 防守方自动程序
 */
 void auton_1(){
-  ///init lift
-  control.set_lift_state(MIDDLE);
+  ///init catapult
+  control.set_catapult_state(MIDDLE);
   ///****
   chassis.set_drive_pid(30,DRIVE_SPEED,true);
   chassis.wait_drive();
@@ -82,7 +82,7 @@ void auton_1(){
 * 进攻方自动程序
 */
 void auton_2(){
-  control.set_lift_state(MIDDLE);
+  control.set_catapult_state(MIDDLE);
   ///****
   // 直走到球门吐第一个球
   chassis.set_drive_pid(65,80,true);
@@ -138,14 +138,14 @@ void auton_3(){
 
 
 //***由于抛投暂时不可调，所以先注释掉
-  // constexpr float lift_t=30;//抛投的总时间，单位为s
+  // constexpr float catapult_t=30;//抛投的总时间，单位为s
   // auto start_t=pros::millis();
   // while(true){
   //   auto now_t=pros::millis();
   //   if((now_t-start_t)/1000>30){
   //     break;
   //   }
-  //   set_lift(60);//第一个参数为电机方向，第二个参数为电机速度,在control.cpp中修改函数
+  //   set_catapult(60);//第一个参数为电机方向，第二个参数为电机速度,在control.cpp中修改函数
   //   pros::delay(1000);//每次抛投的延迟，单位为ms
   // }
 //**************/

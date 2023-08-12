@@ -38,22 +38,22 @@ Control control=Control(
   //pros::E_MOTOR_GEAR_600（600RPM）
   ,pros::E_MOTOR_GEAR_200
 
-  // Lift电机端口（负端口将反转它！）
+  // Catapult电机端口（负端口将反转它！）
   ,-1
 
-  // Lift 电机的RPM,可选项同上
-  ,pros::E_MOTOR_GEAR_200
+  // Catapult 电机的RPM,可选项同上
+  ,pros::E_MOTOR_GEAR_100
 
-  // Lift的触碰按钮端口
-  ,'H'
+  // Catapult的触碰按钮端口
+  ,'C'
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{-'A', 'B'}
+  ,{'E', -'G'}
 
-  // Hanger Ports:{hanger_arm,hanger_claw} (negative port will reverse it!)
-  //钩子的电磁阀端口：{爪臂的端口,爪子的端口}（负端口将反转它！）
-  ,{'C', 'D'}
+  // Hanger Ports: (negative port will reverse it!)
+  //钩子的电磁阀端口：（负端口将反转它！）
+  ,'D'
 );
 
 
@@ -81,9 +81,9 @@ void initialize() {
     Auton("1min. ", auton_3),
     Auton("test pid",test_pid),
   });
-  Control::set_intake_state(INTAKE);
-  Control::set_lift_state(MIDDLE);
-  Control::set_wings_state(OFF);
+  control.set_intake_state(INTAKE);
+  control.set_catapult_state(MIDDLE);
+  control.set_wings_state(OFF);
   chassis.initialize();
   as::initialize();
 
@@ -163,8 +163,6 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-  pros::Motor lift(-1);
-  lift.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   //用于翻转intake状态的lambda函数
   Control_State default_intake_state=control.get_intake_state();
   control.set_intake_state(STOP);
@@ -192,19 +190,22 @@ void opcontrol() {
       control.set_wings_state(OFF);
     }
     if(Controller_Button_State::A_pressed()){
-      lift.move(100);
+      control.set_catapult_state(MIDDLE);
+    }else if(Controller_Button_State::B_pressed()){
+      control.set_catapult_state(DOWN);
     }
-    if(Controller_Button_State::UP_pressed()){
-      lift.move(-100);
-    }else if(Controller_Button_State::DOWN_pressed()){
-      lift.move(100);
-    }else{
-      lift.brake();
-    }
+    // if(Controller_Button_State::UP_pressed()){
+    //   catapult.move(-100);
+    // }else if(Controller_Button_State::DOWN_pressed()){
+    //   catapult.move(100);
+    // }else{
+    //   catapult.brake();
+    // }
     if(Controller_Button_State::RIGHT_pressed()){
-      // control.set_lift(80,MIDDLE);
+      control.set_hanger_state(OFF);
+    }else if(Controller_Button_State::LEFT_pressed()){
+      control.set_hanger_state(ON);
     }
-    
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
 

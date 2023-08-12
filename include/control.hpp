@@ -8,7 +8,7 @@ enum Control_State{
     ON,
     OFF
 };
-enum Lift_State{
+enum Catapult_State{
     UP,
     MIDDLE,
     DOWN
@@ -18,26 +18,30 @@ public:
     /**
      * \param intake_motor_ports ports of the intake motors (negative port will reverse it!)
      * \param intake_gearset gearset of the intake motors
-     * \param lift_motor_port port of the lift motor (negative port will reverse it!)
-     * \param lift_gearset gearset of the lift motor
-     * \param lift_press_button_port port of the lift press button
+     * \param catapult_motor_port port of the catapult motor (negative port will reverse it!)
+     * \param catapult_gearset gearset of the catapult motor
+     * \param catapult_press_button_port port of the catapult press button
      * \param wings_ports ports of the wings (negative port will reverse it!)
      * \param hanger_ports ports of the hanger (negative port will reverse it!)
     */
-    Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &lift_motor_port,
-    pros::motor_gearset_e_t lift_gearset,const int8_t lift_press_button_port,const std::vector<int8_t> &wings_ports,
-    const std::vector<int8_t> &hanger_ports);
-
+    Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &catapult_motor_port,
+    pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_press_button_port,const std::vector<int8_t> &wings_ports,
+    const int8_t &hanger_ports);
 
     /**
-     *  \param 设置升降机在升起时的位置
+     * \param 设置投石机在下方的位置
     */
-    void set_lift_up_pos(double pos);
+   void set_catapult_down_pos(double pos);
+
+    /**
+     *  \param 设置投石机在升起时的位置
+    */
+    void set_catapult_up_pos(double pos);
     
     /**
-     * \param 设置升降机在中间时的位置
+     * \param 设置投石机在中间时的位置
     */
-    void set_lift_middle_pos(double pos);
+    void set_catapult_middle_pos(double pos);
 
     inline static Control_State reverse_intake(Control_State loggle){
         return loggle==INTAKE?OUTTAKE:INTAKE;
@@ -47,7 +51,7 @@ public:
      * - INTAKE: 吸取
      * - OUTTAKE: 放出
     */
-    inline static void set_intake_state(Control_State state){
+    inline void set_intake_state(Control_State state){
         intake_state=state;
     }
     /**
@@ -55,36 +59,54 @@ public:
      * - ON: 放出
      * - OFF: 收起
     */
-    inline static void set_wings_state(Control_State state){
+    inline void set_wings_state(Control_State state){
         wings_state=state;
     }
     /**
-     * \param state 设置lift的模式
+     * \param state 设置catapult的模式
      * - UP: 升起
      * - MIDDLE: 中间
      * - DOWN: 放下
     */
-    inline static void set_lift_state(Lift_State state){
-        lift_state=state;
+    inline void set_catapult_state(Catapult_State state){
+        catapult_state=state;
+        drive_catapult=true;
+    }
+
+    /**
+     * \param state 设置hanger的模式
+     * - ON: 打开
+     * - OFF: 关闭
+    */
+    inline void set_hanger_state(Control_State state){
+        hanger_state=state;
+    }
+
+
+    /**
+     * \return 返回hanger的当前模式
+    */
+    inline Control_State get_hanger_state(){
+        return hanger_state;
     }
 
     /**
      * \return 返回intake的当前模式
     */
-    inline static Control_State get_intake_state(){
+    inline Control_State get_intake_state(){
         return intake_state;
     }
     /**
      * \return 返回wings的当前模式
     */
-    inline static Control_State get_wings_state(){
+    inline Control_State get_wings_state(){
         return wings_state;
     }
     /**
-     * \return 返回lift的当前模式
+     * \return 返回catapult的当前模式
     */
-    inline static Lift_State get_lift_state(){
-        return lift_state;
+    inline Catapult_State get_catapult_state(){
+        return catapult_state;
     }
 private:
 
@@ -99,14 +121,14 @@ private:
     void set_intake(int speed,Control_State state);
 
     /**
-     * \param speed 设置lift电机的速度
+     * \param speed 设置catapult电机的速度
      * - -127~127
-     * \param state 设置lift的模式，不填时默认为放下
+     * \param state 设置catapult的模式，不填时默认为放下
      * - UP: 升起
      * - MIDDLE: 中间
      * - DOWN: 放下
     */
-    void set_lift(int speed,Lift_State state=DOWN);
+    void set_catapult(int speed,Catapult_State state=DOWN);
 
     /**
      * \param state 设置两侧挡板的状态
@@ -114,6 +136,13 @@ private:
      * - OFF: 关闭挡板
     */
     void set_wings(Control_State state);
+
+    /**
+     * \param state 设置侧面勾爪的状态
+     * - ON: 打开勾爪
+     * - OFF: 关闭勾爪
+    */
+    void set_hanger(Control_State state);
 
     /**
      * \brief 维护上层机构的task
@@ -124,22 +153,23 @@ public:
 
 private:
     std::vector<pros::Motor> intake_motors;
-    std::shared_ptr<pros::Motor> lift_motor;
+    std::shared_ptr<pros::Motor> catapult_motor;
     std::shared_ptr<pros::ADIDigitalOut> wings_l;
     std::shared_ptr<pros::ADIDigitalOut> wings_r;
-    std::shared_ptr<pros::ADIDigitalOut> hanger_arm;
-    std::shared_ptr<pros::ADIDigitalOut> hanger_claw;
-    std::shared_ptr<pros::ADIDigitalIn> lift_press_button;
-    double lift_up_pos;
-    double lift_middle_pos;
+    std::shared_ptr<pros::ADIDigitalOut> hanger;
+    std::shared_ptr<pros::ADIDigitalIn> catapult_press_button;
+    double catapult_up_pos;
+    double catapult_middle_pos;
+    double catapult_down_pos;
     std::array<bool,2> wings_reversed;
-    std::array<bool,2> hanger_reversed;
+    bool hanger_reversed;
     pros::Task task;
 
     static Control_State intake_state;
     static Control_State wings_state;
-    static Lift_State lift_state;
-
+    static Catapult_State catapult_state;
+    static Control_State hanger_state;
+    bool drive_catapult;
 };
 
 
