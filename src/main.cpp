@@ -76,14 +76,11 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
-    Auton("Guard.", auton_1),
+    Auton("Attack.", attack),
+    Auton("Guard.", guard),
     Auton("test pid",test_pid),
-    Auton("Attack.", auton_2),
     Auton("1min. ", auton_3),
   });
-  control.set_intake_state(STOP);
-  control.set_catapult_state(MIDDLE);
-  control.set_wings_state(OFF);
   chassis.initialize();
   as::initialize();
 

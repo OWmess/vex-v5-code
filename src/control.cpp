@@ -4,7 +4,7 @@
  * @brief 投球机位于顶部和中间位置时的编码器值，编码器0点为底部
 */
 #define CATAPULT_UP_POS      500.0 
-#define CATAPULT_MIDDLE_POS  1530.0 
+#define CATAPULT_MIDDLE_POS  1500.0 
 #define CATAPULT_DOWN_POS    0.0
 
 Control_State Control::intake_state=INTAKE;
@@ -82,7 +82,9 @@ void Control::set_catapult(int speed,Catapult_State state) {
   };
 
   catapult_motor->move(speed);
-  if(state==DOWN){
+  if(state==BRAKE){
+    catapult_motor->brake();
+  }else if(state==DOWN){
     wait_until_not_pressed();
     wait_until_pressed();
     if(catapult_down_pos!=0)
@@ -134,26 +136,22 @@ void Control::set_catapult_down_pos(double pos){
 
 
 void Control::control_task(){
-  static Control_State last_intake_state=intake_state;
-  static Catapult_State last_catapult_state=catapult_state;
-  static Control_State last_wings_state=wings_state;
-  static Control_State last_hanger_state=hanger_state;
   while(true){
-    if(last_intake_state!=intake_state){
+    if(drive_intake){
       set_intake(100,intake_state);
-      last_intake_state=intake_state;
+      drive_intake=false;
     }
     if(drive_catapult){
       set_catapult(120,catapult_state);
       drive_catapult=false;
     }
-    if(last_wings_state!=wings_state){
+    if(drive_wings){
       set_wings(wings_state);
-      last_wings_state=wings_state;
+      drive_wings=false;
     }
-    if(last_hanger_state!=hanger_state){
+    if(drive_hanger){
       set_hanger(hanger_state);
-      last_hanger_state=hanger_state;
+      drive_hanger=false;
     }
 
     pros::delay(50);

@@ -32,7 +32,7 @@ void default_constants() {
 /**
 * 防守方自动程序
 */
-void auton_1(){
+void guard(){
   ///init catapult
   control.set_catapult_state(DOWN);
   
@@ -55,7 +55,7 @@ void auton_1(){
   pros::delay(300);
   chassis.set_turn_pid(10,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(-49,DRIVE_SPEED,true);
+  chassis.set_drive_pid(-50,120,true);
   chassis.wait_drive();
   chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();
@@ -75,49 +75,67 @@ void auton_1(){
 /**
 * 进攻方自动程序
 */
-void auton_2(){
-  control.set_catapult_state(MIDDLE);
-  ///****
-  // 直走到球门吐第一个球
-  chassis.set_drive_pid(65,80,true);
-  chassis.wait_drive();
-  chassis.set_turn_pid(90,DRIVE_SPEED);
-  chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(15,80,true);
-  chassis.wait_drive();
-  chassis.set_drive_pid(-5,DRIVE_SPEED,true);
-  chassis.wait_drive();
-  //第二个球
-  chassis.set_turn_pid(-115,DRIVE_SPEED);//从球门转身到第二个球的角度，可能需要调整
-  chassis.wait_drive();
+void attack(){
+  control.set_catapult_state(BRAKE);
   control.set_intake_state(INTAKE);
-  chassis.set_drive_pid(32,80,true);//取第二个球时走的距离，可能需要调整
+  chassis.set_drive_pid(39,DRIVE_SPEED);
   chassis.wait_drive();
-  pros::delay(100);
-  chassis.set_turn_pid(-295,TURN_SPEED);//取到第二个球之后转身射门的角度，可能需要调整
-  chassis.wait_drive();
-  chassis.set_drive_pid(33,60,true);
-  chassis.wait_until(20);//走20in之后吐球
-  control.set_intake_state(OUTTAKE);
-  chassis.wait_drive();
-  pros::delay(100);
-  //第三个球
-  chassis.set_drive_pid(-18,DRIVE_SPEED,true);//从球门回到第三个球的距离，可能需要调整
-  chassis.wait_drive();
-  control.set_intake_state(INTAKE);
-  chassis.set_turn_pid(-0,TURN_SPEED);//直角转弯直接取第三个球，一般不需要调整
-  chassis.wait_drive();
-  chassis.set_drive_pid(13,50,true);//取第三个球时走的距离，可能需要调整，小心压线！
-  chassis.wait_drive();
-  pros::delay(100);
-  // chassis.set_drive_pid(-5,DRIVE_SPEED,true);
-  // chassis.wait_drive();
   chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(25,DRIVE_SPEED,true);//第三个球射门
+  chassis.set_drive_pid(15,DRIVE_SPEED);
   chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
+  pros::delay(100);
+  chassis.set_drive_pid(-15,DRIVE_SPEED);
+  chassis.wait_drive();
+  control.set_intake_state(INTAKE);
+  chassis.set_swing_pid(LEFT_SWING,0,SWING_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(15,DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90,TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(20,DRIVE_SPEED);
+  chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
+
+  chassis.set_drive_pid(-20,DRIVE_SPEED);
+  chassis.wait_drive();
+  control.set_intake_state(INTAKE);
+  chassis.set_turn_pid(-90,TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(12,DRIVE_SPEED);
+  chassis.wait_drive();
+  pros::delay(100);
+  chassis.set_drive_pid(-12,DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90,TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(23,DRIVE_SPEED);
+  chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
+  pros::delay(100);
+  chassis.set_drive_pid(-10,DRIVE_SPEED);
+  control.set_intake_state(INTAKE);
+  chassis.wait_drive();
+  chassis.set_turn_pid(230,TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(27,DRIVE_SPEED);
+  chassis.wait_drive();
+  pros::delay(100);
+  chassis.set_drive_pid(-30,DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90,TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(10,DRIVE_SPEED);
+  chassis.wait_drive();
+
+  control.set_intake_state(OUTTAKE);
+  pros::delay(100);
+  chassis.set_drive_pid(-20,DRIVE_SPEED);
+  chassis.wait_drive();
+
 
 }
 

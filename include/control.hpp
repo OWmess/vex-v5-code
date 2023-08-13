@@ -11,7 +11,8 @@ enum Control_State{
 enum Catapult_State{
     UP,
     MIDDLE,
-    DOWN
+    DOWN,
+    BRAKE
 };
 class Control {
 public:
@@ -53,6 +54,7 @@ public:
     */
     inline void set_intake_state(Control_State state){
         intake_state=state;
+        drive_intake=true;
     }
     /**
      * \param state 设置wings的模式
@@ -61,6 +63,7 @@ public:
     */
     inline void set_wings_state(Control_State state){
         wings_state=state;
+        drive_wings=true;
     }
     /**
      * \param state 设置catapult的模式
@@ -80,6 +83,7 @@ public:
     */
     inline void set_hanger_state(Control_State state){
         hanger_state=state;
+        drive_hanger=true;
     }
 
 
@@ -170,6 +174,9 @@ private:
     static Catapult_State catapult_state;
     static Control_State hanger_state;
     bool drive_catapult;
+    bool drive_intake;
+    bool drive_wings;
+    bool drive_hanger;
 };
 
 

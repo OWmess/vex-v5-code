@@ -4,9 +4,9 @@
 #include "control.hpp"
 extern Drive chassis;
 extern Control control;
-void auton_1();
+void guard();
 
-void auton_2();
+void attack();
 
 void auton_3();
 
