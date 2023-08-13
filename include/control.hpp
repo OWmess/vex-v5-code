@@ -85,8 +85,21 @@ public:
         hanger_state=state;
         drive_hanger=true;
     }
+    /**
+     * \param speed 设置intake的速度,默认值为100
+     * - -127~127
+    */
+    inline void set_intake_speed(int speed=100){
+        intake_speed=speed;
+    }
 
-
+    /**
+     * \param speed 设置catapult的速度,默认值为120
+     * - -127~127
+    */
+    inline void set_catapult_speed(int speed=120){
+        catapult_speed=speed;
+    }
     /**
      * \return 返回hanger的当前模式
     */
@@ -94,6 +107,12 @@ public:
         return hanger_state;
     }
 
+    /**
+     * \param time 设置投石机的超时时间,默认值为2000ms
+    */
+    inline void set_time_out(int time=2000){
+        time_out=time;
+    }
     /**
      * \return 返回intake的当前模式
     */
@@ -177,6 +196,9 @@ private:
     bool drive_intake;
     bool drive_wings;
     bool drive_hanger;
+    int intake_speed=100;
+    int catapult_speed=120;
+    int time_out=2000;
 };
 
 

@@ -14,7 +14,7 @@ Control_State Control::hanger_state=OFF;
 Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &catapult_motor_port,
     pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_press_button_port,const std::vector<int8_t> &wings_ports,
     const int8_t &hanger_port):task([this](){this->control_task();}){
-  
+  //创建各个电机、电磁阀对象
   for(auto port:intake_motor_ports){
     pros::Motor temp{static_cast<int8_t>(abs(port)),intake_gearset,util::is_reversed(port)};
     intake_motors.push_back(temp);
@@ -56,19 +56,21 @@ void Control::set_intake(int speed,Control_State state){
 void Control::set_catapult(int speed,Catapult_State state) {
   int cnt=0;
   double start_t=pros::millis();
+  //lambda函数，用于等待弹射机构按键松开
   auto wait_until_not_pressed=[this,start_t](){
     while(catapult_press_button->get_value()){
-      if(pros::millis()-start_t>3000){
+      if(pros::millis()-start_t>time_out){//超时
         printf("catapult time out\n");
         break;
       }
       pros::delay(1);
     }
   };
+  //lambda函数，用于等待弹射机构按键按下
   auto wait_until_pressed=[this,start_t](){
     int cnt=0;
     while(true) {
-      if(pros::millis()-start_t>3000){
+      if(pros::millis()-start_t>time_out){//超时
         printf("catapult time out\n");
         break;
       }
@@ -138,11 +140,11 @@ void Control::set_catapult_down_pos(double pos){
 void Control::control_task(){
   while(true){
     if(drive_intake){
-      set_intake(100,intake_state);
+      set_intake(intake_speed,intake_state);
       drive_intake=false;
     }
     if(drive_catapult){
-      set_catapult(120,catapult_state);
+      set_catapult(catapult_speed,catapult_state);
       drive_catapult=false;
     }
     if(drive_wings){

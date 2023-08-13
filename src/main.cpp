@@ -22,8 +22,8 @@ Drive chassis=Drive(
   //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
   ,60.0/36.0
 
-  // 左右两侧轮组的距离
-  ,12.0
+  // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
+  ,21.0
 );
 
 // 上层机构控制器构造
@@ -38,13 +38,13 @@ Control control=Control(
   //pros::E_MOTOR_GEAR_600（600RPM）
   ,pros::E_MOTOR_GEAR_200
 
-  // Catapult电机端口（负端口将反转它！）
+  // 投石机电机端口（负端口将反转它！）
   ,-1
 
-  // Catapult 电机的RPM,可选项同上
+  // 投石机 电机RPM,可选项同上
   ,pros::E_MOTOR_GEAR_100
 
-  // Catapult的触碰按钮端口
+  // 投石机的触碰按钮所在端口
   ,'C'
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
@@ -71,15 +71,15 @@ void initialize() {
   chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
   chassis.set_joystick_threshold(5);//设置摇杆死区的阈值，摇杆的范围在[-127,127]
-  chassis.set_tank_min_power(30,30);//设置坦克模式下的最小功率，范围在[0,127]
+  chassis.set_tank_min_power(30,30);//设置坦克模式下的最小功率，范围在[0,127],当摇杆输出值小于该值时，底盘将以最小功率运行
   default_constants(); // 设置PID参数。
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
+    Auton("Conservatively attack. ", conservatively_attack),
     Auton("Attack.", attack),
     Auton("Guard.", guard),
     Auton("test pid",test_pid),
-    Auton("1min. ", auton_3),
   });
   chassis.initialize();
   as::initialize();
@@ -136,9 +136,6 @@ void autonomous() {
   chassis.reset_gyro(); // 重置陀螺仪
   chassis.reset_drive_sensor(); // 重置电机编码器
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
-  // auton_1();// 防守方案
-  // auton_2();// 攻击方案
-  // auton_3();//1分钟全自动方案
   ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
 
 
@@ -160,9 +157,8 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-  //用于翻转intake状态的lambda函数
   
-  Control_State default_intake_state=INTAKE;
+  Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
   while (true)
   {
@@ -174,7 +170,7 @@ void opcontrol() {
         }else{//如果intake没有运行，则打开
           control.set_intake_state(default_intake_state);
         }
-        pros::delay(300);
+        pros::delay(300);//防抖
     }else if(Controller_Button_State::R2_pressed()){//R2按下时，翻转intake
       control.set_intake_state(Control::reverse_intake(default_intake_state));
     }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态

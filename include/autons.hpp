@@ -8,7 +8,7 @@ void guard();
 
 void attack();
 
-void auton_3();
+void conservatively_attack();
 
 void default_constants();
 

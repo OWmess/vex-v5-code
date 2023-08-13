@@ -136,86 +136,28 @@ void attack(){
 
 }
 
-void auton_3(){
-  chassis.set_drive_pid(25,DRIVE_SPEED,true);
+void conservatively_attack(){
+  control.set_catapult_state(BRAKE);
+  control.set_intake_state(INTAKE);
+  chassis.set_drive_pid(39,DRIVE_SPEED);
   chassis.wait_drive();
-  chassis.set_turn_pid(-90,TURN_SPEED);
+  chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(10,DRIVE_SPEED,true);
+  chassis.set_drive_pid(15,DRIVE_SPEED);
   chassis.wait_drive();
-  pros::delay(500);
-
-
-//***由于抛投暂时不可调，所以先注释掉
-  // constexpr float catapult_t=30;//抛投的总时间，单位为s
-  // auto start_t=pros::millis();
-  // while(true){
-  //   auto now_t=pros::millis();
-  //   if((now_t-start_t)/1000>30){
-  //     break;
-  //   }
-  //   set_catapult(60);//第一个参数为电机方向，第二个参数为电机速度,在control.cpp中修改函数
-  //   pros::delay(1000);//每次抛投的延迟，单位为ms
-  // }
-//**************/
-  chassis.set_drive_pid(-20,80,true);
+  control.set_intake_state(OUTTAKE);
+  pros::delay(100);
+  chassis.set_drive_pid(-20,DRIVE_SPEED);
   chassis.wait_drive();
-  chassis.set_turn_pid(0,TURN_SPEED);
+  chassis.set_turn_pid(180,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(-20,DRIVE_SPEED,true);
+  chassis.set_drive_pid(26,DRIVE_SPEED);
   chassis.wait_drive();
-  chassis.set_turn_pid(-90,TURN_SPEED);
+  pros::delay(100);
+  chassis.set_turn_pid(250,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(-105,DRIVE_SPEED,true);//到进攻区的长距离前进（路过提升杆那一段）
+  chassis.set_drive_pid(30,60);
   chassis.wait_drive();
-  //先打侧面球门
-  chassis.set_turn_pid(-135,TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(-35,DRIVE_SPEED,true);
-  chassis.wait_drive();
-  chassis.set_turn_pid(-180,TURN_SPEED);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(-15,DRIVE_SPEED,true);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(5,80,true);//撞击侧门后回退的距离，可能需要调整
-  chassis.wait_drive();
-  chassis.set_turn_pid(-270,TURN_SPEED);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(-55,DRIVE_SPEED,true);//到中间障碍杆的距离，可能需要调整
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(-180,TURN_SPEED);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(-45,DRIVE_SPEED,true);//到正面球门的距离
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(-90,TURN_SPEED);
-  chassis.wait_drive();
-  //重复两次撞正面球门
-  control.set_wings_state(ON);//true为打开两侧挡板，false为关闭两侧挡板
-  pros::delay(500);
-  chassis.set_drive_pid(-35,DRIVE_SPEED,true);
-  chassis.wait_drive();
-  control.set_wings_state(OFF);
-  pros::delay(500);
-  chassis.set_drive_pid(35,DRIVE_SPEED,true);
-  chassis.wait_drive();
-
-  control.set_wings_state(ON);
-  pros::delay(500);
-  chassis.set_drive_pid(-35,DRIVE_SPEED,true);
-  chassis.wait_drive();
-
-  control.set_wings_state(OFF);
-  pros::delay(500);
-
-  chassis.set_drive_pid(35,DRIVE_SPEED,true);
-  chassis.wait_drive();
-
 }
 
 void test_pid(){
