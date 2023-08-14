@@ -1,6 +1,9 @@
 import os
 import re
 import matplotlib.pyplot as plt
+import math
+import matplotlib.gridspec as gridspec
+
 
 def read_data_from_file(file_path):
     gyro_data = []
@@ -24,54 +27,72 @@ def read_data_from_file(file_path):
                     left_sensor_data = [float(x) for x in data if x]
                 elif section == 'right_sensor':
                     right_sensor_data = [float(x) for x in data if x]
-    
     return gyro_data, left_sensor_data, right_sensor_data
 
-def plot_sensor_data(mode, gyro_data, left_sensor_data, right_sensor_data, title):
-    plt.figure(figsize=(10, 6))
-    if mode in ["forward", "backward"]:
-        plt.plot(gyro_data, label='Gyro')
-        plt.plot(left_sensor_data, label='Left Sensor')
-        plt.plot(right_sensor_data, label='Right Sensor')
-    elif mode in ["turn", "swing"]:
-        plt.plot(gyro_data, label='Gyro')
-    elif mode == "turn_gyro_free":
-        plt.plot(left_sensor_data, label='Left Sensor')
-        plt.plot(right_sensor_data, label='Right Sensor')
-    else:
-        print(f"Unknown mode: {mode}")
-        return
+def plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data, title):
+    # 在给定的ax（子图）上绘制曲线
+    ax.plot(gyro_data, label='Gyro')
+    ax.plot(left_sensor_data, label='Left Sensor')
+    ax.plot(right_sensor_data, label='Right Sensor')
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Sensor Data')
+    ax.set_title(title)
+    ax.legend()
+    ax.grid()
 
-    plt.xlabel('Time')
-    plt.ylabel('Sensor Data')
-    plt.title(title)
-    plt.legend()
-    plt.grid()
-    plt.show()
-    print('title: '+title)
+def generate_and_save_plot_image(subplots_data, output_file):
+    num_subplots = len(subplots_data)
+    num_cols = 2
+    num_rows = math.ceil(num_subplots / num_cols)
+
+    fig = plt.figure(figsize=(12, 8))
+    gs = gridspec.GridSpec(num_rows, num_cols)
+
+    for idx, (mode, gyro_data, left_sensor_data, right_sensor_data, title) in enumerate(subplots_data):
+        row = idx // num_cols
+        col = idx % num_cols
+        ax = fig.add_subplot(gs[row, col])
+        plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data, title)
+
+    plt.tight_layout()
+    plt.savefig(output_file)
+    plt.close()
 
 if __name__ == '__main__':
-    root_path = './'
-    all_lines = []
-    print(f'Root path: {root_path}')
-    file_pattern = re.compile(r'(forward|backward|turn|swing|turn_gyro_free)_([\d\.]+)_([\d\.]+)_([\d\.]+)_([\d\.]+)\.txt')
     
+    root_path = './'
+    file_pattern = re.compile(r'(forward|backward|turn|swing|turn_gyro_free)_([\d\.]+)_([\d\.]+)_([\d\.]+)_([\d\.]+)\.txt')
+
+    batch_size_cnt = 0
+    batch_size = 6  # 设置每批显示的子图数量
+    subplots_data = []  # 用于存储每批子图的数据
+
+    output_folder = './output_images/'
+    os.makedirs(output_folder, exist_ok=True)
+
     for file_name in os.listdir(root_path):
         if file_name.endswith('.txt'):
-            print('File name:', file_name)
             match = file_pattern.search(file_name)
             if match:
                 mode, kp, ki, kd, start_i = match.groups()
-                mode = mode.lower()  # Convert mode to lowercase for consistent comparison
+                mode = mode.lower()
                 title = f'{mode.capitalize()} - KP: {kp}, KI: {ki}, KD: {kd}, Start_I: {start_i}'
+                print("Reading parameter: ",title)
                 file_path = os.path.join(root_path, file_name)
                 gyro_data, left_sensor_data, right_sensor_data = read_data_from_file(file_path)
-                # 将绘图命令添加到all_lines列表中
-                all_lines.append((mode, gyro_data, left_sensor_data, right_sensor_data, title))
-    
-     # 遍历all_lines列表并绘制所有曲线
-    for mode, gyro_data, left_sensor_data, right_sensor_data, title in all_lines:
-        plot_sensor_data(mode, gyro_data, left_sensor_data, right_sensor_data, title)
+                subplots_data.append((mode, gyro_data, left_sensor_data, right_sensor_data, title))
 
-    # 调用一次plt.show()来显示所有曲线
-    plt.show()
+                # 如果达到一批的子图数量，则生成图像文件并清空子图数据
+                if len(subplots_data) == batch_size:
+                    batch_size_cnt += 1
+                    output_file = os.path.join(output_folder, f'batch_{batch_size_cnt}.png')
+                    print(f'Generating {output_file}...')
+                    generate_and_save_plot_image(subplots_data, output_file)
+                    subplots_data = []
+
+    # 生成剩余的图像文件
+    if subplots_data:
+        batch_size_cnt += 1
+        output_file = os.path.join(output_folder, f'batch_{batch_size_cnt}.png')
+        print(f'Generating {output_file}...')
+        generate_and_save_plot_image(subplots_data, output_file)
