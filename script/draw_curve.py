@@ -9,7 +9,9 @@ def read_data_from_file(file_path):
     gyro_data = []
     left_sensor_data = []
     right_sensor_data = []
-    
+    gyro_target=[]
+    left_sensor_target=[]
+    right_sensor_target=[]
     with open(file_path, 'r') as file:
         section = None
         for line in file:
@@ -19,6 +21,12 @@ def read_data_from_file(file_path):
                 section = 'left_sensor'
             elif line.startswith('right_sensor:'):
                 section = 'right_sensor'
+            elif line.startswith('gyro_target:'):
+                section = 'gyro_target'
+            elif line.startswith('left_sensor_target:'):
+                section = 'left_sensor_target'
+            elif line.startswith('right_sensor_target:'):
+                section = 'right_sensor_target'
             elif section:
                 data = line.strip().split(',')
                 if section == 'gyro':
@@ -27,10 +35,22 @@ def read_data_from_file(file_path):
                     left_sensor_data = [float(x) for x in data if x]
                 elif section == 'right_sensor':
                     right_sensor_data = [float(x) for x in data if x]
-    return gyro_data, left_sensor_data, right_sensor_data
+                elif section == 'gyro_target':
+                    gyro_target = [float(x) for x in data if x]
+                elif section == 'left_sensor_target':
+                    left_sensor_target = [float(x) for x in data if x]
+                elif section == 'right_sensor_target':
+                    right_sensor_target = [float(x) for x in data if x]
+    return gyro_data, left_sensor_data, right_sensor_data,gyro_target,left_sensor_target,right_sensor_target
 
-def plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data, title):
+def plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data,gyro_target,left_target,right_target, title):
     # 在给定的ax（子图）上绘制曲线
+    if gyro_target:
+        ax.axhline(y=gyro_target,color='r',label='gyro target')
+    if left_target:
+        ax.axhline(y=left_target,color=(0.1,0.05,0.2),label='left target')
+    if(right_target):
+        ax.axhline(y=right_target,color=(0.5,0.2,0.7),label='right target')
     ax.plot(gyro_data, label='Gyro')
     ax.plot(left_sensor_data, label='Left Sensor')
     ax.plot(right_sensor_data, label='Right Sensor')
@@ -41,6 +61,7 @@ def plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data, t
     ax.grid()
 
 def generate_and_save_plot_image(subplots_data, output_file):
+
     num_subplots = len(subplots_data)
     num_cols = 2
     num_rows = math.ceil(num_subplots / num_cols)
@@ -48,11 +69,11 @@ def generate_and_save_plot_image(subplots_data, output_file):
     fig = plt.figure(figsize=(12, 8))
     gs = gridspec.GridSpec(num_rows, num_cols)
 
-    for idx, (mode, gyro_data, left_sensor_data, right_sensor_data, title) in enumerate(subplots_data):
+    for idx, (mode, gyro_data, left_sensor_data, right_sensor_data,gyro_target,left_target,right_target, title) in enumerate(subplots_data):
         row = idx // num_cols
         col = idx % num_cols
         ax = fig.add_subplot(gs[row, col])
-        plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data, title)
+        plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data,gyro_target,left_target,right_target, title)
 
     plt.tight_layout()
     plt.savefig(output_file)
@@ -64,7 +85,7 @@ if __name__ == '__main__':
     file_pattern = re.compile(r'(forward|backward|turn|swing|turn_gyro_free)_([\d\.]+)_([\d\.]+)_([\d\.]+)_([\d\.]+)\.txt')
 
     batch_size_cnt = 0
-    batch_size = 6  # 设置每批显示的子图数量
+    batch_size = 4  # 设置每批显示的子图数量
     subplots_data = []  # 用于存储每批子图的数据
 
     output_folder = './output_images/'
@@ -79,8 +100,8 @@ if __name__ == '__main__':
                 title = f'{mode.capitalize()} - KP: {kp}, KI: {ki}, KD: {kd}, Start_I: {start_i}'
                 print("Reading parameter: ",title)
                 file_path = os.path.join(root_path, file_name)
-                gyro_data, left_sensor_data, right_sensor_data = read_data_from_file(file_path)
-                subplots_data.append((mode, gyro_data, left_sensor_data, right_sensor_data, title))
+                gyro_data, left_sensor_data, right_sensor_data, gyro_target, left_target, right_target = read_data_from_file(file_path)
+                subplots_data.append((mode, gyro_data, left_sensor_data, right_sensor_data,gyro_target,left_target,right_target, title))
 
                 # 如果达到一批的子图数量，则生成图像文件并清空子图数据
                 if len(subplots_data) == batch_size:

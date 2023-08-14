@@ -64,6 +64,10 @@ bool PIDLogger::save_data_to_file(const std::vector<double> &gyro_vec){
         std::cout<<"failed to open pid data file"<<std::endl;
         return false;
     }
+
+    file<<"gyro_target:"<<std::endl;
+    file<<target<<std::endl;
+
     file<<"gyro:"<<std::endl;
     for(const auto &i:gyro_vec){
         file<<i<<",";
@@ -83,6 +87,12 @@ bool PIDLogger::save_data_to_file(const std::vector<double> &left_sensor_vec,con
         std::cout<<"failed to open pid data file"<<std::endl;
         return false;
     }
+    file<<"left_sensor_target:"<<std::endl;
+    file<<left_sensor_target<<std::endl;
+    file<<"right_sensor_target:"<<std::endl;
+    file<<right_sensor_target<<std::endl;
+    file<<"gyro_target:"<<std::endl;
+    file<<gyro_vec.front()<<std::endl;
 
     file<<"gyro:"<<std::endl;
     for(const auto &i:gyro_vec){
