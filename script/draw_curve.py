@@ -57,16 +57,16 @@ def plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data,gy
     ax.set_xlabel('Time')
     ax.set_ylabel('Sensor Data')
     ax.set_title(title)
-    ax.legend()
+    ax.legend(framealpha=0.3,loc='upper right')
     ax.grid()
 
-def generate_and_save_plot_image(subplots_data, output_file):
+def generate_and_save_plot_image(fig,subplots_data, output_file):
 
     num_subplots = len(subplots_data)
     num_cols = 2
     num_rows = math.ceil(num_subplots / num_cols)
 
-    fig = plt.figure(figsize=(12, 8))
+
     gs = gridspec.GridSpec(num_rows, num_cols)
 
     for idx, (mode, gyro_data, left_sensor_data, right_sensor_data,gyro_target,left_target,right_target, title) in enumerate(subplots_data):
@@ -74,7 +74,6 @@ def generate_and_save_plot_image(subplots_data, output_file):
         col = idx % num_cols
         ax = fig.add_subplot(gs[row, col])
         plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data,gyro_target,left_target,right_target, title)
-
     plt.tight_layout()
     plt.savefig(output_file)
     plt.close()
@@ -108,7 +107,9 @@ if __name__ == '__main__':
                     batch_size_cnt += 1
                     output_file = os.path.join(output_folder, f'batch_{batch_size_cnt}.png')
                     print(f'Generating {output_file}...')
-                    generate_and_save_plot_image(subplots_data, output_file)
+                    fig = plt.figure(figsize=(12, 8),num=batch_size_cnt)
+                    generate_and_save_plot_image(fig,subplots_data, output_file)
+                    fig.show()
                     subplots_data = []
 
     # 生成剩余的图像文件
@@ -116,4 +117,7 @@ if __name__ == '__main__':
         batch_size_cnt += 1
         output_file = os.path.join(output_folder, f'batch_{batch_size_cnt}.png')
         print(f'Generating {output_file}...')
-        generate_and_save_plot_image(subplots_data, output_file)
+        fig = plt.figure(figsize=(12, 8),num=batch_size_cnt)
+        generate_and_save_plot_image(fig,subplots_data, output_file)
+        fig.show()
+    input('Press Enter to exit...')
