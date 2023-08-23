@@ -3,7 +3,7 @@ import re
 import matplotlib.pyplot as plt
 import math
 import matplotlib.gridspec as gridspec
-
+import shutil
 
 def read_data_from_file(file_path):
     gyro_data = []
@@ -76,7 +76,6 @@ def generate_and_save_plot_image(fig,subplots_data, output_file):
         plot_sensor_data(ax, mode, gyro_data, left_sensor_data, right_sensor_data,gyro_target,left_target,right_target, title)
     plt.tight_layout()
     plt.savefig(output_file)
-    plt.close()
 
 if __name__ == '__main__':
     
@@ -88,6 +87,11 @@ if __name__ == '__main__':
     subplots_data = []  # 用于存储每批子图的数据
 
     output_folder = './output_images/'
+    try:
+        shutil.rmtree(output_folder)
+    except Exception as e:
+        pass
+
     os.makedirs(output_folder, exist_ok=True)
 
     for file_name in os.listdir(root_path):
@@ -120,4 +124,4 @@ if __name__ == '__main__':
         fig = plt.figure(figsize=(12, 8),num=batch_size_cnt)
         generate_and_save_plot_image(fig,subplots_data, output_file)
         fig.show()
-    input('Press Enter to exit...')
+    input('Press any key to exit...')

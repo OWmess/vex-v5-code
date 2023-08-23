@@ -354,4 +354,4 @@ void Drive::initialize() {
 void Drive::toggle_auto_drive(bool toggle) { drive_toggle = toggle; }
 void Drive::toggle_auto_print(bool toggle) { print_toggle = toggle; }
 
-constexpr void Drive::set_pid_logger(bool toggle) { pid_logger = toggle; }
+void Drive::set_pid_logger(bool toggle) { pid_logger = toggle; }

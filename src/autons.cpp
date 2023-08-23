@@ -15,7 +15,7 @@ void default_constants() {
   chassis.set_slew_min_power(50, 50);//设置最小启动速度，用于缓加速
   chassis.set_slew_distance(7, 7);//设置缓加速的距离
   ///设置PID参数，第一个参数为PID结构体，后面四个参数分别为P、I、D、最大输出
-    chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 13, 0);
+  chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 13, 0);
   chassis.set_pid_constants(&chassis.forward_drivePID, 1, 0, 2, 0);
   chassis.set_pid_constants(&chassis.backward_drivePID, 0.5, 0, 4, 0);
   chassis.set_pid_constants(&chassis.turnPID, 4, 0.01,25, 15);
@@ -161,8 +161,18 @@ void conservatively_attack(){
 }
 
 void test_pid(){
-  control.set_catapult_state(DOWN);
-  chassis.set_swing_pid(LEFT_SWING,-90,DRIVE_SPEED);
-  chassis.wait_drive();
+  float P =0.5,I=0,D=2;
+  chassis.set_pid_logger(true);
+  for(int i=0;i<5;++i){
+    chassis.set_drive_pid(50,DRIVE_SPEED);
+    chassis.wait_drive();
+    chassis.set_drive_pid(-50,DRIVE_SPEED);
+    chassis.wait_drive();
+
+    chassis.set_pid_constants(&chassis.forward_drivePID, P, I, D, 0);
+    chassis.set_pid_constants(&chassis.backward_drivePID, P, I, D, 0);
+    P*=2;
+    D*=2;
+  }
 
 }

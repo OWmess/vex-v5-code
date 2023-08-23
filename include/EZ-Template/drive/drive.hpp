@@ -870,7 +870,7 @@ public:
   /**
    * 用于记录pid数据
    */
-  constexpr void set_pid_logger(bool logger);
+  void set_pid_logger(bool logger);
 
 
 };
