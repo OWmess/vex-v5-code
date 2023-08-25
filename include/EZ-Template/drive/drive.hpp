@@ -14,6 +14,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "EZ-Template/util.hpp"
 #include "pros/motors.h"
 #include "EZ-Template/drive/odom.hpp"
+#include "EZ-Template/PID_Logger.hpp"
 using namespace ez;
 
 class Drive {
@@ -711,11 +712,18 @@ class Drive {
    */
   Drive &with_odom(const float &ForwardTracker_center_distance,const float &SidewaysTracker_center_distance);
 
-
   void drive_to_point(double x, double y,int speed,bool ibackwards=false ,bool slew_on = false, bool toggle_heading = true);
 
   void trun_to_point(double x, double y,int speed);
+
+  /**
+   * 设置最小行驶功率
+   * \param left_motor 左侧
+   * \param right_motor 右侧
+  */
+  void set_tank_min_power(int left_motor,int right_motor);
  private:  // !Auton
+
   bool drive_toggle = true;
   bool print_toggle = true;
   int swing_min = 0;
@@ -829,7 +837,40 @@ class Drive {
   void r_increase();
 
   /**
-   *
+   * 左右轮的轮间距
    */
   double WHEEL_DISTANCE;
+
+  int l_tank_min_power=0;
+  int r_tank_min_power=0;
+
+
+
+  /**
+   * 是否记录pid数据
+  */
+  bool pid_logger=false;
+
+  /**
+   * 用于记录pid数据到文件
+   */
+  PIDLogger logger;
+  /**
+   * 暂存左右电机编码值或陀螺仪角度，用于pid数据记录
+  */
+  std::vector<double> l_sensor_vec;
+  std::vector<double> r_sensor_vec;
+  std::vector<double> gyro_vec;
+  inline void clear_vec(){
+    l_sensor_vec.clear();
+    r_sensor_vec.clear();
+    gyro_vec.clear();
+  }
+public:
+  /**
+   * 用于记录pid数据
+   */
+  void set_pid_logger(bool logger);
+
+
 };

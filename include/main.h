@@ -83,7 +83,6 @@ void opcontrol(void);
  */
 #include <iostream>
 #include <array>
-#include "Eigen/Dense"
 #endif
 
 #endif  // _PROS_MAIN_H_

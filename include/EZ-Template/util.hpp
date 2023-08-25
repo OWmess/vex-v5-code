@@ -20,11 +20,6 @@ extern pros::Controller master;
 namespace ez {
 
 /**
- * Prints our branding all over your pros terminal
- */
-void print_ez_template();
-
-/**
  * Prints to the brain screen in one string.  Splits input between lines with
  * '\n' or when text longer then 32 characters.
  *

@@ -173,6 +173,7 @@ double Drive::right_curve_function(double x) {
     // else
     // return powf(2.718, ((abs(x)-127)*RIGHT_CURVE_SCALE)/100)*x;
   }
+
   return x;
 }
 
@@ -208,11 +209,13 @@ void Drive::tank() {
 
   // Toggle for controller curve
   modify_curve_with_controller();
-
+  
   // Put the joysticks through the curve function
   int l_stick = left_curve_function(master.get_analog(ANALOG_LEFT_Y));
   int r_stick = left_curve_function(master.get_analog(ANALOG_RIGHT_Y));
   // Set robot to l_stick and r_stick, check joystick threshold, set active brake
+  l_stick=(abs(l_stick)<l_tank_min_power)?l_tank_min_power*util::sgn(l_stick):l_stick;
+  r_stick=(abs(r_stick)<r_tank_min_power)?r_tank_min_power*util::sgn(r_stick):r_stick;
   joy_thresh_opcontrol(l_stick, r_stick);
 }
 
@@ -262,4 +265,9 @@ void Drive::arcade_flipped(e_type stick_type) {
 
   // Set robot to l_stick and r_stick, check joystick threshold, set active brake
   joy_thresh_opcontrol(fwd_stick + turn_stick, fwd_stick - turn_stick);
+}
+
+void Drive::set_tank_min_power(int left_motor,int right_motor){
+  l_tank_min_power=left_motor;
+  r_tank_min_power=right_motor;
 }
