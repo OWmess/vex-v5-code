@@ -56,7 +56,8 @@ enum exit_output { RUNNING = 1,
                    BIG_EXIT = 3,
                    VELOCITY_EXIT = 4,
                    mA_EXIT = 5,
-                   ERROR_NO_CONSTANTS = 6 };
+                   ERROR_NO_CONSTANTS = 6,
+                   TIMEOUT = 7 };
 
 /**
  * Enum for split and single stick arcade.

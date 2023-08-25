@@ -79,6 +79,7 @@ void PID::reset_timers() {
   k = 0;
   j = 0;
   l = 0;
+  n = false;
   is_mA = false;
 }
 
@@ -121,6 +122,18 @@ exit_output PID::exit_condition(bool print) {
   // a certain amount of time, exit and continue.  This does not run while small_timeout is running
   if (exit.big_error != 0 && exit.big_exit_time != 0) {  // Check if this condition is enabled
     if (abs(error) < exit.big_error) {
+      static auto start = std::chrono::high_resolution_clock::now();
+      if(!n){
+        start = std::chrono::high_resolution_clock::now();
+        n=true;
+      }
+      auto end = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start).count();
+      if(duration>5){
+        reset_timers();
+        if (print) print_exit(TIMEOUT);
+        return TIMEOUT;
+      }
       i += util::DELAY_TIME;
       if (i > exit.big_exit_time) {
         reset_timers();
@@ -145,7 +158,7 @@ exit_output PID::exit_condition(bool print) {
       k = 0;
     }
   }
-
+  
   return RUNNING;
 }
 

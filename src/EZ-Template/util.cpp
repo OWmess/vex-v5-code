@@ -117,6 +117,8 @@ std::string exit_to_string(exit_output input) {
       return "mA";
     case ERROR_NO_CONSTANTS:
       return "Error: Exit condition constants not set!";
+    case TIMEOUT:
+      return "Error: Timeout!";
     default:
       return "Error: Out of bounds!";
   }

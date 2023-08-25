@@ -176,6 +176,7 @@ class PID {
 
  private:
   int i = 0, j = 0, k = 0, l = 0;//用于退出条件的计时
+  bool n = false;//用于退出条件的计时
   bool is_mA = false;
   void reset_timers();//重置所有计时器的函数
   std::string name;

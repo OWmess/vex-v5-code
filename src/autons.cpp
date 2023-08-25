@@ -161,18 +161,21 @@ void conservatively_attack(){
 }
 
 void test_pid(){
+  chassis.set_exit_condition(chassis.turn_exit, 2000, 3, 2000, 7, 5000, 5000);
+  chassis.set_exit_condition(chassis.swing_exit, 2000, 3, 2000, 7, 5000, 5000);
+  chassis.set_exit_condition(chassis.drive_exit, 2000, 50, 2000, 150, 5000, 5000);
   float P =0.5,I=0,D=2;
   chassis.set_pid_logger(true);
   for(int i=0;i<5;++i){
-    chassis.set_drive_pid(50,DRIVE_SPEED);
+    chassis.set_drive_pid(50,DRIVE_SPEED,true,false);
     chassis.wait_drive();
-    chassis.set_drive_pid(-50,DRIVE_SPEED);
-    chassis.wait_drive();
+    chassis.set_drive_pid(-50,DRIVE_SPEED,true,false);
+    chassis.wait_drive(); 
 
     chassis.set_pid_constants(&chassis.forward_drivePID, P, I, D, 0);
     chassis.set_pid_constants(&chassis.backward_drivePID, P, I, D, 0);
     P*=2;
     D*=2;
   }
-
+  printf("test finished\n");
 }
