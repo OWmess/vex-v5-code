@@ -31,11 +31,11 @@ void test_pid(){
 
 
   //开始的PID参数
-  constexpr start_p=0.5,start_i=0,start_d=0.5;
+  float start_p=0.5,start_i=0,start_d=0.5;
   //结束的PID参数
-  constexpr stop_p=5,stop_i=0,stop_d=10;
+  constexpr float stop_p=5,stop_i=0,stop_d=10;
   //PID参数的步长
-  constexpr step_p=0.1,step_i=0.1,step_d=0.1;
+  constexpr float step_p=0.1,step_i=0.1,step_d=0.1;
   //打开PID数据日志
   chassis.set_pid_logger(true);
 

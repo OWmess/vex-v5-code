@@ -1,4 +1,11 @@
+#include "autons.hpp"
 #include "main.h"
+#include "pros/gps.hpp"
+#include "pros/rtos.hpp"
+
+
+
+
 
 /**
  * 设置正常运行时的底盘速度
@@ -161,21 +168,59 @@ void conservatively_attack(){
 }
 
 void test_pid(){
-  chassis.set_exit_condition(chassis.turn_exit, 2000, 3, 2000, 7, 5000, 5000);
-  chassis.set_exit_condition(chassis.swing_exit, 2000, 3, 2000, 7, 5000, 5000);
-  chassis.set_exit_condition(chassis.drive_exit, 2000, 50, 2000, 150, 5000, 5000);
-  float P =0.5,I=0,D=2;
-  chassis.set_pid_logger(true);
-  for(int i=0;i<5;++i){
-    chassis.set_drive_pid(50,DRIVE_SPEED,true,false);
-    chassis.wait_drive();
-    chassis.set_drive_pid(-50,DRIVE_SPEED,true,false);
-    chassis.wait_drive(); 
+  /**
+  * 设置PID的退出条件，函数的声明会在后文给出。
+  * 该函数在底盘Drive类构造时已使用默认参数自动调用，在这里再次用的原因是使用默认参数时，无法反映车子在停止时是否抖动，需要让PID的退出条件更加严格，以保证PID参数的精确。
+  */
+  chassis.set_exit_condition(chassis.turn_exit, 800, 3, 800, 7, 5000, 5000);
+  chassis.set_exit_condition(chassis.swing_exit, 800, 3, 800, 7, 5000, 5000);
+  chassis.set_exit_condition(chassis.drive_exit, 800, 50, 800, 150, 5000, 5000);
 
-    chassis.set_pid_constants(&chassis.forward_drivePID, P, I, D, 0);
-    chassis.set_pid_constants(&chassis.backward_drivePID, P, I, D, 0);
-    P*=2;
-    D*=2;
-  }
-  printf("test finished\n");
+
+  chassis.set_drive_pid(45, 120,true);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90, 60);
+  chassis.wait_drive();
+  chassis.set_turn_pid(-90, 120);
+  chassis.wait_drive();
+  chassis.set_turn_pid(0,80);
+  chassis.wait_drive();
+  chassis.set_swing_pid(LEFT_SWING, 120, 100);
+  chassis.wait_drive();
+  chassis.set_swing_pid(LEFT_SWING,0, 60);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-45,100,false);
+  chassis.wait_drive();
+  chassis.set_drive_pid(45,120,true);
+  chassis.wait_drive();
+  // //开始的PID参数
+  // float start_p=0.5,start_i=0,start_d=0.5;
+  // //结束的PID参数
+  // constexpr float stop_p=4,stop_i=0,stop_d=10;
+  // //PID参数的步长
+  // constexpr float step_p=0.5,step_i=0.1,step_d=1;
+  // //打开PID数据日志
+  // // chassis.set_pid_logger(true);
+
+  // while(start_p<=stop_p){
+  //   while(start_d<=stop_d){
+
+  //       while(start_i<=stop_i){
+  //           //设置PID参数
+  //           chassis.set_pid_constants(&chassis.forward_drivePID, start_p, start_i, start_d, 0);
+  //           chassis.set_pid_constants(&chassis.backward_drivePID, start_p, start_i, start_d, 0);
+  //           //让车子跑一下
+  //           chassis.set_drive_pid(30,110,false,true);
+  //           chassis.wait_drive();
+  //           chassis.set_drive_pid(-30,110,false,true);
+  //           chassis.wait_drive(); 
+  //           start_i+=step_i;
+  //       }
+  //       start_i=0;
+  //       start_d+=step_d;
+  //   }
+  //   start_d=0;
+  //   start_p+=step_p;
+  // }
+  // printf("test finished\n");
 }

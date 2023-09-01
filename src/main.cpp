@@ -1,4 +1,29 @@
 #include "main.h"
+#include "pros/imu.hpp"
+#include "pros/rtos.hpp"
+
+
+auto gps_data_task =[](){
+  pros::delay(2500);
+  const char* path="/usd/imu_data.txt";
+  std::ofstream file(path,std::ios::out | std::ios::trunc);
+  pros::Imu imu(12);
+  
+  while(1){
+    file.open(path, std::ios::out | std::ios::app);
+    auto [x,y,z] =imu.get_accel();
+    file<<"("<<x<<","<<y<<","<<z<<")"<<" ";
+    file.close();
+    pros::delay(10);
+  }
+
+};
+
+pros::Task gps_task(gps_data_task);
+
+
+
+
 
 // 底盘构造
 Drive chassis=Drive(
@@ -9,12 +34,12 @@ Drive chassis=Drive(
   // ,{11, 3, 2}
   
   // 左侧电机组端口，（负端口将反转电机！）
-  {1}
+  {-1,-2}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{-2}
+  ,{11,13}
   // 陀螺仪端口
-  ,5
+  ,12
 
   // 车轮直径（英寸）
   ,3.25

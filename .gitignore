@@ -19,5 +19,6 @@ temp.errors
 #Jetbrains IDE
 .idea/
 
-scrpit/*.txt
-scrpit/output_images
+./scrpit/*.txt
+./scrpit/output_images
+./scrpit/output_images/*
