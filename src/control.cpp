@@ -13,7 +13,7 @@ Control_State Control::wings_state=OFF;
 Control_State Control::hanger_state=OFF;
 Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &catapult_motor_port,
     pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_press_button_port,const std::vector<int8_t> &wings_ports,
-    const int8_t &hanger_port):task([this](){this->control_task();}){
+    const int8_t &hanger_port):task([this](){this->control_task();}),catapult_task([this](){this->catapult_task_func();}){
   //创建各个电机、电磁阀对象
   for(auto port:intake_motor_ports){
     pros::Motor temp{static_cast<int8_t>(abs(port)),intake_gearset,util::is_reversed(port)};
@@ -41,12 +41,12 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
 
 void Control::set_intake(int speed,Control_State state){
   if(state==STOP){
-    for(pros::Motor &intake_motor:intake_motors){
+    for(const pros::Motor &intake_motor:intake_motors){
       intake_motor.brake();
     }
     return;
   }
-  for(pros::Motor &intake_motor:intake_motors){
+  for(const pros::Motor &intake_motor:intake_motors){
     intake_motor.move(state==INTAKE?speed:-speed);
   }
 
@@ -136,16 +136,33 @@ void Control::set_catapult_down_pos(double pos){
   catapult_down_pos=pos;
 }
 
+void Control::catapult_task_func(){
+  while (true) {
+    // block for up to 20ms waiting for a notification and clear the value
+    pros::Task::notify_take(true, 50);
+
+    set_catapult(catapult_speed,catapult_state);
+
+    // no need to delay here because the call to notify_take blocks
+  }
+
+
+
+}
+
 
 void Control::control_task(){
+
   while(true){
     if(drive_intake){
       set_intake(intake_speed,intake_state);
       drive_intake=false;
     }
     if(drive_catapult){
-      set_catapult(catapult_speed,catapult_state);
+      // set_catapult(catapult_speed,catapult_state);
+      catapult_task.notify();
       drive_catapult=false;
+      
     }
     if(drive_wings){
       set_wings(wings_state);

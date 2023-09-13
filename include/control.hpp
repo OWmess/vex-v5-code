@@ -172,6 +172,7 @@ private:
     */
     void control_task();
 
+    void catapult_task_func();
 public:
 
 private:
@@ -187,7 +188,7 @@ private:
     std::array<bool,2> wings_reversed;
     bool hanger_reversed;
     pros::Task task;
-
+    pros::Task catapult_task;
     static Control_State intake_state;
     static Control_State wings_state;
     static Catapult_State catapult_state;
