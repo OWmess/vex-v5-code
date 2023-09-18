@@ -136,8 +136,6 @@ void autonomous() {
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
   ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
 
-
-
 }
 
 /**

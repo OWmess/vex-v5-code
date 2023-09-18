@@ -722,6 +722,10 @@ class Drive {
    * \param right_motor 右侧
   */
   void set_tank_min_power(int left_motor,int right_motor);
+
+
+  
+
  private:  // !Auton
 
   bool drive_toggle = true;
