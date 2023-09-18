@@ -1,5 +1,4 @@
 #include "main.h"
-
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
@@ -35,7 +34,7 @@ Control control=Control(
   //可选项有：
   //pros::E_MOTOR_GEAR_200（200RPM）
   //pros::E_MOTOR_GEAR_100（100RPM）
-  //pros::E_MOTOR_GEAR_600（600RPM）
+  //pros::E_MOTOR_GEAR_600（600RPM）               
   ,pros::E_MOTOR_GEAR_200
 
   // 投石机电机端口（负端口将反转它！）
@@ -55,7 +54,6 @@ Control control=Control(
   //钩子的电磁阀端口：（负端口将反转它！）
   ,'D'
 );
-
 
 
 
