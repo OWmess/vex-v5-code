@@ -138,10 +138,11 @@ void Control::set_catapult_down_pos(double pos){
 
 void Control::catapult_task_func(){
   while (true) {
-    // block for up to 20ms waiting for a notification and clear the value
-    pros::Task::notify_take(true, 50);
+    // block for up to 50ms waiting for a notification and clear the value
+    if(pros::Task::notify_take(true, 50)){
+      set_catapult(catapult_speed,catapult_state);
+    }
 
-    set_catapult(catapult_speed,catapult_state);
 
     // no need to delay here because the call to notify_take blocks
   }
