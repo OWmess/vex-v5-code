@@ -4,10 +4,8 @@
 #include "pros/rtos.hpp"
 #include "EZ-Template/PID.hpp"
 #include "EZ-Template/drive/drive.hpp"
-struct Gps_Position{
-    double x;
-    double y;
-};
+#include "gps_pid.hpp"
+
 
 class Gps_Drive{
 public:
@@ -24,13 +22,17 @@ public:
 private:
 
 
-    
+    void update();
 
     void get_position_task_func();
 private:
+    float heading_angle;
+
+    
     PID heading_PID;
     PID straight_PID;
-    Gps_Position position;
+    Point2d target;
+    Point2d position;
     pros::Gps gps_sensor;
     pros::Task get_position_task;
 

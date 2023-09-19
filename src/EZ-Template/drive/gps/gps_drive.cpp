@@ -1,6 +1,5 @@
 #include "EZ-Template/drive/gps/gps_drive.hpp"
 #include "main.h"
-#include "pros/gps.h"
 
 Gps_Drive::Gps_Drive(const std::uint8_t port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset):
     gps_sensor(port,xInitial,yInitial,headingInitial,xOffset,yOffset),
@@ -20,6 +19,8 @@ void Gps_Drive::get_position_task_func(){
     while(true){
         status=gps_sensor.get_status();
         position={status.x,status.y};
+
+        update();
         pros::Task::delay_until(&start,10);
     }
 }
@@ -29,14 +30,44 @@ void Gps_Drive::set_pid_contants(double kp,double ki,double kd,double start_i) {
 }
 
 void Gps_Drive::drive_to_position(double target_x,double target_y){
-    float distance = hypot(target_x-this->position.x,target_y-this->position.y);
-    float angle =acos((target_x-this->position.x)/distance)*180/M_PI;
+    target={target_x,target_y};
+    straight_PID.set_target(0);
 
-    // Gps_PID.set_target(distance);
-
-    
 }
 
-void turn_to_degree(double deg){
+
+void Gps_Drive::update(){
+
+    float distance = hypot(target.x-this->position.x,target.y-this->position.y);
+    float angle =asin((target.x-this->position.x)/distance);
+    float heading_angle = angle;
+
+    float k=(target.y-this->position.y)/(target.x-this->position.x);
+    
+    if(k>0){
+        if(target.y-this->position.y>0){
+            heading_angle=angle;
+        }
+        else{
+            heading_angle=180+angle;
+        }
+    }else{
+        if(target.y-this->position.y>0){
+            heading_angle=360-angle;
+        }
+        else{
+            heading_angle=180-angle;
+        }
+    }
+
+
+
+
+
+    heading_PID.set_target(heading_angle);
+
+    float heading_output=heading_PID.compute(this->heading_angle);
+
+
 
 }
