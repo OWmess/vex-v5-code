@@ -1,4 +1,6 @@
 #include "main.h"
+#include "EZ-Template/drive/gps/gps_drive.hpp"
+#include "pros/gps.hpp"
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
@@ -55,7 +57,7 @@ Control control=Control(
   ,'D'
 );
 
-
+Gps_Drive gps_drive(chassis,5,0,0,0,0,0);
 
 /**
 *运行初始化代码。发生在程序刚启动的时候，在所有比赛模式、初始化之前
@@ -157,7 +159,7 @@ void opcontrol() {
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
   while (true)
-  {
+  { 
     chassis.tank(); // Tank 模式
     //根据按钮状态控制机器人
     if(Controller_Button_State::R1_pressed()){//R1按下时，打开或关闭intake

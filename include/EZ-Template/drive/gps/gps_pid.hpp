@@ -1,48 +1,9 @@
 #pragma once
 #include "EZ-Template/PID.hpp"
 
-class Point2d{
-    public:
-    Point2d(double x,double y){
-      update_quadrant(x,y);
-    }
-
-    Point2d(){
-        x=0;
-        y=0;
-        quadrant=1;
-    }
-
-    void set(double x,double y){
-      update_quadrant(x,y);
-      this->x=x;
-      this->y=y;
-    }
-
-    double get_x(){
-      return x;
-    }
-
-    double get_y(){
-      return y;
-    }
-
-   private:
+struct Point2d{
     double x;
     double y;
-    int8_t quadrant;
-
-
-    void update_quadrant(double x,double y){
-      if(x>=0&&y>=0)
-        quadrant=1;
-      else if(x<0&&y>0)
-        quadrant=2;
-      else if(x<0&&y<0)
-        quadrant=3;
-      else if(x>0&&y<0)
-        quadrant=4;
-    }
 };
 class Gps_PID:public PID{
     public:
@@ -51,7 +12,8 @@ class Gps_PID:public PID{
     ~Gps_PID();
 
     double compute(double x,double y){
-      error = hypot(target2d.get_x()-x,target2d.get_y()-y);
+      error = hypot(target_position.x-x,target_position.y-y);
+      error *= cal_overflow(x, y);
       derivative = error - prev_error;
 
       if (constants.ki != 0) {
@@ -71,32 +33,54 @@ class Gps_PID:public PID{
 
     double compute(double current)=delete;
     void set_target(double x,double y){
-        target2d={x,y};
+        target_position={x,y};
 
+
+    }
+
+    void initlize(double start_x,double start_y,double target_x,double target_y){
+      inital_position={start_x,start_y};
+      target_position={target_x,target_y};
+
+      k=(target_y-start_y)/(target_x-start_x);
+      k1=-1/k;
 
     }
     void set_target(double current)=delete;
 
-    auto get_target(){
-        return target;
-    }
    private:
 
     inline int8_t cal_overflow(double x,double y) {
-        k=(target2d.get_y()-y)/(target2d.get_x()-x);
-        double k1=-1/k;
-        double y1=k1*(x-target2d.get_x())+target2d.get_y();
-
-        if(k1>0){
-
-        }
-        if(k1*(x-target2d.get_x())+target2d.get_y()-y>0){
-          return -1;
+      double y1=k1*(x-target_position.x)+target_position.y;
+      if(k>0){//可以删掉？
+        if(target_position.y-inital_position.y>0){
+          if(y1>y){
+            return 1;
+          }else{
+            return -1;
+          }
         }else{
-          return 1;
+          if(y1>y){
+            return -1;
+          }else{
+            return 1;
+          }
         }
+      }else{
+        if(target_position.y-inital_position.y>0){
+          if(y1>y){
+            return 1;
+          }else{
+            return -1;
+          }
+        }
+      }
+      return 0;
     }
-    double k;
-    Point2d target2d;
 
+    double k;
+    double k1;
+
+    Point2d target_position;
+    Point2d inital_position;
 };

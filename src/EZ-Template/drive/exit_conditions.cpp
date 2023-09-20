@@ -32,7 +32,6 @@ void Drive::wait_drive(){
   if (mode == DRIVE||mode==TRUN_GYRO_FREE) {
     exit_output left_exit = RUNNING;
     exit_output right_exit = RUNNING;
-    int cnt_tmp=0;
     while (left_exit == RUNNING || right_exit == RUNNING) {
       left_exit = left_exit != RUNNING ? left_exit : leftPID.exit_condition(left_motors[0]);
       right_exit = right_exit != RUNNING ? right_exit : rightPID.exit_condition(right_motors[0]);
