@@ -40,7 +40,7 @@ class Gps_PID:public PID{
 
     void initlize(double start_x,double start_y,double target_x,double target_y){
       inital_position={start_x,start_y};
-      target_position={target_x,target_y};
+      set_target(target_x, target_y);
 
       k=(target_y-start_y)/(target_x-start_x);
       k1=-1/k;

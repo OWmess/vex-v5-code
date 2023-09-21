@@ -48,10 +48,10 @@ Gps_Drive::Gps_Drive(Drive &drive_chassis,const std::uint8_t port, double xIniti
             0, 0, 0, pow(dt, 4) / 4.f, pow(dt, 3) / 2.f, pow(dt, 2) / 2.f,
             0, 0, 0, pow(dt, 3) / 2.f, pow(dt, 2), dt,
             0, 0, 0, pow(dt, 2) / 2.f, dt, 1;
-    Q=Q*0.6;//乘上加速度方差
+    Q=Q*0.35;//乘上加速度方差
     // 测量噪声协方差
-    R << 0.001,0,
-         0,0.001;
+    R << 0.005,0,
+         0,0.005;
     // 估计误差协方差
     P << .05, .05, .05,0 ,0 ,0 ,
         .05, .05, .05,0 ,0 ,0 ,
@@ -68,6 +68,10 @@ Gps_Drive::Gps_Drive(Drive &drive_chassis,const std::uint8_t port, double xIniti
     x0 << xInitial, 0, 0, yInitial, 0, 0;
     kf.init(t, x0);
 
+    set_pid_contants(&straight_PID, 200,0,200,0);
+    set_pid_contants(&heading_PID, 2, 0, 4,0);
+    straight_PID.set_exit_condition(80, 0.005, 300, 0.005, 500, 5000);
+    // heading_PID.set_exit_condition(80, 0.005, 300, 0.005, 500, 5000);
 }
 
 Gps_Drive::~Gps_Drive(){
@@ -75,32 +79,32 @@ Gps_Drive::~Gps_Drive(){
 }
 
 void Gps_Drive::get_position_task_func(){
-    pros::c::gps_status_s_t status;
+    pros::c::gps_status_s_t status_raw;
     auto start=pros::millis();
     while(true){
-        status=gps_sensor.get_status();
-
-        pros::screen::print(pros::E_TEXT_MEDIUM,0,"Gps raw status: x:%.4lf , y:%.4lf,",status.x,status.y);
+        status_raw=gps_sensor.get_status();
+        pros::screen::print(pros::E_TEXT_SMALL,0,"Gps raw status: x:%.4lf , y:%.4lf, heading:%.2f",status_raw.x,status_raw.y,gps_sensor.get_heading());
         pros::screen::print(pros::E_TEXT_MEDIUM,2,"Gps error: %lf",gps_sensor.get_error());
 
         Eigen::VectorXd y(2);
-        y<<status.x,status.y;
+        y<<status_raw.x,status_raw.y;
         kf.update(y);
-        auto kf_x=kf.state();
-        pros::screen::print(pros::E_TEXT_MEDIUM,1,"KalmanFilter status: x:%.4lf , y:%.4lf,",kf_x[0],kf_x[3]);
+        position={kf.state()[0],kf.state()[3]};
+        pros::screen::print(pros::E_TEXT_MEDIUM,1,"KalmanFilter status: x:%.4lf , y:%.4lf,",position.x,position.y);
 
 
-        position={status.x,status.y};
         heading_angle=gps_sensor.get_heading();
         if(drive_toggle){
             update_heading_target();
-            float straight_out=straight_PID.compute(status.x,status.y);
+            float straight_out=straight_PID.compute(position.x,position.y);
             float heading_out=heading_PID.compute(heading_angle);
 
             double drive_out = util::clip_num(straight_out, max_speed, -max_speed);
             chassis_reference.set_tank(straight_out+heading_out,straight_out-heading_out);
-            if(straight_PID.exit_condition(chassis_reference.left_motors[0])!=ez::RUNNING){
-                drive_toggle=false;
+            pros::screen::print(pros::E_TEXT_MEDIUM,3,"straight_out%.4lf , heading_out%.4lf,",straight_out,heading_out);
+            pros::screen::print(pros::E_TEXT_MEDIUM,4,"heading_target%.2f",heading_PID.get_target());
+            if(straight_PID.exit_condition(chassis_reference.left_motors[0])!=ez::RUNNING) {
+                // drive_toggle=false;
                 std::cout<<"Gps exit: "<<ez::exit_to_string(straight_PID.exit_condition(chassis_reference.left_motors[0]))<<"\n";
             }
         }
@@ -108,23 +112,21 @@ void Gps_Drive::get_position_task_func(){
     }
 }
 
-void Gps_Drive::set_pid_contants(double kp,double ki,double kd,double start_i) {
-    // Gps_PID.set_constants(kp,ki,kd,start_i);
-}
 
-void Gps_Drive::drive_to_position(double target_x,double target_y){
+
+void Gps_Drive::drive_to_position(int speed,double target_x,double target_y){
+    max_speed=speed;
     target={target_x,target_y};
     auto [start_x,start_y]=position;
     straight_PID.initlize(start_x,start_y,target_x,target_y);
     drive_toggle=true;
-
 
 }
 
 
 void Gps_Drive::update_heading_target(){
     float distance = hypot(target.x-this->position.x,target.y-this->position.y);
-    float angle =asin((target.x-this->position.x)/distance);
+    float angle =asin((target.x-this->position.x)/distance)*180/M_PI;
     float heading_angle = angle;
 
     float k=(target.y-this->position.y)/(target.x-this->position.x);
