@@ -1,14 +1,17 @@
 #include "main.h"
 #include "EZ-Template/drive/gps/gps_drive.hpp"
 #include "EZ-Template/drive/gps/gps_pid.hpp"
+#include "EZ-Template/util.hpp"
 #include "pros/gps.hpp"
+#include "pros/imu.hpp"
+#include "pros/rtos.hpp"
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {-11, -16}
+  {-3, -4}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{14, 15}
+  ,{1, 2}
 
   // 陀螺仪端口
   ,6
@@ -31,7 +34,7 @@ Drive chassis=Drive(
 // 上层机构控制器构造
 Control control=Control(
   // Intake 电机组端口，（负端口将反转电机！）
-  {13, -19}
+  {-10, 20}
 
   // Intake 电机组的RPM,
   //可选项有：
@@ -41,7 +44,7 @@ Control control=Control(
   ,pros::E_MOTOR_GEAR_200
 
   // 投石机电机端口（负端口将反转它！）
-  ,-1
+  ,19
 
   // 投石机 电机RPM,可选项同上
   ,pros::E_MOTOR_GEAR_100
@@ -58,7 +61,7 @@ Control control=Control(
   ,'D'
 );
 
-Gps_Drive gps_drive(chassis,5,0,0,0,0,0);
+Gps_Drive gps_drive(chassis,5,1.2,-1.20,0,8*0.0254,0);
 
 
 /**
@@ -157,17 +160,19 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
+  while(!Controller_Button_State::A_pressed());
 
-  gps_drive.drive_to_position(100,1.2f, 1.2f);
+  gps_drive.drive_to_position(60,0.6f, -0.3f);
   gps_drive.wait_drive();
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
   while (true)
   {  
-    chassis.tank(); // Tank 模式
+    // chassis.tank(); // Tank 模式
+    chassis.arcade_standard(SPLIT);
     //根据按钮状态控制机器人
     if(Controller_Button_State::R1_pressed()){//R1按下时，打开或关闭intake
-        if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
+        if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止 
           control.set_intake_state(STOP);
         }else{//如果intake没有运行，则打开
           control.set_intake_state(default_intake_state);

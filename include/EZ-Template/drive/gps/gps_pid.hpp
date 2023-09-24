@@ -1,10 +1,16 @@
 #pragma once
 #include "EZ-Template/PID.hpp"
 
-struct Point2d{
-    double x;
-    double y;
-};
+
+namespace GPS_STRUCT{
+  struct Point2d{
+      double x;
+      double y;
+  };
+}
+
+
+
 class Gps_PID:public PID{
     public:
     Gps_PID();
@@ -31,7 +37,7 @@ class Gps_PID:public PID{
       return output;
     }
 
-    double compute(double current)=delete;
+    
     void set_target(double x,double y){
         target_position={x,y};
 
@@ -46,9 +52,11 @@ class Gps_PID:public PID{
       k1=-1/k;
 
     }
+
+    double compute(double current)=delete;
     void set_target(double current)=delete;
 
-   private:
+  private:
 
     inline int8_t cal_overflow(double x,double y) {
       double y1=k1*(x-target_position.x)+target_position.y;
@@ -81,6 +89,6 @@ class Gps_PID:public PID{
     double k;
     double k1;
 
-    Point2d target_position;
-    Point2d inital_position;
+    GPS_STRUCT::Point2d target_position;
+    GPS_STRUCT::Point2d inital_position;
 };

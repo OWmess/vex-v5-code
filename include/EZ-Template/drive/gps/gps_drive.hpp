@@ -9,6 +9,11 @@
 
 class Gps_Drive{
 public:
+    enum class Task_Mode{
+        MONITOR,
+        TURN,
+        STRAIGHT,
+    };
     Gps_Drive(Drive &drive_chassis,const std::uint8_t port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset);
     ~Gps_Drive();
 
@@ -26,23 +31,27 @@ public:
     bool check_Gps();
 public:
     PID heading_PID;
+    PID turn_PID;
     Gps_PID straight_PID;
     
 private:
 
     void update_heading_target();
 
-    void get_position_task_func();
+    void gps_task_func();
 
+    void gps_imu_turn(double angle);
 private:
     float heading_angle;
     int max_speed;
 
-    Point2d target;
-    Point2d position;
+    GPS_STRUCT::Point2d target;
+    GPS_STRUCT::Point2d position;
     pros::Gps gps_sensor;
-    pros::Task get_position_task;
+    pros::Task gps_task;
     Drive &chassis_reference;
     bool drive_toggle;
     KalmanFilter kf;
+    Task_Mode task_mode;
+    float heading_thresh;
 };
