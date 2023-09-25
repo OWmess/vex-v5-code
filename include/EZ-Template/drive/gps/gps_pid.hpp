@@ -60,30 +60,20 @@ class Gps_PID:public PID{
 
     inline int8_t cal_overflow(double x,double y) {
       double y1=k1*(x-target_position.x)+target_position.y;
-      if(k>0){//可以删掉？
-        if(target_position.y-inital_position.y>0){
-          if(y1>y){
-            return 1;
-          }else{
-            return -1;
-          }
+      if(target_position.y-inital_position.y>0){
+        if(y1>y){
+          return 1;
         }else{
-          if(y1>y){
-            return -1;
-          }else{
-            return 1;
-          }
+          return -1;
         }
       }else{
-        if(target_position.y-inital_position.y>0){
-          if(y1>y){
-            return 1;
-          }else{
-            return -1;
-          }
+        if(y1>y){
+          return -1;
+        }else{
+          return 1;
         }
       }
-      return 0;
+      return INT8_MAX;
     }
 
     double k;

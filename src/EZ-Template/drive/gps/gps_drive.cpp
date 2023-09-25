@@ -3,10 +3,11 @@
 #include "control.hpp"
 #include "gps_pid.hpp"
 #include "main.h"
+#include "pros/rtos.hpp"
 #include "pros/screen.h"
 #include "pros/screen.hpp"
 
-#define HEADING_THRESH 0.2
+#define HEADING_THRESH 0.1
 Gps_Drive::Gps_Drive(Drive &drive_chassis,const std::uint8_t port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset):
     gps_sensor(port,xInitial,yInitial,headingInitial,xOffset,yOffset),chassis_reference(drive_chassis),
     gps_task([this](){this->gps_task_func();})
@@ -72,12 +73,12 @@ Gps_Drive::Gps_Drive(Drive &drive_chassis,const std::uint8_t port, double xIniti
 
     auto [p,i,d,start_i] =chassis_reference.turnPID.get_constants();
     // set_pid_contants(&turn_PID, p, i, d, start_i);
-    set_pid_contants(&turn_PID, 10, 0.00,15, 0);
+    set_pid_contants(&turn_PID, 3, 0.003, 20, 10);
     
-    set_pid_contants(&straight_PID, 200,0,300,0);
-    set_pid_contants(&heading_PID, 2, 0, 4,0);
+    set_pid_contants(&straight_PID, 300,0,600,0);
+    set_pid_contants(&heading_PID, 4, 0.000, 10,0);
     turn_PID.set_exit_condition( 100, 1, 500, 3, 50000, 5000);
-    straight_PID.set_exit_condition(80, 0.005, 300, 0.005, 50000, 5000);
+    straight_PID.set_exit_condition(80, 0.01, 300, 0.02, 50000, 5000);
 
     task_mode=Task_Mode::MONITOR;
     heading_thresh=HEADING_THRESH;
@@ -100,7 +101,12 @@ void Gps_Drive::gps_task_func(){
         Eigen::VectorXd y(2);
         y<<status_raw.x,status_raw.y;
         kf.update(y);
-        position={kf.state()[0],kf.state()[3]};
+        pos_mutex.take(mutex_timeout);
+        ///TODO:暂时不用滤波试试
+        position={status_raw.x,status_raw.y};
+        // position={kf.state()[0],kf.state()[3]};
+        pos_mutex.give();
+        file<<"status_raw "<<status_raw.x<<" , "<<status_raw.y<<"\n";
         pros::screen::print(pros::E_TEXT_MEDIUM,1,"KalmanFilter status: x:%.4lf , y:%.4lf,",position.x,position.y);
         heading_angle=gps_sensor.get_heading();
         if(drive_toggle) {
@@ -108,23 +114,18 @@ void Gps_Drive::gps_task_func(){
             switch (task_mode) {
                 case Task_Mode::MONITOR:
                     task_mode=Task_Mode::TURN;
-                case Task_Mode::TURN:
+                case Task_Mode::TURN: 
                     turn_PID.compute(heading_angle);
-                        file.open(path, std::ios::out | std::ios::app);
-                        file<<"heading "<<heading_angle<<" , "<<turn_PID.output<<"\n";
-                        file<<"position "<<position.x <<" , "<<position.y<<"\n";
-                        file.close();
+                    file.open(path, std::ios::out | std::ios::app);
+                    file<<"heading "<<heading_angle<<" , "<<turn_PID.output<<"\n";
+                    file<<"position "<<position.x <<" , "<<position.y<<"\n";
+                    file.close();
                     l_out=util::clip_num(turn_PID.output, max_speed, -max_speed);
                     r_out=util::clip_num(-turn_PID.output, max_speed, -max_speed);
                     pros::screen::print(pros::E_TEXT_MEDIUM,3,"turn_target%.1lf , turn_out%.1lf,",turn_PID.get_target(),turn_PID.output);
-                    while(Controller_Button_State::A_pressed()){
-                        chassis_reference.set_tank(0,0);
-                        pros::delay(10);
-                    }
                     if(turn_PID.exit_condition(chassis_reference.left_motors[0])!=ez::RUNNING) {
                         pros::screen::print(pros::E_TEXT_SMALL,6,"turn exit: %s",ez::exit_to_string(turn_PID.exit_condition(chassis_reference.left_motors[0])));
                         task_mode=Task_Mode::STRAIGHT;
-                        while(!Controller_Button_State::A_pressed());
                     }
                     break;
                 case Task_Mode::STRAIGHT:
@@ -139,17 +140,23 @@ void Gps_Drive::gps_task_func(){
                     r_out=straight_out-heading_out;
                     pros::screen::print(pros::E_TEXT_MEDIUM,3,"straight_out%.2lf , heading_out%.2lf,",straight_out,heading_out);
                     pros::screen::print(pros::E_TEXT_MEDIUM,4,"heading_target%.2f",heading_PID.get_target());
+                    file.open(path, std::ios::out | std::ios::app);
+                    file<<"r "<<r<<std::endl;
+                    file<<"heading_thresh"<<pow(heading_thresh,2)<<std::endl;
+                    file<<"straight_out "<<straight_out<<" , "<<straight_out<<"\n";
+                    file<<"position "<<position.x <<" , "<<position.y<<"\n";
+                    file.close();
                     if(straight_PID.exit_condition(chassis_reference.left_motors[0])!=ez::RUNNING) {
                         task_mode=Task_Mode::MONITOR;
                         drive_toggle=false;
                         ///TODO: 单位为米时会因为derivative变化过小而退出 
-                        std::cout<<"Gps exit: "<<ez::exit_to_string(straight_PID.exit_condition(chassis_reference.left_motors[0]))<<"\n";
+                        pros::screen::print(pros::E_TEXT_MEDIUM,8,"gps drive exit: %s",ez::exit_to_string(straight_PID.exit_condition(chassis_reference.left_motors[0])));
                     }
                     break;
             }
             chassis_reference.set_tank(l_out,r_out);
         }
-        pros::Task::delay_until(&start,10);
+        pros::Task::delay_until(&start,20);
     }
 }
 
@@ -158,19 +165,33 @@ void Gps_Drive::gps_task_func(){
 void Gps_Drive::drive_to_position(int speed,double target_x,double target_y){
     max_speed=speed;
     target={target_x,target_y};
-    auto [starting_x,starting_y]=position;
+    pos_mutex.take(mutex_timeout);
+    ///TODO: 直接读数值
+    // auto [starting_x,starting_y]=position;
+    auto status=gps_sensor.get_status();
+    double starting_x=position.x;
+    double starting_y=position.y;
+
+    pos_mutex.give();
     double angle = atan((target_x - starting_x) / (target_y - starting_y)) / M_PI * 180;
 
     while(!Controller_Button_State::A_pressed());
+    pros::delay(1000);
     if (target_y - starting_y < 0)
         angle = angle + 180;
 
     if(angle<0){
         angle+=360;
     }
-        pros::screen::print(pros::E_TEXT_SMALL,7,"pos x:%.3lf ,y:%.3lf,angle:%.2lf",starting_x,starting_y,angle);
     turn_PID.set_target(angle);
 
+    while(!Controller_Button_State::A_pressed()){
+        pros::screen::erase();
+        pros::screen::print(pros::E_TEXT_SMALL,7,"pos x:%.2lf ,y:%.2lf,angle:%.2lf",starting_x,starting_y,angle);
+        
+        pros::screen::print(pros::E_TEXT_SMALL,8,"target_x,y:%.3lf , %.3lf,init_x,y:%.3lf , %.3lf",target_x,target_y,starting_x,starting_y);
+        pros::delay(10);
+    }
     straight_PID.initlize(starting_x,starting_y,target_x,target_y);
     drive_toggle=true;
 

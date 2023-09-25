@@ -8,10 +8,10 @@
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {-3, -4}
+  {-1, -2}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{1, 2}
+  ,{3, 4}
 
   // 陀螺仪端口
   ,6
@@ -61,7 +61,7 @@ Control control=Control(
   ,'D'
 );
 
-Gps_Drive gps_drive(chassis,5,1.2,-1.20,0,8*0.0254,0);
+Gps_Drive gps_drive(chassis,5,0,0,0,2*0.0254,-1*0.0254);
 
 
 /**
@@ -160,8 +160,6 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-  while(!Controller_Button_State::A_pressed());
-
   gps_drive.drive_to_position(60,0.6f, -0.3f);
   gps_drive.wait_drive();
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态

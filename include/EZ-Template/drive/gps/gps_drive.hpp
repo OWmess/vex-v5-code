@@ -54,4 +54,6 @@ private:
     KalmanFilter kf;
     Task_Mode task_mode;
     float heading_thresh;
+    pros::Mutex pos_mutex;
+    const int8_t mutex_timeout=10;
 };
