@@ -26,7 +26,7 @@ Drive chassis=Drive(
   ,21.0
 );
 
-// 上层机构控制器构造
+/// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
   // Intake 电机组端口，（负端口将反转电机！）
   {13, -19}
@@ -44,8 +44,8 @@ Control control=Control(
   // 投石机 电机RPM,可选项同上
   ,pros::E_MOTOR_GEAR_100
 
-  // 投石机的触碰按钮所在端口
-  ,'C'
+  // 投石机的角度传感器所在端口,若角度传感器正方向与投石机下压方向相反则为负
+  ,-4
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
@@ -76,13 +76,14 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
-    Auton("Conservatively attack. ", conservatively_attack),
     Auton("Attack.", attack),
     Auton("Guard.", guard),
+    Auton("Conservatively attack. ", conservatively_attack),
     Auton("test pid",test_pid),
   });
   chassis.initialize();
   as::initialize();
+
 
 }
 
@@ -157,12 +158,12 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-  
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
   while (true)
   {
-    chassis.tank(); // Tank 模式
+    chassis.arcade_standard(SPLIT);
+    // chassis.tank();
     //根据按钮状态控制机器人
     if(Controller_Button_State::R1_pressed()){//R1按下时，打开或关闭intake
         if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
@@ -185,8 +186,11 @@ void opcontrol() {
     }
     if(Controller_Button_State::A_pressed()){
       control.set_catapult_state(MIDDLE);
+      pros::delay(300);
     }else if(Controller_Button_State::B_pressed()){
       control.set_catapult_state(DOWN);
+      pros::delay(300);
+
     }
     if(Controller_Button_State::RIGHT_pressed()){
       control.set_hanger_state(OFF);

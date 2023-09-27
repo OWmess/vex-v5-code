@@ -1,18 +1,19 @@
 #include "main.h"
 
 /**
- * @brief 投球机位于顶部和中间位置时的编码器值，编码器0点为底部
+ * @brief catapult 在中间和在底部时的角度值，该值可通过主控器直接观测得到，但若角度传感器正方向与投石机下压方向相反，
+ *       则需取反后+360
+ *        
 */
-#define CATAPULT_UP_POS      500.0 
-#define CATAPULT_MIDDLE_POS  1500.0 
-#define CATAPULT_DOWN_POS    0.0
+#define CATAPULT_MIDDLE_POS  360.0-295.0
+#define CATAPULT_DOWN_POS    360.0-287.0
 
 Control_State Control::intake_state=INTAKE;
 Catapult_State Control::catapult_state=MIDDLE;
 Control_State Control::wings_state=OFF;
 Control_State Control::hanger_state=OFF;
 Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &catapult_motor_port,
-    pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_press_button_port,const std::vector<int8_t> &wings_ports,
+    pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_rotation_port,const std::vector<int8_t> &wings_ports,
     const int8_t &hanger_port):task([this](){this->control_task();}),catapult_task([this](){this->catapult_task_func();}){
   //创建各个电机、电磁阀对象
   for(auto port:intake_motor_ports){
@@ -23,7 +24,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
 
   catapult_motor=std::make_shared<pros::Motor>(abs(catapult_motor_port),catapult_gearset,util::is_reversed(catapult_motor_port));
   catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-  catapult_press_button=std::make_shared<pros::ADIDigitalIn>(catapult_press_button_port);
+  cata_rotation=std::make_shared<pros::Rotation>(abs(catapult_rotation_port),ez::util::is_reversed(catapult_rotation_port));
 
   wings_l=std::make_shared<pros::ADIDigitalOut>(abs(wings_ports[0]),util::is_reversed(wings_ports[0]));
   wings_r=std::make_shared<pros::ADIDigitalOut>(abs(wings_ports[1]),util::is_reversed(wings_ports[1]));
@@ -33,9 +34,11 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   wings_reversed[1]=util::is_reversed(wings_ports[1]);
   hanger_reversed=util::is_reversed(hanger_port);
 
-  set_catapult_up_pos(CATAPULT_UP_POS);
+  
   set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
   set_catapult_down_pos(CATAPULT_DOWN_POS);
+  cata_PID={10,0,25,0};
+  cata_PID.set_exit_condition(20, 1, 50, 3, 500, 3000);
 }
 
 
@@ -56,61 +59,40 @@ void Control::set_intake(int speed,Control_State state){
 void Control::set_catapult(int speed,Catapult_State state) {
   int cnt=0;
   double start_t=pros::millis();
-  //lambda函数，用于等待弹射机构按键松开
-  auto wait_until_not_pressed=[this,start_t](){
-    while(catapult_press_button->get_value()){
-      if(pros::millis()-start_t>time_out){//超时
-        printf("catapult time out\n");
-        break;
-      }
-      pros::delay(1);
+  auto cata_to_degree_lambda=[this,start_t,speed](float degree){
+    catapult_motor->move(speed);
+    //走过一段距离防止不运动
+    while(pros::millis()-start_t<time_out&&abs(cata_rotation->get_angle()/100.f-degree)<3.5){
+      pros::delay(10);
     }
-  };
-  //lambda函数，用于等待弹射机构按键按下
-  auto wait_until_pressed=[this,start_t](){
-    int cnt=0;
-    while(true) {
-      if(pros::millis()-start_t>time_out){//超时
-        printf("catapult time out\n");
-        break;
-      }
-      if(catapult_press_button->get_value()){
-        cnt++;
-      }
-      if(cnt>=1)
-        break;
-      pros::delay(1);
-    }
-  };
 
+    //PID控制电机
+    cata_PID.set_target(degree);
+    while(pros::millis()-start_t<time_out){
+      double out=cata_PID.compute(cata_rotation->get_angle()/100.f);
+      out=util::clip_num(out, speed, 0);
+      if(out!=120.f){
+        std::cout<<"cata_out "<<out<<std::endl;
+      }
+      catapult_motor->move(out);
+      //当pid输出<=0时，则说明已运动到目标位置或已越过目标位置，但由于棘轮的存在无法回到目标位置，此时退出循环
+      if(cata_PID.exit_condition(*catapult_motor.get())!=RUNNING||out<=0){
+        break;
+      }
+      pros::delay(5);
+    }
+    catapult_motor->brake();
+  };
   catapult_motor->move(speed);
+  pros::delay(300);
   if(state==BRAKE){
     catapult_motor->brake();
   }else if(state==DOWN){
-    wait_until_not_pressed();
-    wait_until_pressed();
-    if(catapult_down_pos!=0)
-      catapult_motor->move_relative(catapult_down_pos,speed);
-    else
-      catapult_motor->brake();
+    cata_to_degree_lambda(catapult_down_pos);
   }else if(state==MIDDLE){
-    if(catapult_press_button->get_value()){
-      wait_until_not_pressed();
-      catapult_motor->move_relative(catapult_middle_pos,speed);
-    }else{
-      wait_until_pressed();
-      wait_until_not_pressed();
-      catapult_motor->move_relative(catapult_middle_pos,speed);
-    }
+    cata_to_degree_lambda(catapult_middle_pos);
   }else if(state==UP){
-    if(catapult_press_button->get_value()){
-      wait_until_not_pressed();
-      catapult_motor->move_relative(catapult_up_pos,speed);
-    }else{
-      wait_until_pressed();
-      wait_until_not_pressed();
-      catapult_motor->move_relative(catapult_up_pos,speed);
-    }
+    cata_to_degree_lambda(catapult_up_pos);
   }
 
 }
@@ -137,10 +119,13 @@ void Control::set_catapult_down_pos(double pos){
 }
 
 void Control::catapult_task_func(){
+  int cnt=0;
   while (true) {
+    
     // block for up to 50ms waiting for a notification and clear the value
     if(pros::Task::notify_take(true, 50)){
       set_catapult(catapult_speed,catapult_state);
+      std::cout<<"catapult task cnt "<<++cnt<<std::endl;
     }
 
 
@@ -153,16 +138,16 @@ void Control::catapult_task_func(){
 
 
 void Control::control_task(){
-
+  int cnt=0;
   while(true){
     if(drive_intake){
       set_intake(intake_speed,intake_state);
       drive_intake=false;
     }
     if(drive_catapult){
-      // set_catapult(catapult_speed,catapult_state);
       catapult_task.notify();
       drive_catapult=false;
+      std::cout<<"catapult task notify "<<++cnt<<std::endl;
       
     }
     if(drive_wings){

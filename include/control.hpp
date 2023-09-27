@@ -1,6 +1,6 @@
 #pragma once
 #include "api.h"
-
+#include "EZ-template/api.hpp"
 enum Control_State{
     INTAKE,
     OUTTAKE,
@@ -26,7 +26,7 @@ public:
      * \param hanger_ports ports of the hanger (negative port will reverse it!)
     */
     Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &catapult_motor_port,
-    pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_press_button_port,const std::vector<int8_t> &wings_ports,
+    pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_rotation_port,const std::vector<int8_t> &wings_ports,
     const int8_t &hanger_ports);
 
     /**
@@ -131,6 +131,21 @@ public:
     inline Catapult_State get_catapult_state(){
         return catapult_state;
     }
+
+    inline void set_intake_brake_mode(const pros::motor_brake_mode_e_t mode) const{
+        for(const auto& motor:intake_motors){
+            motor.set_brake_mode(mode);
+        }
+    }
+
+    inline void set_catapult_brake_mode(const pros::motor_brake_mode_e_t mode) const{
+        catapult_motor->set_brake_mode(mode);
+    }
+
+
+    inline void set_pid_constants(PID *pid, double p, double i, double d, double p_start_i){
+        pid->set_constants(p,i,d,p_start_i);
+    }
 private:
 
     /**
@@ -174,14 +189,14 @@ private:
 
     void catapult_task_func();
 public:
-
+    PID cata_PID;
 private:
+    std::shared_ptr<pros::Rotation> cata_rotation;
     std::vector<pros::Motor> intake_motors;
     std::shared_ptr<pros::Motor> catapult_motor;
     std::shared_ptr<pros::ADIDigitalOut> wings_l;
     std::shared_ptr<pros::ADIDigitalOut> wings_r;
     std::shared_ptr<pros::ADIDigitalOut> hanger;
-    std::shared_ptr<pros::ADIDigitalIn> catapult_press_button;
     double catapult_up_pos;
     double catapult_middle_pos;
     double catapult_down_pos;
@@ -197,7 +212,7 @@ private:
     bool drive_intake;
     bool drive_wings;
     bool drive_hanger;
-    int intake_speed=100;
+    int intake_speed=120;
     int catapult_speed=120;
     int time_out=2000;
 };

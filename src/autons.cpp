@@ -43,6 +43,7 @@ void guard(){
   control.set_catapult_state(MIDDLE);
   pros::delay(200);
 
+
   chassis.set_drive_pid(-20,DRIVE_SPEED,true);
   chassis.wait_drive();
   chassis.set_turn_pid(-3,TURN_SPEED);
@@ -72,47 +73,47 @@ void guard(){
 /**
 * 进攻方自动程序
 */
-void attack(){
+void attack() {
   control.set_catapult_state(BRAKE);
   control.set_intake_state(INTAKE);
-  chassis.set_drive_pid(39,DRIVE_SPEED);
+  chassis.set_drive_pid(36,DRIVE_SPEED);
   chassis.wait_drive();
   chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(15,DRIVE_SPEED);
+  chassis.set_drive_pid(15,120);
   chassis.wait_drive();
   control.set_intake_state(OUTTAKE);
-  pros::delay(100);
+  pros::delay(200);
   chassis.set_drive_pid(-15,DRIVE_SPEED);
   chassis.wait_drive();
   control.set_intake_state(INTAKE);
   chassis.set_swing_pid(LEFT_SWING,0,SWING_SPEED);
   chassis.wait_drive();
 
-  chassis.set_drive_pid(15,DRIVE_SPEED);
+  chassis.set_drive_pid(12,DRIVE_SPEED);
   chassis.wait_drive();
   chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(20,DRIVE_SPEED);
+  chassis.set_drive_pid(20,120);
   chassis.wait_drive();
   control.set_intake_state(OUTTAKE);
 
   chassis.set_drive_pid(-20,DRIVE_SPEED);
   chassis.wait_drive();
   control.set_intake_state(INTAKE);
-  chassis.set_turn_pid(-90,TURN_SPEED);
+  chassis.set_turn_pid(-85,TURN_SPEED);
   chassis.wait_drive();
   chassis.set_drive_pid(12,DRIVE_SPEED);
   chassis.wait_drive();
-  pros::delay(100);
+  pros::delay(200);
   chassis.set_drive_pid(-12,DRIVE_SPEED);
   chassis.wait_drive();
   chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(23,DRIVE_SPEED);
+  chassis.set_drive_pid(23,120);
   chassis.wait_drive();
   control.set_intake_state(OUTTAKE);
-  pros::delay(100);
+  pros::delay(200);
   chassis.set_drive_pid(-10,DRIVE_SPEED);
   control.set_intake_state(INTAKE);
   chassis.wait_drive();
@@ -120,16 +121,16 @@ void attack(){
   chassis.wait_drive();
   chassis.set_drive_pid(27,DRIVE_SPEED);
   chassis.wait_drive();
-  pros::delay(100);
-  chassis.set_drive_pid(-30,DRIVE_SPEED);
+  pros::delay(200);
+  chassis.set_drive_pid(-15,DRIVE_SPEED);
   chassis.wait_drive();
   chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(10,DRIVE_SPEED);
+  chassis.set_drive_pid(20,120);
   chassis.wait_drive();
 
   control.set_intake_state(OUTTAKE);
-  pros::delay(100);
+  pros::delay(200);
   chassis.set_drive_pid(-20,DRIVE_SPEED);
   chassis.wait_drive();
 
