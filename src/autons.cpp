@@ -22,6 +22,7 @@ void default_constants() {
   chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0);
   chassis.set_pid_constants(&chassis.turnPID_gyro_free, 0.45, 0, 2, 0);
 
+  
 }
 
 
@@ -32,7 +33,7 @@ void default_constants() {
 void guard(){
   ///init catapult
   control.set_catapult_state(DOWN);
-  
+  pros::delay(500);
   ///****
   chassis.set_turn_pid(40,40);
   control.set_intake_state(INTAKE);
@@ -53,7 +54,7 @@ void guard(){
   pros::delay(300);
   chassis.set_turn_pid(10,TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(-50,120,true);
+  chassis.set_drive_pid(-48,120,true);
   chassis.wait_drive();
   chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();
@@ -74,7 +75,7 @@ void guard(){
 * 进攻方自动程序
 */
 void attack() {
-  control.set_catapult_state(BRAKE);
+  control.set_catapult_state(MIDDLE);
   control.set_intake_state(INTAKE);
   chassis.set_drive_pid(36,DRIVE_SPEED);
   chassis.wait_drive();
@@ -90,7 +91,7 @@ void attack() {
   chassis.set_swing_pid(LEFT_SWING,0,SWING_SPEED);
   chassis.wait_drive();
 
-  chassis.set_drive_pid(12,DRIVE_SPEED);
+  chassis.set_drive_pid(14,DRIVE_SPEED);
   chassis.wait_drive();
   chassis.set_turn_pid(90,TURN_SPEED);
   chassis.wait_drive();

@@ -215,12 +215,26 @@ private:
     int intake_speed=120;
     int catapult_speed=120;
     int time_out=2000;
+    bool catapult_is_moving=false;
 };
 
 
 class Controller_Button_State{
 public:
-  inline static bool A_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_A);}
+  inline static bool A_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A);}
+  inline static bool B_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B);}
+  inline static bool X_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X);}
+  inline static bool Y_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y);}
+  inline static bool R1_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1);}
+  inline static bool R2_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2);}
+  inline static bool L1_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1);}
+  inline static bool L2_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2);}
+  inline static bool UP_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP);}
+  inline static bool DOWN_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN);}
+  inline static bool LEFT_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT);}
+  inline static bool RIGHT_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT);}
+
+    inline static bool A_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_A);}
   inline static bool B_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_B);}
   inline static bool X_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_X);}
   inline static bool Y_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_Y);}

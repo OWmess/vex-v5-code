@@ -165,36 +165,37 @@ void opcontrol() {
     chassis.arcade_standard(SPLIT);
     // chassis.tank();
     //根据按钮状态控制机器人
-    if(Controller_Button_State::R1_pressed()){//R1按下时，打开或关闭intake
+    if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
         if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
           control.set_intake_state(STOP);
         }else{//如果intake没有运行，则打开
           control.set_intake_state(default_intake_state);
         }
-        pros::delay(300);//防抖
+        // pros::delay(300);//防抖
+        
     }else if(Controller_Button_State::R2_pressed()){//R2按下时，翻转intake
       control.set_intake_state(Control::reverse_intake(default_intake_state));
     }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
       control.set_intake_state(default_intake_state);
     }
 
-    if(Controller_Button_State::L1_pressed()){//L1按下时，打开翅膀
+    if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
       control.set_wings_state(ON);
     }
-    else if(Controller_Button_State::L2_pressed()){//L2按下时，关闭翅膀
+    else if(Controller_Button_State::L2_new_press()){//L2按下时，关闭翅膀
       control.set_wings_state(OFF);
     }
-    if(Controller_Button_State::A_pressed()){
+    if(Controller_Button_State::A_new_press()){
       control.set_catapult_state(MIDDLE);
-      pros::delay(300);
-    }else if(Controller_Button_State::B_pressed()){
+      // pros::delay(300);
+    }else if(Controller_Button_State::B_new_press()){
       control.set_catapult_state(DOWN);
-      pros::delay(300);
-
+      // pros::delay(300);
     }
-    if(Controller_Button_State::RIGHT_pressed()){
+
+    if(Controller_Button_State::RIGHT_new_press()){
       control.set_hanger_state(OFF);
-    }else if(Controller_Button_State::LEFT_pressed()){
+    }else if(Controller_Button_State::LEFT_new_press()){
       control.set_hanger_state(ON);
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
