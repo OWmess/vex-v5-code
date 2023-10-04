@@ -6,8 +6,8 @@
  *        
 */
 #define CATAPULT_UP_POS     360.0-350.0
-#define CATAPULT_MIDDLE_POS  360.0-307.0
-#define CATAPULT_DOWN_POS    360.0-295.5
+#define CATAPULT_MIDDLE_POS  360.0-318.0
+#define CATAPULT_DOWN_POS    360.0-302.5
 
 Control_State Control::intake_state=INTAKE;
 Catapult_State Control::catapult_state=MIDDLE;
@@ -38,8 +38,9 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   set_catapult_up_pos(CATAPULT_UP_POS);
   set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
   set_catapult_down_pos(CATAPULT_DOWN_POS);
-  cata_PID={8,0,20,0};
-  cata_PID.set_exit_condition(20, 1, 50, 3, 500, 3000);
+  cata_PID={15,0.6,10,3};
+  cata_PID.set_velocity_out(0.0001);
+  cata_PID.set_exit_condition(20, 1, 50, 1.5, 500, 3000);
 }
 
 
@@ -61,33 +62,58 @@ void Control::set_intake(int speed,Control_State state){
 void Control::set_catapult(int speed,Catapult_State state) {
   int cnt=0;
   double start_t=pros::millis();
-
+  time_out=5000;
   auto cata_to_top_lambda=[this,start_t,speed](float degree){
     this->catapult_motor->move(speed);
-    while(pros::millis()-start_t<time_out&&cata_rotation->get_velocity()>=0){
-      pros::delay(10);
+    while(pros::millis()-start_t<time_out){
+      pros::delay(1);
+      if(cata_rotation->get_velocity()>-2)
+        continue;
+      else
+       break;
     }
+    this->catapult_motor->brake();
+    // pros::delay(1000);
+
+    // double cata_angle=0;
+    // while(pros::millis()-start_t<time_out){
+    //   cata_angle=cata_rotation->get_angle()/100.f;
+    //   static double cnt=0;
+    //   cout<<cnt++<<"  "<<cata_angle<<endl;
+    //   if(cata_angle<5.0||(cata_angle>=350.f&&cata_angle<=360.f)){
+    //     cout<<"break"<<endl;
+    //     break;
+    //   }
+    //   pros::delay(10);
+    // }
   };
 
   auto cata_to_degree_lambda=[this,start_t,speed,state](float degree){
     //PID控制电机
     cata_PID.set_target(degree);
     while(pros::millis()-start_t<time_out){
-      if(cata_rotation->get_velocity()<0)//发射架在复位途中,忽略
-        continue;
+      pros::delay(20);
       auto cata_angle=cata_rotation->get_angle()/100.f;
+      if(cata_rotation->get_velocity()<-1){//发射架在复位途中,忽略
+        catapult_motor->brake();
+        continue;
+      }else{
+        catapult_motor->move(speed);
+      }
       //防止因发射架挤压限位形变所导致的数值计算错误
       if(cata_angle>350.f&&cata_angle<360.f){
         cata_angle=0.f;
       }
       double out=cata_PID.compute(cata_angle);
+      cout<<"PID error "<<cata_PID.error<<"  PID out "<<out<<endl;
       out=util::clip_num(out, speed, 0);
       catapult_motor->move(out);
       //当pid输出<=0时，则说明已运动到目标位置或已越过目标位置，但由于棘轮的存在无法回到目标位置，此时退出循环
-      if(cata_PID.exit_condition(*catapult_motor.get())!=RUNNING||out<=0){
+      auto exit_condition=cata_PID.exit_condition(*catapult_motor.get());
+      if(exit_condition!=RUNNING||out<=0||cata_angle>=degree){
+        std::cout<<"exit condition: "<<exit_to_string(exit_condition)<<std::endl;
         break;
       }
-      pros::delay(5);
     }
     catapult_motor->brake();
   };
@@ -99,6 +125,7 @@ void Control::set_catapult(int speed,Catapult_State state) {
     catapult_motor->brake();
   }else if(state==DOWN){
     cata_to_top_lambda(catapult_down_pos);
+    
     cata_to_degree_lambda(catapult_down_pos);
   }else if(state==MIDDLE){
     cata_to_top_lambda(catapult_middle_pos);
@@ -163,11 +190,14 @@ void Control::control_task(){
     }
     if(drive_hanger){
       set_hanger(hanger_state);
+
       drive_hanger=false;
     }
     auto cata_angle=cata_rotation->get_angle()/100.f;
     if(cata_angle<catapult_middle_pos-5||(cata_angle>350.f&&cata_angle<360.f)){
       set_intake(0, STOP);
+    }else{
+      set_intake(intake_speed, intake_state);
     }
     double temperature=catapult_motor->get_temperature();
     master.print(0, 0,"cata temp %lf",temperature);

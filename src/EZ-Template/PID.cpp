@@ -60,13 +60,17 @@ double PID::compute(double current) {
   derivative = error - prev_error;
 
   if (constants.ki != 0) {
-    if (fabs(error) < constants.start_i)
+    if (fabs(error) < constants.start_i){
       integral += error;
+      cout<<"integral: "<<integral<<"\n";
+    }
 
     if (util::sgn(error) != util::sgn(prev_error))
       integral = 0;
+    
+    printf("error: %lf prev_error: %lf integral: %lf\n",error,prev_error,integral*constants.ki);
+    
   }
-
   output = (error * constants.kp) + (integral * constants.ki) + (derivative * constants.kd);
 
   prev_error = error;
@@ -134,7 +138,7 @@ exit_output PID::exit_condition(bool print) {
 
   // If the motor velocity is 0,the code will timeout and set interfered to true.
   if (exit.velocity_exit_time != 0) {  // Check if this condition is enabled
-    if (abs(derivative) <= 0.05) {
+    if (abs(derivative) <= velocity_out) {
       k += util::DELAY_TIME;
       if (k > exit.velocity_exit_time) {
         reset_timers();
@@ -195,3 +199,5 @@ exit_output PID::exit_condition(std::vector<pros::Motor> sensor, bool print) {
 
   return exit_condition(print);
 }
+
+void PID::set_velocity_out(double p_velocity_out) { velocity_out = p_velocity_out; }
