@@ -200,4 +200,6 @@ exit_output PID::exit_condition(std::vector<pros::Motor> sensor, bool print) {
   return exit_condition(print);
 }
 
-void PID::set_velocity_out(double p_velocity_out) { velocity_out = p_velocity_out; }
+void PID::set_velocity_out(double p_velocity_out) {
+   velocity_out = p_velocity_out; 
+}

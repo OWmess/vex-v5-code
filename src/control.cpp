@@ -1,4 +1,6 @@
+#include <memory>
 #include "main.h"
+#include "pros/motors.h"
 
 /**
  * @brief catapult 在中间和在底部时的角度值，该值可通过主控器直接观测得到，但若角度传感器正方向与投石机下压方向相反，
@@ -6,8 +8,8 @@
  *        
 */
 #define CATAPULT_UP_POS     360.0-350.0
-#define CATAPULT_MIDDLE_POS  360.0-318.0
-#define CATAPULT_DOWN_POS    360.0-302.5
+#define CATAPULT_MIDDLE_POS  360.0-319.0
+#define CATAPULT_DOWN_POS    360.0-303
 
 Control_State Control::intake_state=INTAKE;
 Catapult_State Control::catapult_state=MIDDLE;
@@ -22,14 +24,13 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
     intake_motors.push_back(temp);
     intake_motors.back().set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   }
+  catapult_motor=std::make_unique<pros::Motor>(abs(catapult_motor_port),catapult_gearset,util::is_reversed(catapult_motor_port));
+  catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+  cata_rotation=std::make_unique<pros::Rotation>(abs(catapult_rotation_port),ez::util::is_reversed(catapult_rotation_port));
 
-  catapult_motor=std::make_shared<pros::Motor>(abs(catapult_motor_port),catapult_gearset,util::is_reversed(catapult_motor_port));
-  catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-  cata_rotation=std::make_shared<pros::Rotation>(abs(catapult_rotation_port),ez::util::is_reversed(catapult_rotation_port));
-
-  wings_l=std::make_shared<pros::ADIDigitalOut>(abs(wings_ports[0]),util::is_reversed(wings_ports[0]));
-  wings_r=std::make_shared<pros::ADIDigitalOut>(abs(wings_ports[1]),util::is_reversed(wings_ports[1]));
-  hanger=std::make_shared<pros::ADIDigitalOut>(abs(hanger_port),util::is_reversed(hanger_port));
+  wings_l=std::make_unique<pros::ADIDigitalOut>(abs(wings_ports[0]),util::is_reversed(wings_ports[0]));
+  wings_r=std::make_unique<pros::ADIDigitalOut>(abs(wings_ports[1]),util::is_reversed(wings_ports[1]));
+  hanger=std::make_unique<pros::ADIDigitalOut>(abs(hanger_port),util::is_reversed(hanger_port));
 
   wings_reversed[0]=util::is_reversed(wings_ports[0]);
   wings_reversed[1]=util::is_reversed(wings_ports[1]);
@@ -38,8 +39,9 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   set_catapult_up_pos(CATAPULT_UP_POS);
   set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
   set_catapult_down_pos(CATAPULT_DOWN_POS);
+  // 配置catapult的pid参数
   cata_PID={15,0.6,10,3};
-  cata_PID.set_velocity_out(0.0001);
+  cata_PID.set_velocity_out(0.1);
   cata_PID.set_exit_condition(20, 1, 50, 1.5, 500, 3000);
 }
 
@@ -51,16 +53,15 @@ void Control::set_intake(int speed,Control_State state){
     }
     return;
   }
-  if(!catapult_is_moving)
-    for(const pros::Motor &intake_motor:intake_motors){
-      intake_motor.move(state==INTAKE?speed:-speed);
-    }
+  for(const pros::Motor &intake_motor:intake_motors){
+    intake_motor.move(state==INTAKE?speed:-speed);
+  }
 
 }
 
 
 void Control::set_catapult(int speed,Catapult_State state) {
-  int cnt=0;
+  int cnt=0; 
   double start_t=pros::millis();
   time_out=5000;
   auto cata_to_top_lambda=[this,start_t,speed](float degree){
@@ -73,19 +74,6 @@ void Control::set_catapult(int speed,Catapult_State state) {
        break;
     }
     this->catapult_motor->brake();
-    // pros::delay(1000);
-
-    // double cata_angle=0;
-    // while(pros::millis()-start_t<time_out){
-    //   cata_angle=cata_rotation->get_angle()/100.f;
-    //   static double cnt=0;
-    //   cout<<cnt++<<"  "<<cata_angle<<endl;
-    //   if(cata_angle<5.0||(cata_angle>=350.f&&cata_angle<=360.f)){
-    //     cout<<"break"<<endl;
-    //     break;
-    //   }
-    //   pros::delay(10);
-    // }
   };
 
   auto cata_to_degree_lambda=[this,start_t,speed,state](float degree){
@@ -124,11 +112,14 @@ void Control::set_catapult(int speed,Catapult_State state) {
   if(state==BRAKE){
     catapult_motor->brake();
   }else if(state==DOWN){
-    cata_to_top_lambda(catapult_down_pos);
-    
+    if(cata_rotation->get_angle()/100.f>=catapult_down_pos-5){
+      cata_to_top_lambda(catapult_down_pos);
+    }
     cata_to_degree_lambda(catapult_down_pos);
   }else if(state==MIDDLE){
-    cata_to_top_lambda(catapult_middle_pos);
+    if(cata_rotation->get_angle()/100.f>=catapult_middle_pos-5){
+      cata_to_top_lambda(catapult_down_pos);
+    }
     cata_to_degree_lambda(catapult_middle_pos);
   }else if(state==UP){
     cata_to_degree_lambda(catapult_up_pos);

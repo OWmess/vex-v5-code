@@ -191,12 +191,12 @@ private:
 public:
     PID cata_PID;
 private:
-    std::shared_ptr<pros::Rotation> cata_rotation;
+    std::unique_ptr<pros::Rotation> cata_rotation;
     std::vector<pros::Motor> intake_motors;
-    std::shared_ptr<pros::Motor> catapult_motor;
-    std::shared_ptr<pros::ADIDigitalOut> wings_l;
-    std::shared_ptr<pros::ADIDigitalOut> wings_r;
-    std::shared_ptr<pros::ADIDigitalOut> hanger;
+    std::unique_ptr<pros::Motor> catapult_motor;
+    std::unique_ptr<pros::ADIDigitalOut> wings_l;
+    std::unique_ptr<pros::ADIDigitalOut> wings_r;
+    std::unique_ptr<pros::ADIDigitalOut> hanger;
     double catapult_up_pos;
     double catapult_middle_pos;
     double catapult_down_pos;
@@ -215,7 +215,6 @@ private:
     int intake_speed=120;
     int catapult_speed=120;
     int time_out=2000;
-    bool catapult_is_moving=false;
 };
 
 
