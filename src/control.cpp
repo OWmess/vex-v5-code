@@ -9,15 +9,15 @@
 */
 #define CATAPULT_UP_POS     360.0-350.0
 #define CATAPULT_MIDDLE_POS  360.0-319.0
-#define CATAPULT_DOWN_POS    360.0-303
+#define CATAPULT_DOWN_POS    360.0-303.0
 
 Control_State Control::intake_state=INTAKE;
 Catapult_State Control::catapult_state=MIDDLE;
 Control_State Control::wings_state=OFF;
-Control_State Control::hanger_state=OFF;
+Control_State Control::armer_state=OFF;
 Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &catapult_motor_port,
     pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_rotation_port,const std::vector<int8_t> &wings_ports,
-    const int8_t &hanger_port):task([this](){this->control_task();}),catapult_task([this](){this->catapult_task_func();}){
+    const std::vector<int8_t> &armer_ports):task([this](){this->control_task();}),catapult_task([this](){this->catapult_task_func();}){
   //创建各个电机、电磁阀对象
   for(auto port:intake_motor_ports){
     pros::Motor temp{static_cast<int8_t>(abs(port)),intake_gearset,util::is_reversed(port)};
@@ -28,13 +28,19 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
   cata_rotation=std::make_unique<pros::Rotation>(abs(catapult_rotation_port),ez::util::is_reversed(catapult_rotation_port));
 
-  wings_l=std::make_unique<pros::ADIDigitalOut>(abs(wings_ports[0]),util::is_reversed(wings_ports[0]));
-  wings_r=std::make_unique<pros::ADIDigitalOut>(abs(wings_ports[1]),util::is_reversed(wings_ports[1]));
-  hanger=std::make_unique<pros::ADIDigitalOut>(abs(hanger_port),util::is_reversed(hanger_port));
+  for(const auto &wing_port:wings_ports){
+    PneumaticsStruct tmp;
+    tmp.pneumatics=std::make_shared<pros::ADIDigitalOut>(abs(wing_port),util::is_reversed(wing_port));
+    tmp.reversed=util::is_reversed(wing_port);
+    wings.push_back(tmp);
+  }
 
-  wings_reversed[0]=util::is_reversed(wings_ports[0]);
-  wings_reversed[1]=util::is_reversed(wings_ports[1]);
-  hanger_reversed=util::is_reversed(hanger_port);
+  for(const auto &armer_port:armer_ports){
+    PneumaticsStruct tmp;
+    tmp.pneumatics=std::make_shared<pros::ADIDigitalOut>(abs(armer_port),util::is_reversed(armer_port));
+    tmp.reversed=util::is_reversed(armer_port);
+    armers.push_back(tmp);
+  }
 
   set_catapult_up_pos(CATAPULT_UP_POS);
   set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
@@ -128,12 +134,15 @@ void Control::set_catapult(int speed,Catapult_State state) {
 }
 
 void Control::set_wings(Control_State state){
-  wings_l->set_value(state==ON?!wings_reversed[0]:wings_reversed[0]);
-  wings_r->set_value(state==ON?!wings_reversed[1]:wings_reversed[1]);
+  for(const auto &wing:wings){
+    wing.pneumatics->set_value(state==ON?!wing.reversed:wing.reversed);
+  }
 }
 
-void Control::set_hanger(Control_State state){
-  hanger->set_value(state==ON?!hanger_reversed:hanger_reversed);
+void Control::set_armer(Control_State state){
+  for(const auto &armer:armers){
+    armer.pneumatics->set_value(state==ON?!armer.reversed:armer.reversed);
+  }
 }
 
 void Control::set_catapult_up_pos(double pos){
@@ -179,10 +188,10 @@ void Control::control_task(){
       set_wings(wings_state);
       drive_wings=false;
     }
-    if(drive_hanger){
-      set_hanger(hanger_state);
+    if(drive_armer){
+      set_armer(armer_state);
 
-      drive_hanger=false;
+      drive_armer=false;
     }
     auto cata_angle=cata_rotation->get_angle()/100.f;
     if(cata_angle<catapult_middle_pos-5||(cata_angle>350.f&&cata_angle<360.f)){

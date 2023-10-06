@@ -1,6 +1,8 @@
 #pragma once
+#include <memory>
 #include "api.h"
 #include "EZ-template/api.hpp"
+#include "pros/adi.hpp"
 enum Control_State{
     INTAKE,
     OUTTAKE,
@@ -23,11 +25,11 @@ public:
      * \param catapult_gearset gearset of the catapult motor
      * \param catapult_press_button_port port of the catapult press button
      * \param wings_ports ports of the wings (negative port will reverse it!)
-     * \param hanger_ports ports of the hanger (negative port will reverse it!)
+     * \param armer_ports ports of the armer (negative port will reverse it!)
     */
     Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &catapult_motor_port,
     pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_rotation_port,const std::vector<int8_t> &wings_ports,
-    const int8_t &hanger_ports);
+    const std::vector<int8_t> &armer_ports);
 
     /**
      * \param 设置投石机在下方的位置
@@ -77,13 +79,13 @@ public:
     }
 
     /**
-     * \param state 设置hanger的模式
+     * \param state 设置armer的模式
      * - ON: 打开
      * - OFF: 关闭
     */
-    inline void set_hanger_state(Control_State state){
-        hanger_state=state;
-        drive_hanger=true;
+    inline void set_armer_state(Control_State state){
+        armer_state=state;
+        drive_armer=true;
     }
     /**
      * \param speed 设置intake的速度,默认值为100
@@ -101,10 +103,10 @@ public:
         catapult_speed=speed;
     }
     /**
-     * \return 返回hanger的当前模式
+     * \return 返回armer的当前模式
     */
-    inline Control_State get_hanger_state(){
-        return hanger_state;
+    inline Control_State get_armer_state(){
+        return armer_state;
     }
 
     /**
@@ -180,38 +182,44 @@ private:
      * - ON: 打开勾爪
      * - OFF: 关闭勾爪
     */
-    void set_hanger(Control_State state);
+    void set_armer(Control_State state);
 
     /**
      * \brief 维护上层机构的task
     */
     void control_task();
 
+    /**
+     * \brief 维护投石机的task
+    */
     void catapult_task_func();
 public:
     PID cata_PID;
 private:
+    struct PneumaticsStruct{
+        std::shared_ptr<pros::ADIDigitalOut> pneumatics;
+        bool reversed;
+
+    };
     std::unique_ptr<pros::Rotation> cata_rotation;
     std::vector<pros::Motor> intake_motors;
     std::unique_ptr<pros::Motor> catapult_motor;
-    std::unique_ptr<pros::ADIDigitalOut> wings_l;
-    std::unique_ptr<pros::ADIDigitalOut> wings_r;
-    std::unique_ptr<pros::ADIDigitalOut> hanger;
+    std::vector<PneumaticsStruct> wings;
+    std::vector<PneumaticsStruct> armers;
     double catapult_up_pos;
     double catapult_middle_pos;
     double catapult_down_pos;
-    std::array<bool,2> wings_reversed;
-    bool hanger_reversed;
+    bool armer_reversed;
     pros::Task task;
     pros::Task catapult_task;
     static Control_State intake_state;
     static Control_State wings_state;
     static Catapult_State catapult_state;
-    static Control_State hanger_state;
+    static Control_State armer_state;
     bool drive_catapult;
     bool drive_intake;
     bool drive_wings;
-    bool drive_hanger;
+    bool drive_armer;
     int intake_speed=120;
     int catapult_speed=120;
     int time_out=2000;

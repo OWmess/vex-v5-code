@@ -51,9 +51,9 @@ Control control=Control(
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
   ,{'B', -'G'}
 
-  // Hanger Ports: (negative port will reverse it!)
+  // armer Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
-  ,'A'
+  ,{'A'}
 );
 
 
@@ -194,9 +194,9 @@ void opcontrol() {
     }
 
     if(Controller_Button_State::RIGHT_new_press()){
-      control.set_hanger_state(OFF);
+      control.set_armer_state(OFF);
     }else if(Controller_Button_State::LEFT_new_press()){
-      control.set_hanger_state(ON);
+      control.set_armer_state(ON);
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
