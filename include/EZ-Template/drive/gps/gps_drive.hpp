@@ -31,7 +31,7 @@ public:
     bool check_Gps();
 public:
     PID heading_PID;
-    PID turn_PID;
+    Gps_PID turn_PID;
     Gps_PID straight_PID;
     
 private:

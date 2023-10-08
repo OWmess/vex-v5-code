@@ -1,6 +1,6 @@
 #pragma once
 #include "EZ-Template/PID.hpp"
-
+#include "EZ-Template/util.hpp"
 
 namespace GPS_STRUCT{
   struct Point2d{
@@ -53,8 +53,43 @@ class Gps_PID:public PID{
 
     }
 
-    double compute(double current)=delete;
-    void set_target(double current)=delete;
+    void set_target(double t){
+      target=t;
+    }
+
+    double compute(double current){
+      error = target - current;
+      derivative = error - prev_error;
+      if(error>180){
+        error-=360;
+      }
+      else if(error<-180){
+        error+=360;
+      }
+      // if(target>180){
+      //   if(error>180){
+      //     error-=360;
+      //   }
+      // }
+      // else if(target<180){
+      //   if(error<-180){
+      //     error+=360;
+      //   }
+      // }
+      if (constants.ki != 0) {
+        if (fabs(error) < constants.start_i)
+          integral += error;
+
+        if (ez::util::sgn(error) != ez::util::sgn(prev_error))
+          integral = 0;
+      }
+
+      output = (error * constants.kp) + (integral * constants.ki) + (derivative * constants.kd);
+
+      prev_error = error;
+
+      return output;
+    } 
 
   private:
 

@@ -8,6 +8,7 @@
 #include "pros/screen.hpp"
 
 #define HEADING_THRESH 0.1
+#define OUT_THRESH 0.08
 Gps_Drive::Gps_Drive(Drive &drive_chassis,const std::uint8_t port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset):
     gps_sensor(port,xInitial,yInitial,headingInitial,xOffset,yOffset),chassis_reference(drive_chassis),
     gps_task([this](){this->gps_task_func();})
@@ -73,12 +74,12 @@ Gps_Drive::Gps_Drive(Drive &drive_chassis,const std::uint8_t port, double xIniti
 
     auto [p,i,d,start_i] =chassis_reference.turnPID.get_constants();
     // set_pid_contants(&turn_PID, p, i, d, start_i);
-    set_pid_contants(&turn_PID, 3, 0.003, 20, 10);
+    set_pid_contants(&turn_PID, 3, 0, 20, 0);
     
     set_pid_contants(&straight_PID, 300,0,600,0);
     set_pid_contants(&heading_PID, 4, 0.000, 10,0);
     turn_PID.set_exit_condition( 100, 1, 500, 3, 50000, 5000);
-    straight_PID.set_exit_condition(80, 0.01, 300, 0.02, 50000, 5000);
+    straight_PID.set_exit_condition(80, 0.1, 300, 0.02, 50000, 5000);
 
     task_mode=Task_Mode::MONITOR;
     heading_thresh=HEADING_THRESH;
@@ -114,7 +115,9 @@ void Gps_Drive::gps_task_func(){
             switch (task_mode) {
                 case Task_Mode::MONITOR:
                     task_mode=Task_Mode::TURN;
-                case Task_Mode::TURN: 
+                case Task_Mode::TURN:
+                    ///TODO: 测试需删除
+                    task_mode=Task_Mode::STRAIGHT;  
                     turn_PID.compute(heading_angle);
                     file.open(path, std::ios::out | std::ios::app);
                     file<<"heading "<<heading_angle<<" , "<<turn_PID.output<<"\n";
@@ -140,13 +143,8 @@ void Gps_Drive::gps_task_func(){
                     r_out=straight_out-heading_out;
                     pros::screen::print(pros::E_TEXT_MEDIUM,3,"straight_out%.2lf , heading_out%.2lf,",straight_out,heading_out);
                     pros::screen::print(pros::E_TEXT_MEDIUM,4,"heading_target%.2f",heading_PID.get_target());
-                    file.open(path, std::ios::out | std::ios::app);
-                    file<<"r "<<r<<std::endl;
-                    file<<"heading_thresh"<<pow(heading_thresh,2)<<std::endl;
-                    file<<"straight_out "<<straight_out<<" , "<<straight_out<<"\n";
-                    file<<"position "<<position.x <<" , "<<position.y<<"\n";
-                    file.close();
-                    if(straight_PID.exit_condition(chassis_reference.left_motors[0])!=ez::RUNNING) {
+
+                    if(straight_PID.exit_condition(chassis_reference.left_motors[0])!=ez::RUNNING||r<pow(OUT_THRESH,2)) {
                         task_mode=Task_Mode::MONITOR;
                         drive_toggle=false;
                         ///TODO: 单位为米时会因为derivative变化过小而退出 
