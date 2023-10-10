@@ -171,13 +171,11 @@ void opcontrol() {
         }else{//如果intake没有运行，则打开
           control.set_intake_state(default_intake_state);
         }
-        // pros::delay(300);//防抖
-        
     }else if(Controller_Button_State::R2_pressed()){//R2按下时，翻转intake
       control.set_intake_state(Control::reverse_intake(default_intake_state));
     }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
       control.set_intake_state(default_intake_state);
-    }
+    } 
 
     if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
       control.set_wings_state(ON);

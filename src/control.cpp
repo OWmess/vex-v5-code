@@ -9,9 +9,9 @@
 */
 #define CATAPULT_UP_POS     360.0-350.0
 #define CATAPULT_MIDDLE_POS  360.0-319.0
-#define CATAPULT_DOWN_POS    360.0-303.0
+#define CATAPULT_DOWN_POS    360.0-305.0
 
-Control_State Control::intake_state=INTAKE;
+Control_State Control::intake_state=STOP;
 Catapult_State Control::catapult_state=MIDDLE;
 Control_State Control::wings_state=OFF;
 Control_State Control::armer_state=OFF;
@@ -46,9 +46,9 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
   set_catapult_down_pos(CATAPULT_DOWN_POS);
   // 配置catapult的pid参数
-  cata_PID={15,0.6,10,3};
+  cata_PID={18,2,10,3};
   cata_PID.set_velocity_out(0.1);
-  cata_PID.set_exit_condition(20, 1, 50, 1.5, 500, 3000);
+  cata_PID.set_exit_condition(20, 1, 50, 1.5, 1000, 3000);
 }
 
 
