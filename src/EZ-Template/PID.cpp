@@ -62,13 +62,13 @@ double PID::compute(double current) {
   if (constants.ki != 0) {
     if (fabs(error) < constants.start_i){
       integral += error;
-      cout<<"integral: "<<integral<<"\n";
+      // cout<<"integral: "<<integral<<"\n";
     }
 
     if (util::sgn(error) != util::sgn(prev_error))
       integral = 0;
     
-    printf("error: %lf prev_error: %lf integral: %lf\n",error,prev_error,integral*constants.ki);
+    // printf("error: %lf prev_error: %lf integral: %lf\n",error,prev_error,integral*constants.ki);
     
   }
   output = (error * constants.kp) + (integral * constants.ki) + (derivative * constants.kd);

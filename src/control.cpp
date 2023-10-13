@@ -1,15 +1,31 @@
 #include <memory>
 #include "main.h"
 #include "pros/motors.h"
+#include "pros/rtos.h"
 
+///********************************参数配置*******************************************///
 /**
  * @brief catapult 在中间和在底部时的角度值，该值可通过主控器直接观测得到，但若角度传感器正方向与投石机下压方向相反，
  *       则需取反后+360
  *        
 */
-#define CATAPULT_UP_POS     360.0-350.0
-#define CATAPULT_MIDDLE_POS  360.0-319.0
-#define CATAPULT_DOWN_POS    360.0-305.0
+#define CATAPULT_UP_POS     10.0
+#define CATAPULT_MIDDLE_POS  43.0
+#define CATAPULT_DOWN_POS    55.0
+
+///**********************************************************************************///
+
+static inline bool check_task_notify(pros::Task &task,uint32_t delay,bool &flag){
+  auto notify=task.notify_take(false, delay);
+  if(notify) {
+    task.notify();
+    flag=true;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+    return true;
+  }
+  return false;
+}
+
+
 
 Control_State Control::intake_state=STOP;
 Catapult_State Control::catapult_state=MIDDLE;
@@ -71,9 +87,12 @@ void Control::set_catapult(int speed,Catapult_State state) {
   double start_t=pros::millis();
   time_out=5000;
   auto cata_to_top_lambda=[this,start_t,speed](float degree){
+    // if(check_task_notify(1,cata_exit_condition)){
+    //   this->catapult_motor->brake();
+    //   return;
+    // }
     this->catapult_motor->move(speed);
-    while(pros::millis()-start_t<time_out){
-      pros::delay(1);
+    while(pros::millis()-start_t<time_out) {
       if(cata_rotation->get_velocity()>-2)
         continue;
       else
@@ -86,20 +105,21 @@ void Control::set_catapult(int speed,Catapult_State state) {
     //PID控制电机
     cata_PID.set_target(degree);
     while(pros::millis()-start_t<time_out){
-      pros::delay(20);
+      if(check_task_notify(catapult_task,10,cata_exit_condition)){
+        this->catapult_motor->brake();
+        return;
+      }
       auto cata_angle=cata_rotation->get_angle()/100.f;
       if(cata_rotation->get_velocity()<-1){//发射架在复位途中,忽略
         catapult_motor->brake();
         continue;
-      }else{
-        catapult_motor->move(speed);
       }
-      //防止因发射架挤压限位形变所导致的数值计算错误
+      //防止因发射架挤压限位形变所导致的数值计算错误 
       if(cata_angle>350.f&&cata_angle<360.f){
         cata_angle=0.f;
       }
       double out=cata_PID.compute(cata_angle);
-      cout<<"PID error "<<cata_PID.error<<"  PID out "<<out<<endl;
+      // cout<<"PID error "<<cata_PID.error<<"  PID out "<<out<<endl;
       out=util::clip_num(out, speed, 0);
       catapult_motor->move(out);
       //当pid输出<=0时，则说明已运动到目标位置或已越过目标位置，但由于棘轮的存在无法回到目标位置，此时退出循环
@@ -109,6 +129,7 @@ void Control::set_catapult(int speed,Catapult_State state) {
         break;
       }
     }
+    cata_exit_condition=false;
     catapult_motor->brake();
   };
 
@@ -118,17 +139,17 @@ void Control::set_catapult(int speed,Catapult_State state) {
   if(state==BRAKE){
     catapult_motor->brake();
   }else if(state==DOWN){
-    if(cata_rotation->get_angle()/100.f>=catapult_down_pos-5){
+    if(cata_rotation->get_angle()/100.f>=catapult_down_pos-5||cata_exit_condition){
       cata_to_top_lambda(catapult_down_pos);
     }
     cata_to_degree_lambda(catapult_down_pos);
   }else if(state==MIDDLE){
-    if(cata_rotation->get_angle()/100.f>=catapult_middle_pos-5){
+    if(cata_rotation->get_angle()/100.f>=catapult_middle_pos-5||cata_exit_condition){
       cata_to_top_lambda(catapult_down_pos);
     }
     cata_to_degree_lambda(catapult_middle_pos);
   }else if(state==UP){
-    cata_to_degree_lambda(catapult_up_pos);
+    cata_to_top_lambda(catapult_down_pos);
   }
 
 }
@@ -160,11 +181,12 @@ void Control::set_catapult_down_pos(double pos){
 void Control::catapult_task_func(){
   while (true) {
     // block for up to 50ms waiting for a notification and clear the value
-    if(pros::Task::notify_take(true, 50)){
+    auto t=catapult_task.notify_take(true, 50);
+    if(cata_exit_condition)
+      std::cout<<"t "<<t<<std::endl;
+    if(t){
       set_intake(0,STOP);
-      // catapult_is_moving=true;
       set_catapult(catapult_speed,catapult_state);
-      // catapult_is_moving=false;
       set_intake(intake_speed, intake_state);
     }
     // no need to delay here because the call to notify_take blocks

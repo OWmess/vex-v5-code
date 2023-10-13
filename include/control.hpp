@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include "EZ-Template/util.hpp"
 #include "api.h"
 #include "EZ-template/api.hpp"
 #include "pros/adi.hpp"
@@ -216,6 +217,7 @@ private:
     static Control_State wings_state;
     static Catapult_State catapult_state;
     static Control_State armer_state;
+    bool cata_exit_condition=false;
     bool drive_catapult;
     bool drive_intake;
     bool drive_wings;
