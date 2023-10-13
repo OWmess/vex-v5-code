@@ -87,10 +87,11 @@ void Control::set_catapult(int speed,Catapult_State state) {
   double start_t=pros::millis();
   time_out=5000;
   auto cata_to_top_lambda=[this,start_t,speed](float degree){
-    // if(check_task_notify(1,cata_exit_condition)){
-    //   this->catapult_motor->brake();
-    //   return;
-    // }
+    ////检测是否有其他task通知catapult运动
+    if(check_task_notify(catapult_task,1,cata_exit_condition)){
+      this->catapult_motor->brake();
+      return;
+    }
     this->catapult_motor->move(speed);
     while(pros::millis()-start_t<time_out) {
       if(cata_rotation->get_velocity()>-2)
@@ -100,12 +101,13 @@ void Control::set_catapult(int speed,Catapult_State state) {
     }
     this->catapult_motor->brake();
   };
-
+  
   auto cata_to_degree_lambda=[this,start_t,speed,state](float degree){
     //PID控制电机
     cata_PID.set_target(degree);
     while(pros::millis()-start_t<time_out){
-      if(check_task_notify(catapult_task,10,cata_exit_condition)){
+      //检测是否有其他task通知catapult运动
+      if(check_task_notify(catapult_task,10,cata_exit_condition)) {
         this->catapult_motor->brake();
         return;
       }
@@ -132,9 +134,6 @@ void Control::set_catapult(int speed,Catapult_State state) {
     cata_exit_condition=false;
     catapult_motor->brake();
   };
-
-  // catapult_motor->move(speed);
-  // pros::delay(350);
 
   if(state==BRAKE){
     catapult_motor->brake();

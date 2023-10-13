@@ -213,10 +213,6 @@ private:
     bool armer_reversed;
     pros::Task task;
     pros::Task catapult_task;
-    static Control_State intake_state;
-    static Control_State wings_state;
-    static Catapult_State catapult_state;
-    static Control_State armer_state;
     bool cata_exit_condition=false;
     bool drive_catapult;
     bool drive_intake;
@@ -225,6 +221,10 @@ private:
     int intake_speed=120;
     int catapult_speed=120;
     int time_out=2000;
+    static Control_State intake_state;
+    static Control_State wings_state;
+    static Catapult_State catapult_state;
+    static Control_State armer_state;
 };
 
 
