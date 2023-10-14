@@ -79,6 +79,7 @@ void initialize() {
     Auton("Guard.", guard),
     Auton("Conservatively attack. ", conservatively_attack),
     Auton("test pid",test_pid),
+    Auton("skill match",skill_match)
   });
   chassis.initialize();
   as::initialize();

@@ -1,10 +1,14 @@
+#include "autons.hpp"
+#include "EZ-Template/util.hpp"
+#include "control.hpp"
 #include "main.h"
+#include "pros/rtos.hpp"
 
 /**
  * 设置正常运行时的底盘速度
 */
-#define DRIVE_SPEED  100
-#define TURN_SPEED   80
+#define DRIVE_SPEED  120
+#define TURN_SPEED   100
 #define SWING_SPEED  80
 
 /**
@@ -161,19 +165,49 @@ void conservatively_attack(){
   chassis.wait_drive();
 }
 
+void skill_match(){
+  control.set_catapult_state(MIDDLE);
+  control.set_wings_state(ON);
+  pros::delay(300);
+  control.set_wings_state(OFF);
+  control.set_intake_state(OUTTAKE);
+  chassis.set_turn_pid(45, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(20, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_swing_pid(ez::LEFT_SWING, 90,-SWING_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(10, DRIVE_SPEED);
+  chassis.wait_drive();
+
+
+  // auto start_t=pros::millis();
+  // auto cata_motor_reference=control.get_catapult_motor();
+  // cata_motor_reference.move(120);
+  // while(pros::millis()-start_t<3000){
+  //   pros::delay(ez::util::DELAY_TIME);
+  // }
+  // control.set_catapult_state(MIDDLE);
+
+
+}
+
+
+
+
 void test_pid(){
-  float P =0.5,I=0,D=2;
   chassis.set_pid_logger(true);
-  for(int i=0;i<5;++i){
-    chassis.set_drive_pid(50,DRIVE_SPEED);
-    chassis.wait_drive();
-    chassis.set_drive_pid(-50,DRIVE_SPEED);
-    chassis.wait_drive();
+  chassis.set_drive_pid(50,DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-50,DRIVE_SPEED);
+  chassis.wait_drive();
 
-    chassis.set_pid_constants(&chassis.forward_drivePID, P, I, D, 0);
-    chassis.set_pid_constants(&chassis.backward_drivePID, P, I, D, 0);
-    P*=2;
-    D*=2;
-  }
-
+  chassis.set_turn_pid(180, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(0, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_swing_pid(RIGHT_SWING, 90, SWING_SPEED);
+  chassis.wait_drive();
+  chassis.set_swing_pid(LEFT_SWING, 0, SWING_SPEED);
+  chassis.wait_drive();
 }

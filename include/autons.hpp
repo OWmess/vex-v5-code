@@ -13,3 +13,5 @@ void conservatively_attack();
 void default_constants();
 
 void test_pid();
+
+void skill_match();

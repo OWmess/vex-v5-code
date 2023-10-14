@@ -4,6 +4,7 @@
 #include "api.h"
 #include "EZ-template/api.hpp"
 #include "pros/adi.hpp"
+#include "pros/motors.hpp"
 enum Control_State{
     INTAKE,
     OUTTAKE,
@@ -148,6 +149,10 @@ public:
 
     inline void set_pid_constants(PID *pid, double p, double i, double d, double p_start_i){
         pid->set_constants(p,i,d,p_start_i);
+    }
+
+    inline pros::Motor& get_catapult_motor(){
+        return *catapult_motor;
     }
 private:
 
