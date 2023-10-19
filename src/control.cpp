@@ -5,13 +5,15 @@
 
 ///********************************参数配置*******************************************///
 /**
- * @brief catapult 在中间和在底部时的角度值，该值可通过主控器直接观测得到，但若角度传感器正方向与投石机下压方向相反，
+ * @brief 须在主控-角度传感器中设置发射架的最高点为0（SET ZERO）
+ *        catapult 在中间和在底部时的角度值，该值可通过主控器直接观测得到，但若角度传感器正方向与投石机下压方向相反，
  *       则需取反后+360
+
  *        
 */
 #define CATAPULT_UP_POS     10.0
 #define CATAPULT_MIDDLE_POS  43.0
-#define CATAPULT_DOWN_POS    55.0
+#define CATAPULT_DOWN_POS    54.0
 
 ///**********************************************************************************///
 
@@ -41,7 +43,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
     intake_motors.back().set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   }
   catapult_motor=std::make_unique<pros::Motor>(abs(catapult_motor_port),catapult_gearset,util::is_reversed(catapult_motor_port));
-  catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+  catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   cata_rotation=std::make_unique<pros::Rotation>(abs(catapult_rotation_port),ez::util::is_reversed(catapult_rotation_port));
 
   for(const auto &wing_port:wings_ports){
@@ -62,9 +64,10 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
   set_catapult_down_pos(CATAPULT_DOWN_POS);
   // 配置catapult的pid参数
-  cata_PID={18,2,10,3};
+  cata_PID={15,0.3,20,5};
   cata_PID.set_velocity_out(0.1);
-  cata_PID.set_exit_condition(20, 1, 50, 1.5, 1000, 3000);
+  cata_PID.set_exit_condition(20, 1, 50, 1, 2000, 3000);
+
 }
 
 
@@ -87,19 +90,38 @@ void Control::set_catapult(int speed,Catapult_State state) {
   double start_t=pros::millis();
   time_out=5000;
   auto cata_to_top_lambda=[this,start_t,speed](float degree){
-    ////检测是否有其他task通知catapult运动
-    if(check_task_notify(catapult_task,1,cata_exit_condition)){
-      this->catapult_motor->brake();
-      return;
-    }
     this->catapult_motor->move(speed);
     while(pros::millis()-start_t<time_out) {
-      if(cata_rotation->get_velocity()>-2)
-        continue;
-      else
-       break;
+      ////检测是否有其他task通知catapult运动
+      if(check_task_notify(catapult_task,1,cata_exit_condition)){
+        this->catapult_motor->brake();
+        return;
+      }
+      if(cata_rotation->get_velocity()<-1){//发射架在复位途中,忽略
+        break;
+      }
     }
     this->catapult_motor->brake();
+    std::deque<float> angle_queue;
+    while(true){
+      if(check_task_notify(catapult_task,30,cata_exit_condition)){
+        this->catapult_motor->brake();
+        return;
+      }
+      float angle=cata_rotation->get_angle()/100.f;
+      angle_queue.push_back(angle);
+      if(angle_queue.size()>5){
+        angle_queue.pop_front();
+      }
+      // cout<<"angle "<<angle<<endl;
+      bool res=true;
+      for_each(angle_queue.begin(),angle_queue.end(),[&res](float &angle){
+        if(!(angle>355.f||angle<2.f)){
+          res=false;
+        }
+      });
+      if(res) break;
+    }
   };
   
   auto cata_to_degree_lambda=[this,start_t,speed,state](float degree){
@@ -112,16 +134,17 @@ void Control::set_catapult(int speed,Catapult_State state) {
         return;
       }
       auto cata_angle=cata_rotation->get_angle()/100.f;
-      if(cata_rotation->get_velocity()<-1){//发射架在复位途中,忽略
-        catapult_motor->brake();
-        continue;
-      }
+      // if(cata_rotation->get_velocity()<-1){//发射架在复位途中,忽略
+      //   catapult_motor->brake();
+      //   continue;
+      // }
       //防止因发射架挤压限位形变所导致的数值计算错误 
       if(cata_angle>350.f&&cata_angle<360.f){
         cata_angle=0.f;
       }
       double out=cata_PID.compute(cata_angle);
       // cout<<"PID error "<<cata_PID.error<<"  PID out "<<out<<endl;
+      // cout<<"cata angle "<<cata_angle<<endl;
       out=util::clip_num(out, speed, 0);
       catapult_motor->move(out);
       //当pid输出<=0时，则说明已运动到目标位置或已越过目标位置，但由于棘轮的存在无法回到目标位置，此时退出循环
@@ -181,8 +204,6 @@ void Control::catapult_task_func(){
   while (true) {
     // block for up to 50ms waiting for a notification and clear the value
     auto t=catapult_task.notify_take(true, 50);
-    if(cata_exit_condition)
-      std::cout<<"t "<<t<<std::endl;
     if(t){
       set_intake(0,STOP);
       set_catapult(catapult_speed,catapult_state);
