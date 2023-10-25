@@ -1,4 +1,4 @@
-#include <memory>
+#include "control.hpp"
 #include "main.h"
 #include "pros/motors.h"
 #include "pros/rtos.h"
@@ -8,13 +8,21 @@
  * @brief 须在主控-角度传感器中设置发射架的最高点为0（SET ZERO）
  *        catapult 在中间和在底部时的角度值，该值可通过主控器直接观测得到，但若角度传感器正方向与投石机下压方向相反，
  *       则需取反后+360
-
+          数值越大，发射架越往下
  *        
 */
 #define CATAPULT_UP_POS     10.0
-#define CATAPULT_MIDDLE_POS  43.0
+#define CATAPULT_MIDDLE_POS  44.0
 #define CATAPULT_DOWN_POS    54.0
 
+
+/**
+ * @brief 发射架的PID参数
+*/
+#define CATA_KP             15
+#define CATA_KI             0.1
+#define CATA_KD             20
+#define CATA_START_I        5
 ///**********************************************************************************///
 
 static inline bool check_task_notify(pros::Task &task,uint32_t delay,bool &flag){
@@ -64,7 +72,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
   set_catapult_down_pos(CATAPULT_DOWN_POS);
   // 配置catapult的pid参数
-  cata_PID={15,0.3,20,5};
+  cata_PID={CATA_KP,CATA_KI,CATA_KD,CATA_START_I};
   cata_PID.set_velocity_out(0.1);
   cata_PID.set_exit_condition(20, 1, 50, 1, 2000, 3000);
 
@@ -172,6 +180,10 @@ void Control::set_catapult(int speed,Catapult_State state) {
     cata_to_degree_lambda(catapult_middle_pos);
   }else if(state==UP){
     cata_to_top_lambda(catapult_down_pos);
+  }else if(state==INIT_MIDDLE){
+    cata_to_degree_lambda(catapult_middle_pos);
+  }else if(state==INIT_DOWN){
+    cata_to_degree_lambda(catapult_down_pos);
   }
 
 }
@@ -223,6 +235,7 @@ void Control::control_task(){
       drive_intake=false;
     }
     if(drive_catapult){
+      //通知发射架运动
       catapult_task.notify();
       drive_catapult=false;
     }

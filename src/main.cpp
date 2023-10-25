@@ -9,7 +9,7 @@ Drive chassis=Drive(
   ,{-11, -12, -13}
 
   // 陀螺仪端口
-  ,5
+  ,1
 
   // 车轮直径（英寸）
   ,3.25
@@ -49,11 +49,11 @@ Control control=Control(
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{'E', -'G'}
+  ,{'B', 'G'}
 
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
-  ,{'D'}
+  ,{'A'}
 );
 
 
@@ -76,11 +76,13 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
-    Auton("Attack.", attack),
-    Auton("Guard.", guard),
+    Auton("guard_aggressive",guard_aggressive),
+    Auton("attack_aggressive",attack_aggressive),
+    Auton("skill match",skill_match),
+    Auton("Guard.", guard_1),
     Auton("Conservatively attack. ", conservatively_attack),
-    Auton("test pid",test_pid),
-    Auton("skill match",skill_match)
+    Auton("Attack.", attack),
+
   });
   chassis.initialize();
   as::initialize();
@@ -161,6 +163,8 @@ void autonomous() {
 void opcontrol() {
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
+  bool cata_throwing=false;
+  auto cata_motor_reference=control.get_catapult_motor();
   while (true)
   {
     chassis.arcade_standard(SPLIT);
@@ -196,6 +200,15 @@ void opcontrol() {
       control.set_armer_state(OFF);
     }else if(Controller_Button_State::LEFT_new_press()){
       control.set_armer_state(ON);
+    }
+
+    if(Controller_Button_State::X_new_press()){///持续发射
+      cata_throwing=!cata_throwing;
+      if(cata_throwing){
+        cata_motor_reference.move(120);
+      }else{
+        cata_motor_reference.brake();
+      }
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }

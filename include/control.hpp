@@ -16,7 +16,10 @@ enum Catapult_State{
     UP,
     MIDDLE,
     DOWN,
-    BRAKE
+    BRAKE,
+    INIT_MIDDLE,
+    INIT_DOWN
+
 };
 class Control {
 public:
@@ -154,6 +157,11 @@ public:
     inline pros::Motor& get_catapult_motor(){
         return *catapult_motor;
     }
+
+    inline void clean_cata_task_notify(){
+        catapult_task.notify_clear();
+    }
+
 private:
 
     /**
@@ -199,6 +207,7 @@ private:
      * \brief 维护投石机的task
     */
     void catapult_task_func();
+
 public:
     PID cata_PID;
 private:
