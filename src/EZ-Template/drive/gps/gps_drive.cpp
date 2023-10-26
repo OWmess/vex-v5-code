@@ -1,223 +1,220 @@
 #include "EZ-Template/drive/gps/gps_drive.hpp"
+
+#include "EZ-Template/drive/drive.hpp"
+#include "EZ-Template/drive/gps/kalman_filter.hpp"
+#include "EZ-Template/drive/gps/pose.hpp"
 #include "EZ-Template/util.hpp"
-#include "control.hpp"
-#include "gps_pid.hpp"
-#include "main.h"
+#include "Eigen/src/Core/Matrix.h"
+#include "fmt/core.h"
 #include "pros/rtos.hpp"
-#include "pros/screen.h"
-#include "pros/screen.hpp"
 
-#define HEADING_THRESH 0.1
-#define OUT_THRESH 0.08
-Gps_Drive::Gps_Drive(Drive &drive_chassis,const std::uint8_t port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset):
-    gps_sensor(port,xInitial,yInitial,headingInitial,xOffset,yOffset),chassis_reference(drive_chassis),
-    gps_task([this](){this->gps_task_func();})
-    {
-    gps_sensor.set_data_rate(10);
+#define FMT_HEADER_ONLY
 
-    int n = 6;
-    int m = 1;
+//********************************************
 
-    double dt = 10.0/1000; // 测量频率
-
-    Eigen::MatrixXd F(n, n); // 状态转移矩阵
-    Eigen::MatrixXd H(2, 6); // 观测矩阵
-    Eigen::MatrixXd Q(n, n); // 过程噪声协方差
-    Eigen::MatrixXd R(2, 2); // 测量噪声协方差
-    Eigen::MatrixXd P(n, n); // 估计误差协方差
-
-
-    /**
-     * 状态向量 X(1,6)：[x, x', x'', y, y', y'']
-     */
-    /**
-     *  F:状态转移矩阵
-     */
-    F << 1, dt, 0.5 * pow(dt, 2), 0, 0, 0,
-        0, 1, dt, 0, 0, 0,
-        0, 0, 1, 0, 0, 0,
-        0, 0, 0, 1, dt, 0.5 * pow(dt, 2),
-        0, 0, 0, 0, 1, dt,
-        0, 0, 0, 0, 0, 1;
-    /**
-     * H:观测矩阵
-     */
-    H << 1, 0, 0, 0, 0, 0,
-        0, 0, 0, 1, 0, 0;
-
-    // 估计过程噪声协方差
-    Q << pow(dt, 4) / 4.f, pow(dt, 3) / 2.f, pow(dt, 2) / 2.f, 0, 0, 0,
-            pow(dt, 3) / 2.f, pow(dt, 2), dt, 0, 0, 0,
-            pow(dt, 2) / 2.f, dt, 1, 0, 0, 0,
-            0, 0, 0, pow(dt, 4) / 4.f, pow(dt, 3) / 2.f, pow(dt, 2) / 2.f,
-            0, 0, 0, pow(dt, 3) / 2.f, pow(dt, 2), dt,
-            0, 0, 0, pow(dt, 2) / 2.f, dt, 1;
-    Q=Q*0.35;//乘上加速度方差
-    // 测量噪声协方差
-    R << 0.005,0,
-         0,0.005;
-    // 估计误差协方差
-    P << .05, .05, .05,0 ,0 ,0 ,
-        .05, .05, .05,0 ,0 ,0 ,
-        .05, .05, .05,0 ,0 ,0 ,
-        0, 0, 0,.05, .05, .05,
-        0, 0, 0,.05, .05, .05,
-        0, 0, 0,.05, .05, .05;
-
-    kf=KalmanFilter{dt, F, H, Q, R, P};
-
-    // 估计初始状态
-    Eigen::VectorXd x0(n);
-    double t = 0;
-    x0 << xInitial, 0, 0, yInitial, 0, 0;
-    kf.init(t, x0);
-
-    auto [p,i,d,start_i] =chassis_reference.turnPID.get_constants();
-    // set_pid_contants(&turn_PID, p, i, d, start_i);
-    set_pid_contants(&turn_PID, 3, 0, 20, 0);
-    
-    set_pid_contants(&straight_PID, 300,0,600,0);
-    set_pid_contants(&heading_PID, 4, 0.000, 10,0);
-    turn_PID.set_exit_condition( 100, 1, 500, 3, 50000, 5000);
-    straight_PID.set_exit_condition(80, 0.1, 300, 0.02, 50000, 5000);
-
-    task_mode=Task_Mode::MONITOR;
-    heading_thresh=HEADING_THRESH;
-    // heading_PID.set_exit_condition(80, 0.005, 300, 0.005, 500, 5000);
+#define GPS_RATE 5
+#define CHASE_POWER 2
+using namespace ez::util;
+Gps_Drive::Gps_Drive(Drive &drive_chassis, const std::uint8_t gps_port) : gps_sensor(gps_port), drive_chassis(drive_chassis), gps_task([this]() { this->gps_task_fn(); }) {
+  // 设置GPS传感器的陀螺仪数据更新频率
+  gps_sensor.set_data_rate(GPS_RATE);
+  initlize_kf();
 }
 
-Gps_Drive::~Gps_Drive(){
-    gps_task.remove();
+Gps_Drive::Gps_Drive(Drive &drive_chassis, const std::uint8_t gps_port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset) : Gps_Drive(drive_chassis, gps_port) {
+  initlize_gps(xInitial, yInitial, headingInitial, xOffset, yOffset);
 }
 
-void Gps_Drive::gps_task_func(){
-    const char* path="/usd/heading_data.txt";
-    std::ofstream file(path,std::ios::out | std::ios::trunc);
-    pros::c::gps_status_s_t status_raw;
-    auto start=pros::millis();
-    while(true) {
-        status_raw=gps_sensor.get_status();
-        pros::screen::print(pros::E_TEXT_SMALL,0,"Gps raw: x:%.3lf ,y:%.3lf ,heading:%.1f",status_raw.x,status_raw.y,gps_sensor.get_heading());
-        pros::screen::print(pros::E_TEXT_MEDIUM,2,"Gps error: %lf",gps_sensor.get_error());
-        Eigen::VectorXd y(2);
-        y<<status_raw.x,status_raw.y;
-        kf.update(y);
-        pos_mutex.take(mutex_timeout);
-        ///TODO:暂时不用滤波试试
-        position={status_raw.x,status_raw.y};
-        // position={kf.state()[0],kf.state()[3]};
-        pos_mutex.give();
-        file<<"status_raw "<<status_raw.x<<" , "<<status_raw.y<<"\n";
-        pros::screen::print(pros::E_TEXT_MEDIUM,1,"KalmanFilter status: x:%.4lf , y:%.4lf,",position.x,position.y);
-        heading_angle=gps_sensor.get_heading();
-        if(drive_toggle) {
-            double l_out=0,r_out=0;
-            switch (task_mode) {
-                case Task_Mode::MONITOR:
-                    task_mode=Task_Mode::TURN;
-                case Task_Mode::TURN:
-                    ///TODO: 测试需删除
-                    task_mode=Task_Mode::STRAIGHT;  
-                    turn_PID.compute(heading_angle);
-                    file.open(path, std::ios::out | std::ios::app);
-                    file<<"heading "<<heading_angle<<" , "<<turn_PID.output<<"\n";
-                    file<<"position "<<position.x <<" , "<<position.y<<"\n";
-                    file.close();
-                    l_out=util::clip_num(turn_PID.output, max_speed, -max_speed);
-                    r_out=util::clip_num(-turn_PID.output, max_speed, -max_speed);
-                    pros::screen::print(pros::E_TEXT_MEDIUM,3,"turn_target%.1lf , turn_out%.1lf,",turn_PID.get_target(),turn_PID.output);
-                    if(turn_PID.exit_condition(chassis_reference.left_motors[0])!=ez::RUNNING) {
-                        pros::screen::print(pros::E_TEXT_SMALL,6,"turn exit: %s",ez::exit_to_string(turn_PID.exit_condition(chassis_reference.left_motors[0])));
-                        task_mode=Task_Mode::STRAIGHT;
-                    }
-                    break;
-                case Task_Mode::STRAIGHT:
-                    update_heading_target();
-                    float straight_out=straight_PID.compute(position.x,position.y);
-                    float heading_out=heading_PID.compute(heading_angle);
-                    float r=pow(position.x-target.x,2)+pow(position.y-target.y,2);
-                    if(r<pow(heading_thresh,2))
-                        heading_out=0;
-                    double drive_out = util::clip_num(straight_out, max_speed, -max_speed);
-                    l_out=straight_out+heading_out;
-                    r_out=straight_out-heading_out;
-                    pros::screen::print(pros::E_TEXT_MEDIUM,3,"straight_out%.2lf , heading_out%.2lf,",straight_out,heading_out);
-                    pros::screen::print(pros::E_TEXT_MEDIUM,4,"heading_target%.2f",heading_PID.get_target());
+void Gps_Drive::initlize_gps(double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset) {
+  gps_sensor.initialize_full(xInitial, yInitial, headingInitial, xOffset, yOffset);
+  Eigen::MatrixXd x0(6, 1);
+  x0 << xInitial, 0, 0, yInitial, 0, 0;
+  kf.init(0, x0);
+}
 
-                    if(straight_PID.exit_condition(chassis_reference.left_motors[0])!=ez::RUNNING||r<pow(OUT_THRESH,2)) {
-                        task_mode=Task_Mode::MONITOR;
-                        drive_toggle=false;
-                        ///TODO: 单位为米时会因为derivative变化过小而退出 
-                        pros::screen::print(pros::E_TEXT_MEDIUM,8,"gps drive exit: %s",ez::exit_to_string(straight_PID.exit_condition(chassis_reference.left_motors[0])));
-                    }
-                    break;
-            }
-            chassis_reference.set_tank(l_out,r_out);
-        }
-        pros::Task::delay_until(&start,20);
+void Gps_Drive::initlize_kf() {
+  int n = 6;
+  int m = 1;
+  // 初始化卡尔曼滤波器
+  constexpr double dt = GPS_RATE / 1000.0;  // 测量频率
+
+  Eigen::MatrixXd F(n, n);  // 状态转移矩阵
+  Eigen::MatrixXd H(2, 6);  // 观测矩阵
+  Eigen::MatrixXd Q(n, n);  // 过程噪声协方差
+  Eigen::MatrixXd R(2, 2);  // 测量噪声协方差
+  Eigen::MatrixXd P(n, n);  // 估计误差协方差
+
+  /**
+   * 状态向量 X(1,6)：[x, x', x'', y, y', y'']
+   */
+  /**
+   *  F:状态转移矩阵
+   */
+  F << 1, dt, 0.5 * pow(dt, 2), 0, 0, 0,
+      0, 1, dt, 0, 0, 0,
+      0, 0, 1, 0, 0, 0,
+      0, 0, 0, 1, dt, 0.5 * pow(dt, 2),
+      0, 0, 0, 0, 1, dt,
+      0, 0, 0, 0, 0, 1;
+  /**
+   * H:观测矩阵
+   */
+  H << 1, 0, 0, 0, 0, 0,
+      0, 0, 0, 1, 0, 0;
+
+  // 估计过程噪声协方差
+  Q << pow(dt, 4) / 4.f, pow(dt, 3) / 2.f, pow(dt, 2) / 2.f, 0, 0, 0,
+      pow(dt, 3) / 2.f, pow(dt, 2), dt, 0, 0, 0,
+      pow(dt, 2) / 2.f, dt, 1, 0, 0, 0,
+      0, 0, 0, pow(dt, 4) / 4.f, pow(dt, 3) / 2.f, pow(dt, 2) / 2.f,
+      0, 0, 0, pow(dt, 3) / 2.f, pow(dt, 2), dt,
+      0, 0, 0, pow(dt, 2) / 2.f, dt, 1;
+  Q = Q * 0.35;  // 乘上加速度方差
+  // 测量噪声协方差
+  R << 0.005, 0,
+      0, 0.005;
+  // 估计误差协方差
+  P << .05, .05, .05, 0, 0, 0,
+      .05, .05, .05, 0, 0, 0,
+      .05, .05, .05, 0, 0, 0,
+      0, 0, 0, .05, .05, .05,
+      0, 0, 0, .05, .05, .05,
+      0, 0, 0, .05, .05, .05;
+
+  kf = KalmanFilter{dt, F, H, Q, R, P};
+
+  kf.init();
+}
+
+void Gps_Drive::gps_task_fn() {
+  while (true) {
+    auto status_raw = gps_sensor.get_status();
+    auto heading = gps_sensor.get_heading();
+    Eigen::VectorXd y(2);
+    y << status_raw.x, status_raw.y;
+    kf.update(y);
+
+    set_position(Pose{static_cast<float>(kf.state()(0)), static_cast<float>(kf.state()(3)), static_cast<float>(to_rad(heading))});
+    pros::delay(GPS_RATE);
+  }
+}
+
+void Gps_Drive::move_to(float x, float y, float heading, int max_speed, bool forward, float chasePower, float lead) {
+  // 读取底盘PID参数并配置
+  auto [kp1, ki1, kd1, si1] = forward ? drive_chassis.forward_drivePID.constants : drive_chassis.backward_drivePID.constants;
+  PID linear_pid{kp1, ki1, kd1, si1};
+  auto [kp2, ki2, kd2, si2] = drive_chassis.turnPID.constants;
+  PID angular_pid{kp2, ki2, kd2, si2};
+
+  // 设置PID退出条件
+  linear_pid.set_exit_condition(80, 50, 300, 150, 500, 5000);
+  angular_pid.set_exit_condition(100, 3, 500, 7, 500, 5000);
+
+
+
+  auto gps_move_fn = [this, &linear_pid, &angular_pid, &forward, &max_speed, &chasePower, &lead,x,y,heading]() {
+
+    float prev_linear_power = 0;
+    Pose target_pose{x, y, static_cast<float>(M_PI_2) - to_rad(heading)};
+
+    if (!forward) target_pose.theta = fmod(target_pose.theta + M_PI, 2 * M_PI);
+    bool close = false;
+    if (chasePower == 0) chasePower = CHASE_POWER;
+    while (true) {
+      Pose now_pose = get_position();
+      if (!forward) now_pose.theta += M_PI;
+
+      now_pose.theta = M_PI_2 - now_pose.theta;  //???
+
+      if (now_pose.distance(target_pose) < 7.5 && !close) {
+        close = true;
+        max_speed = fmax(fabs(prev_linear_power), 30.0);
+      }
+      // 计算carrot point
+      Pose carrot = close ? target_pose : target_pose - (Pose(cos(target_pose.theta), sin(target_pose.theta)) * lead * now_pose.distance(target_pose));
+
+      float angular_error;
+      if(!close)
+        angular_error=angleError(now_pose.angle(carrot), now_pose.theta,true);
+      else
+        angular_error=angleError(target_pose.theta, now_pose.theta,true);
+
+      float linear_error=now_pose.distance(carrot)* cos(angular_error);
+      if(!forward) linear_error=-linear_error;
+
+      //计算pid输出
+      float linear_power = linear_pid.compute(linear_error, 0);
+      float angular_power=-angular_pid.compute(to_deg(angular_error), 0);
+
+
+      // calculate radius of turn
+      float curvature = fabs(getCurvature(now_pose, carrot));
+      if (curvature == 0) curvature = -1;
+      float radius = 1 / curvature;
+
+      // calculate the maximum speed at which the robot can turn
+      // using the formula v = sqrt( u * r * g )
+      if (radius != -1) {
+          float maxTurnSpeed = sqrt(chasePower * radius * 9.8);
+          // the new linear power is the minimum of the linear power and the max turn speed
+          if (linear_power > maxTurnSpeed && !close) linear_power = maxTurnSpeed;
+          else if (linear_power < -maxTurnSpeed && !close) linear_power = -maxTurnSpeed;
+      }
+
+      // prioritize turning over moving
+      float overturn = fabs(angular_power) + fabs(linear_power) - max_speed;
+      if (overturn > 0) linear_power -= linear_power > 0 ? overturn : -overturn;
+      prev_linear_power = linear_power;
+
+      // calculate motor powers
+      drive_chassis.set_tank(linear_power + angular_power, linear_power - angular_power);
+
+      pros::delay(10);
     }
+  };
+  moving_mutex.take();
+  pros::Task gps_move_task(gps_move_fn);
+  moving_mutex.give();
 }
 
-
-
-void Gps_Drive::drive_to_position(int speed,double target_x,double target_y){
-    max_speed=speed;
-    target={target_x,target_y};
-    pos_mutex.take(mutex_timeout);
-    ///TODO: 直接读数值
-    // auto [starting_x,starting_y]=position;
-    auto status=gps_sensor.get_status();
-    double starting_x=position.x;
-    double starting_y=position.y;
-
-    pos_mutex.give();
-    double angle = atan((target_x - starting_x) / (target_y - starting_y)) / M_PI * 180;
-
-    while(!Controller_Button_State::A_pressed());
-    pros::delay(1000);
-    if (target_y - starting_y < 0)
-        angle = angle + 180;
-
-    if(angle<0){
-        angle+=360;
-    }
-    turn_PID.set_target(angle);
-
-    while(!Controller_Button_State::A_pressed()){
-        pros::screen::erase();
-        pros::screen::print(pros::E_TEXT_SMALL,7,"pos x:%.2lf ,y:%.2lf,angle:%.2lf",starting_x,starting_y,angle);
-        
-        pros::screen::print(pros::E_TEXT_SMALL,8,"target_x,y:%.3lf , %.3lf,init_x,y:%.3lf , %.3lf",target_x,target_y,starting_x,starting_y);
-        pros::delay(10);
-    }
-    straight_PID.initlize(starting_x,starting_y,target_x,target_y);
-    drive_toggle=true;
-
+void Gps_Drive::set_position(const Pose &position) {
+  position_mutex.take(10);
+  this->position = position;
+  position_mutex.give();
 }
 
-
-void Gps_Drive::update_heading_target(){
-    double angle = atan((target.x - position.x) / (target.y - position.y)) / M_PI * 180;
-    if (target.y - position.y < 0)
-        angle = angle + 180;
-
-    if(angle<0){
-        angle+=360;
-    }
-    heading_PID.set_target(angle);
+Pose Gps_Drive::get_position() {
+  position_mutex.take(10);
+  return position;
+  position_mutex.give();
 }
 
-void Gps_Drive::wait_drive(){
-    while(drive_toggle){
-        pros::delay(10);
-    }
+/**
+ * @brief Get the signed curvature of a circle that intersects the first pose and the second pose
+ *
+ * @note The circle will be tangent to the theta value of the first pose
+ * @note The curvature is signed. Positive curvature means the circle is going clockwise, negative means
+ * counter-clockwise
+ * @note Theta has to be in radians and in standard form. That means 0 is right and increases counter-clockwise
+ *
+ * @param pose the first pose
+ * @param other the second pose
+ * @return float curvature
+ */
+float Gps_Drive::getCurvature(Pose pose, Pose other){
+    // calculate whether the pose is on the left or right side of the circle
+    float side = sgn(std::sin(pose.theta) * (other.x - pose.x) - std::cos(pose.theta) * (other.y - pose.y));
+    // calculate center point and radius
+    float a = -std::tan(pose.theta);
+    float c = std::tan(pose.theta) * pose.x - pose.y;
+    float x = std::fabs(a * other.x + other.y + c) / std::sqrt((a * a) + 1);
+    float d = std::hypot(other.x - pose.x, other.y - pose.y);
 
+    // return curvature
+    return side * ((2 * x) / (d * d));
 }
 
-bool Gps_Drive::check_Gps(){
-    return gps_sensor.get_error()>0.5f;
-}
-
-void Gps_Drive::gps_imu_turn(double angle){
-
+void Gps_Drive::wait_drive() {
+  moving_mutex.take();
+  moving_mutex.give();
 }

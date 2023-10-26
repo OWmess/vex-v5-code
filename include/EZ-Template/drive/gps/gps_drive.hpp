@@ -1,59 +1,52 @@
 #pragma once
-
+#include "pose.hpp"
 #include "pros/gps.hpp"
 #include "pros/rtos.hpp"
 #include "EZ-Template/PID.hpp"
 #include "EZ-Template/drive/drive.hpp"
 #include "gps_pid.hpp"
-#include "EZ-Template/drive/gps/kalman.hpp"
+#include "EZ-Template/drive/gps/kalman_filter.hpp"
+
 
 class Gps_Drive{
-public:
-    enum class Task_Mode{
-        MONITOR,
-        TURN,
-        STRAIGHT,
-    };
-    Gps_Drive(Drive &drive_chassis,const std::uint8_t port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset);
-    ~Gps_Drive();
+    public:
+    Gps_Drive(Drive &drive_chassis,const std::uint8_t gps_port);
+    Gps_Drive(Drive &drive_chassis,const std::uint8_t gps_port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset);
 
-    template<typename T>
-    void set_pid_contants(T *pid,double kp,double ki,double kd,double start_i) {
-        pid->set_constants(kp,ki,kd,start_i);
-    }
+    void initlize_gps(double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset);
 
-    void drive_to_position(int speed,double x,double y);
-
-    void turn_to_degree(double deg);
-
-    void wait_drive();
-
-    bool check_Gps();
-public:
-    PID heading_PID;
-    Gps_PID turn_PID;
-    Gps_PID straight_PID;
+    void move_to(float x, float y, float heading, int max_speed,bool forward = true,float chasePower=0,float lead=0.6);
     
-private:
+    void wait_drive();
+    private:
 
-    void update_heading_target();
+    void initlize_kf();
 
-    void gps_task_func();
+    void gps_task_fn();
 
-    void gps_imu_turn(double angle);
-private:
-    float heading_angle;
-    int max_speed;
+    Pose get_position();
 
-    GPS_STRUCT::Point2d target;
-    GPS_STRUCT::Point2d position;
-    pros::Gps gps_sensor;
-    pros::Task gps_task;
-    Drive &chassis_reference;
-    bool drive_toggle;
+    void set_position(const Pose &position);
+
+        /**
+    * @brief Get the signed curvature of a circle that intersects the first pose and the second pose
+    *
+    * @note The circle will be tangent to the theta value of the first pose
+    * @note The curvature is signed. Positive curvature means the circle is going clockwise, negative means
+    * counter-clockwise
+    * @note Theta has to be in radians and in standard form. That means 0 is right and increases counter-clockwise
+    *
+    * @param pose the first pose
+    * @param other the second pose
+    * @return float curvature
+    */
+    float getCurvature(Pose pose, Pose other);
+    private:
+    pros::GPS gps_sensor;
+    Drive &drive_chassis;
     KalmanFilter kf;
-    Task_Mode task_mode;
-    float heading_thresh;
-    pros::Mutex pos_mutex;
-    const int8_t mutex_timeout=10;
+    pros::Task gps_task;
+    Pose position;
+    pros::Mutex position_mutex;
+    pros::Mutex moving_mutex;
 };

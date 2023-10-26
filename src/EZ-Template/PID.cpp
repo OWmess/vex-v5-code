@@ -74,6 +74,14 @@ double PID::compute(double current) {
   return output;
 }
 
+double PID::compute(double target,double current) {
+  set_target(target);
+  return compute(current);
+}
+
+
+
+
 void PID::reset_timers() {
   i = 0;
   k = 0;

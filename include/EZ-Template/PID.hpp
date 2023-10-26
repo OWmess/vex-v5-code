@@ -100,6 +100,15 @@ class PID {
    */
   double compute(double current);
 
+
+  /**
+  * Computes PID.
+  * \param target
+  *        Target for PID.
+  * \param current
+  *        Current sensor library.
+  */
+  double compute(double target,double current);
   /**
    * Returns target value.
    */

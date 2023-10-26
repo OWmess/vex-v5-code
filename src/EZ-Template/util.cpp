@@ -155,5 +155,25 @@ float to_rad(float angle_deg){
 float to_deg(float angle_rad){
   return(angle_rad*(180.0/M_PI));
 }
+
+/**
+ * @brief Calculate the error between 2 angles. Useful when calculating the error between 2 headings
+ *
+ * @param angle1
+ * @param angle2
+ * @param radians true if angle is in radians, false if not. False by default
+ * @return float wrapped angle
+ */
+float angleError(float angle1, float angle2, bool radians) {
+    float max = radians ? 2 * M_PI : 360;
+    float half = radians ? M_PI : 180;
+    angle1 = fmod(angle1, max);
+    angle2 = fmod(angle2, max);
+    float error = angle1 - angle2;
+    if (error > half) error -= max;
+    else if (error < -half) error += max;
+    return error;
+}
+
 }  // namespace util
 }  // namespace ez

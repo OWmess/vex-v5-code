@@ -159,8 +159,6 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-  gps_drive.drive_to_position(35,1.2,1.2);
-  gps_drive.wait_drive();
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
   while (true)
