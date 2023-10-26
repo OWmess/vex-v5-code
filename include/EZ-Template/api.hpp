@@ -5,6 +5,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #pragma once
+#define FMT_HEADER_ONLY
 
 #include "EZ-Template/PID.hpp"
 #include "EZ-Template/auton.hpp"

@@ -6,6 +6,7 @@
 #include "EZ-Template/util.hpp"
 #include "Eigen/src/Core/Matrix.h"
 #include "fmt/core.h"
+#include "pros/misc.hpp"
 #include "pros/rtos.hpp"
 
 #define FMT_HEADER_ONLY
@@ -120,7 +121,9 @@ void Gps_Drive::move_to(float x, float y, float heading, int max_speed, bool for
     if (!forward) target_pose.theta = fmod(target_pose.theta + M_PI, 2 * M_PI);
     bool close = false;
     if (chasePower == 0) chasePower = CHASE_POWER;
-    while (true) {
+    
+    auto comp_state=pros::competition::get_status();
+    while (comp_state== pros::competition::get_status()) {
       Pose now_pose = get_position();
       if (!forward) now_pose.theta += M_PI;
 
