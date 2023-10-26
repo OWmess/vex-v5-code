@@ -1,6 +1,10 @@
 #pragma once
+#include <memory>
+#include "EZ-Template/util.hpp"
 #include "api.h"
-
+#include "EZ-template/api.hpp"
+#include "pros/adi.hpp"
+#include "pros/motors.hpp"
 enum Control_State{
     INTAKE,
     OUTTAKE,
@@ -12,7 +16,10 @@ enum Catapult_State{
     UP,
     MIDDLE,
     DOWN,
-    BRAKE
+    BRAKE,
+    INIT_MIDDLE,
+    INIT_DOWN
+
 };
 class Control {
 public:
@@ -23,11 +30,11 @@ public:
      * \param catapult_gearset gearset of the catapult motor
      * \param catapult_press_button_port port of the catapult press button
      * \param wings_ports ports of the wings (negative port will reverse it!)
-     * \param hanger_ports ports of the hanger (negative port will reverse it!)
+     * \param armer_ports ports of the armer (negative port will reverse it!)
     */
     Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &catapult_motor_port,
-    pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_press_button_port,const std::vector<int8_t> &wings_ports,
-    const int8_t &hanger_ports);
+    pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_rotation_port,const std::vector<int8_t> &wings_ports,
+    const std::vector<int8_t> &armer_ports);
 
     /**
      * \param 设置投石机在下方的位置
@@ -77,13 +84,13 @@ public:
     }
 
     /**
-     * \param state 设置hanger的模式
+     * \param state 设置armer的模式
      * - ON: 打开
      * - OFF: 关闭
     */
-    inline void set_hanger_state(Control_State state){
-        hanger_state=state;
-        drive_hanger=true;
+    inline void set_armer_state(Control_State state){
+        armer_state=state;
+        drive_armer=true;
     }
     /**
      * \param speed 设置intake的速度,默认值为100
@@ -101,10 +108,10 @@ public:
         catapult_speed=speed;
     }
     /**
-     * \return 返回hanger的当前模式
+     * \return 返回armer的当前模式
     */
-    inline Control_State get_hanger_state(){
-        return hanger_state;
+    inline Control_State get_armer_state(){
+        return armer_state;
     }
 
     /**
@@ -131,6 +138,30 @@ public:
     inline Catapult_State get_catapult_state(){
         return catapult_state;
     }
+
+    inline void set_intake_brake_mode(const pros::motor_brake_mode_e_t mode) const{
+        for(const auto& motor:intake_motors){
+            motor.set_brake_mode(mode);
+        }
+    }
+
+    inline void set_catapult_brake_mode(const pros::motor_brake_mode_e_t mode) const{
+        catapult_motor->set_brake_mode(mode);
+    }
+
+
+    inline void set_pid_constants(PID *pid, double p, double i, double d, double p_start_i){
+        pid->set_constants(p,i,d,p_start_i);
+    }
+
+    inline pros::Motor& get_catapult_motor(){
+        return *catapult_motor;
+    }
+
+    inline void clean_cata_task_notify(){
+        catapult_task.notify_clear();
+    }
+
 private:
 
     /**
@@ -165,47 +196,68 @@ private:
      * - ON: 打开勾爪
      * - OFF: 关闭勾爪
     */
-    void set_hanger(Control_State state);
+    void set_armer(Control_State state);
 
     /**
      * \brief 维护上层机构的task
     */
     void control_task();
 
+    /**
+     * \brief 维护投石机的task
+    */
     void catapult_task_func();
-public:
 
+public:
+    PID cata_PID;
 private:
+    struct PneumaticsStruct{
+        std::shared_ptr<pros::ADIDigitalOut> pneumatics;
+        bool reversed;
+
+    };
+    std::unique_ptr<pros::Rotation> cata_rotation;
     std::vector<pros::Motor> intake_motors;
-    std::shared_ptr<pros::Motor> catapult_motor;
-    std::shared_ptr<pros::ADIDigitalOut> wings_l;
-    std::shared_ptr<pros::ADIDigitalOut> wings_r;
-    std::shared_ptr<pros::ADIDigitalOut> hanger;
-    std::shared_ptr<pros::ADIDigitalIn> catapult_press_button;
+    std::unique_ptr<pros::Motor> catapult_motor;
+    std::vector<PneumaticsStruct> wings;
+    std::vector<PneumaticsStruct> armers;
     double catapult_up_pos;
     double catapult_middle_pos;
     double catapult_down_pos;
-    std::array<bool,2> wings_reversed;
-    bool hanger_reversed;
+    bool armer_reversed;
     pros::Task task;
     pros::Task catapult_task;
-    static Control_State intake_state;
-    static Control_State wings_state;
-    static Catapult_State catapult_state;
-    static Control_State hanger_state;
+    bool cata_exit_condition=false;
     bool drive_catapult;
     bool drive_intake;
     bool drive_wings;
-    bool drive_hanger;
-    int intake_speed=100;
+    bool drive_armer;
+    int intake_speed=120;
     int catapult_speed=120;
     int time_out=2000;
+    static Control_State intake_state;
+    static Control_State wings_state;
+    static Catapult_State catapult_state;
+    static Control_State armer_state;
 };
 
 
 class Controller_Button_State{
 public:
-  inline static bool A_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_A);}
+  inline static bool A_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A);}
+  inline static bool B_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B);}
+  inline static bool X_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X);}
+  inline static bool Y_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y);}
+  inline static bool R1_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1);}
+  inline static bool R2_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2);}
+  inline static bool L1_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1);}
+  inline static bool L2_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2);}
+  inline static bool UP_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP);}
+  inline static bool DOWN_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN);}
+  inline static bool LEFT_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT);}
+  inline static bool RIGHT_new_press(){return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT);}
+
+    inline static bool A_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_A);}
   inline static bool B_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_B);}
   inline static bool X_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_X);}
   inline static bool Y_pressed(){return master.get_digital(pros::E_CONTROLLER_DIGITAL_Y);}
