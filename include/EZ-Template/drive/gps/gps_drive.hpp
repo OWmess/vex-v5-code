@@ -19,7 +19,6 @@ class Gps_Drive{
     
     void wait_drive();
     private:
-
     void initlize_kf();
 
     void gps_task_fn();
@@ -28,6 +27,7 @@ class Gps_Drive{
 
     void set_position(const Pose &position);
 
+    double get_travelled_dist(double tick);
         /**
     * @brief Get the signed curvature of a circle that intersects the first pose and the second pose
     *
@@ -49,4 +49,6 @@ class Gps_Drive{
     Pose position;
     pros::Mutex position_mutex;
     pros::Mutex moving_mutex;
+    Drive::Drive_Config chassis_config;
+    double tick_per_inch;
 };

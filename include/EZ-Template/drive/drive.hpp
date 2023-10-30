@@ -724,8 +724,6 @@ class Drive {
   void set_tank_min_power(int left_motor,int right_motor);
 
 
-  
-
  private:  // !Auton
 
   bool drive_toggle = true;
@@ -876,5 +874,23 @@ public:
    */
   void set_pid_logger(bool logger);
 
+  /**
+  * 底盘配置
+  * \param wheel_diameter 轮子直径
+  * \param ticks 电机编码器每转的tick数
+  * \param ratio 外部齿轮比，轮子齿轮/电机齿轮
+  * \param wheel_distance 轮间距
+  */
+  struct Drive_Config{
+    double wheel_diameter;
+    double cartrige;
+    double ratio;
+    double wheel_distance;
+  };
 
+  /**
+  * 获取当前底盘配置
+  * \return Drive_Config
+  */
+  Drive_Config get_config();
 };

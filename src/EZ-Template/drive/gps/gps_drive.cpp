@@ -1,4 +1,6 @@
 #include "EZ-Template/drive/gps/gps_drive.hpp"
+#include <map>
+#include <vector>
 
 #include "EZ-Template/drive/drive.hpp"
 #include "EZ-Template/drive/gps/kalman_filter.hpp"
@@ -8,7 +10,7 @@
 #include "fmt/core.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"
-
+#include "EZ-Template/units.h"
 #define FMT_HEADER_ONLY
 
 //********************************************
@@ -16,8 +18,18 @@
 #define GPS_RATE 5
 #define CHASE_POWER 2
 using namespace ez::util;
-Gps_Drive::Gps_Drive(Drive &drive_chassis, const std::uint8_t gps_port) : gps_sensor(gps_port), drive_chassis(drive_chassis), gps_task([this]() { this->gps_task_fn(); }) {
+
+
+
+
+
+
+
+Gps_Drive::Gps_Drive(Drive &drive_chassis, const std::uint8_t gps_port) : gps_sensor(gps_port), drive_chassis(drive_chassis),
+gps_task([this]() { this->gps_task_fn(); }) {
   // 设置GPS传感器的陀螺仪数据更新频率
+  chassis_config = drive_chassis.get_config();
+  tick_per_inch=drive_chassis.get_tick_per_inch();
   gps_sensor.set_data_rate(GPS_RATE);
   initlize_kf();
 }
@@ -88,9 +100,24 @@ void Gps_Drive::initlize_kf() {
 }
 
 void Gps_Drive::gps_task_fn() {
+  float prev_heading = 0;
+  units::length::inch_t prev_left_dist;
   while (true) {
     auto status_raw = gps_sensor.get_status();
     auto heading = gps_sensor.get_heading();
+
+    float delta_heading=heading-prev_heading;
+    float avg_heading=heading+delta_heading/2;
+    double left_travelled_dist=get_travelled_dist(drive_chassis.left_sensor());
+    double right_travelled_dist=get_travelled_dist(drive_chassis.right_sensor());
+
+    
+    
+
+
+
+
+
     Eigen::VectorXd y(2);
     y << status_raw.x, status_raw.y;
     kf.update(y);
@@ -220,4 +247,8 @@ float Gps_Drive::getCurvature(Pose pose, Pose other){
 void Gps_Drive::wait_drive() {
   moving_mutex.take();
   moving_mutex.give();
+}
+
+double Gps_Drive::get_travelled_dist(double tick) {
+  return tick / tick_per_inch;
 }

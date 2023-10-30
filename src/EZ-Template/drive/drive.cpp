@@ -355,3 +355,7 @@ void Drive::toggle_auto_drive(bool toggle) { drive_toggle = toggle; }
 void Drive::toggle_auto_print(bool toggle) { print_toggle = toggle; }
 
 void Drive::set_pid_logger(bool toggle) { pid_logger = toggle; }
+
+Drive::Drive_Config  Drive::get_config(){
+  return {WHEEL_DIAMETER,CARTRIDGE,RATIO,WHEEL_DISTANCE};
+}
