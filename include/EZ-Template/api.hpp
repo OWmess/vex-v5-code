@@ -15,5 +15,3 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "EZ-Template/util.hpp"
 #include "EZ-Template/drive/odom.hpp"
 #include "EZ-Template/PID_Logger.hpp"
-#include "EZ-Template/drive/gps/gps_drive.hpp"
-#include "EZ-Template/drive/gps/gps_pid.hpp"

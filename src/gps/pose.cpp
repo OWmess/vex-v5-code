@@ -3,7 +3,7 @@
 #define FMT_HEADER_ONLY
 #include "fmt/core.h"
 
-#include "EZ-Template/drive/gps/pose.hpp"
+#include "gps/pose.hpp"
 
 /**
  * @brief Create a new pose

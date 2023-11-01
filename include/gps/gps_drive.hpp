@@ -4,8 +4,7 @@
 #include "pros/rtos.hpp"
 #include "EZ-Template/PID.hpp"
 #include "EZ-Template/drive/drive.hpp"
-#include "gps_pid.hpp"
-#include "EZ-Template/drive/gps/kalman_filter.hpp"
+#include "gps/kalman_filter.hpp"
 
 
 class Gps_Drive{
@@ -27,8 +26,9 @@ class Gps_Drive{
 
     void set_position(const Pose &position);
 
-    double get_travelled_dist(double tick);
-        /**
+    double get_traveled_dist(double tick);
+
+    /**
     * @brief Get the signed curvature of a circle that intersects the first pose and the second pose
     *
     * @note The circle will be tangent to the theta value of the first pose
@@ -52,3 +52,5 @@ class Gps_Drive{
     Drive::Drive_Config chassis_config;
     double tick_per_inch;
 };
+
+

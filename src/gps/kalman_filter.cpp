@@ -2,7 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "kalman_filter.hpp"
+#include "gps/kalman_filter.hpp"
 
 KalmanFilter::KalmanFilter(
     double dt,

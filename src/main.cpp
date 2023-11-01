@@ -1,6 +1,5 @@
 #include "main.h"
-#include "EZ-Template/drive/gps/gps_drive.hpp"
-#include "EZ-Template/drive/gps/gps_pid.hpp"
+#include "gps/gps_drive.hpp"
 #include "EZ-Template/util.hpp"
 #include "pros/gps.hpp"
 #include "pros/imu.hpp"
@@ -8,16 +7,16 @@
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {18, 19, 20}
+  {-2, 3, 4}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{-11, -12, -13}
+  ,{6, -7, -8}
 
   // 陀螺仪端口
-  ,1
+  ,20
 
   // 车轮直径（英寸）
-  ,4.125
+  ,4.0
 
   // 底盘电机转速(100、200、600RPM)
   ,600
@@ -25,10 +24,10 @@ Drive chassis=Drive(
   //外齿轮比（必须是小数）
   //例如。如果您的齿比是 84:36，其中 36t 连接电机，则您的 齿比 将为 2.333。
   //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
-  ,60.0/36.0
+  ,72.0/36.0
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
-  ,21.0
+  ,12.0
 );
 
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
@@ -44,24 +43,24 @@ Control control=Control(
   ,pros::E_MOTOR_GEAR_200
 
   // 投石机电机端口（负端口将反转它！）
-  ,16
+  ,12
 
   // 投石机 电机RPM,可选项同上
   ,pros::E_MOTOR_GEAR_100
 
   // 投石机的角度传感器所在端口,若角度传感器正方向与投石机下压方向相反则为负
-  ,15
+  ,19
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{'B', 'G'}
+  ,{'A', 'C'}
 
   // armer Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
-  ,{'A'}
+  ,{'B'}
 );
 
-Gps_Drive gps_drive(chassis,10,0,0,0,0,15*0.0254/2);
+Gps_Drive gps_drive(chassis,17,0,0,0,0,15*0.0254/2);
 
 
 /**
@@ -69,6 +68,7 @@ Gps_Drive gps_drive(chassis,10,0,0,0,0,15*0.0254/2);
 *推荐将此模式的执行时间保持在几秒钟以内。
 */
 void initialize() {
+  std::cout<<"initializing"<<std::endl;
   pros::delay(500);
 
   //配置底盘参数
@@ -90,9 +90,10 @@ void initialize() {
 
   });
   chassis.initialize();
+  std::cout<<"chassis initialized"<<std::endl;
   as::initialize();
 
-
+  std::cout<<"initialized"<<std::endl;
 }
 
 
@@ -145,7 +146,7 @@ void autonomous() {
   chassis.reset_gyro(); // 重置陀螺仪
   chassis.reset_drive_sensor(); // 重置电机编码器
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
-  // ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
+  ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
 
 }
 
@@ -164,6 +165,8 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
+  std::cout<<"opcontrol"<<std::endl;
+
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
   bool cata_throwing=false;
