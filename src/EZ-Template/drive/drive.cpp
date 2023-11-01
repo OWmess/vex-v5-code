@@ -255,7 +255,7 @@ double Drive::right_sensor() {
   // return right_motors.front().get_position();
 }
 
-int Drive::right_velocity() { return right_motors.front().get_actual_velocity(); }
+double Drive::right_velocity() { return right_motors.front().get_actual_velocity(); }
 double Drive::right_mA() { return right_motors.front().get_current_draw(); }
 bool Drive::right_over_current() { return right_motors.front().is_over_current(); }
 
@@ -272,7 +272,7 @@ double Drive::left_sensor() {
   // return left_motors.front().get_position();
 }
 
-int Drive::left_velocity() { return left_motors.front().get_actual_velocity(); }
+double Drive::left_velocity() { return left_motors.front().get_actual_velocity(); }
 double Drive::left_mA() { return left_motors.front().get_current_draw(); }
 bool Drive::left_over_current() { return left_motors.front().is_over_current(); }
 

@@ -420,7 +420,7 @@ class Drive {
   /**
    * The velocity of the right motor.
    */
-  int right_velocity();
+  double right_velocity();
 
   /**
    * The watts of the right motor.
@@ -440,7 +440,7 @@ class Drive {
   /**
    * The velocity of the left motor.
    */
-  int left_velocity();
+  double left_velocity();
 
   /**
    * The watts of the left motor.

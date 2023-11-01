@@ -18,7 +18,7 @@
 #define CHASE_POWER 2
 using namespace ez::util;
 
-constexpr float gps_rate_hz=GPS_RATE/1000.0;
+constexpr float gps_cycle=GPS_RATE/1000.0;
 
 inline void write_position_to_csv(const Pose& position, const std::string& filename) {
   std::ofstream file;
@@ -56,7 +56,7 @@ void Gps_Drive::initlize_kf() {
   int n = 6;
   int m = 1;
   // 初始化卡尔曼滤波器
-  constexpr double dt = gps_rate_hz; // 测量频率
+  constexpr double dt = gps_cycle; // 测量频率
 
   Eigen::MatrixXd F(n, n);  // 状态转移矩阵
   Eigen::MatrixXd H(2, 6);  // 观测矩阵
@@ -111,30 +111,41 @@ void Gps_Drive::gps_task_fn() {
   double prev_left_dist=0;
   double prev_right_dist=0;
   const char* gps_data_path = "/usd/spd.csv";
+  auto scalar_time=pros::millis();
   while (true) {
     auto status_raw = gps_sensor.get_status();
-    auto heading = to_rad(gps_sensor.get_heading());
-
+    auto heading = to_rad(gps_sensor.get_heading());//角度都为弧度制
+    double left_traveled_dist=get_traveled_dist(drive_chassis.left_sensor());
+    double right_traveled_dist=get_traveled_dist(drive_chassis.right_sensor());
     float delta_heading=heading-prev_heading;
-    float avg_heading=heading+delta_heading/2;
+    float avg_heading=heading-delta_heading/2;
 
     //以下距离单位为inch
-    float left_traveled_dist=get_traveled_dist(drive_chassis.left_sensor());
-    float right_traveled_dist=get_traveled_dist(drive_chassis.right_sensor());
+
 
     float delta_left_dist=left_traveled_dist-prev_left_dist;
     float delta_right_dist=right_traveled_dist-prev_right_dist;
     float delta_dist=(delta_left_dist+delta_right_dist)/2;
 
-    //以下速度单位为m/s
+    //:w=v/r , v=w*r 
+    double l_spd=inch_to_meter(((drive_chassis.left_velocity()/60.0)/chassis_config.ratio)*2*M_PI*(chassis_config.wheel_diameter/2));
+    double r_spd=inch_to_meter(((drive_chassis.right_velocity()/60.0)/chassis_config.ratio)*2*M_PI*(chassis_config.wheel_diameter/2));
+    pros::screen::print(pros::E_TEXT_MEDIUM,4,"traveled dist l: %5.2f,r: %5.2f",left_traveled_dist,right_traveled_dist);
+    pros::screen::print(pros::E_TEXT_MEDIUM,5,"prev dist l: %5.2f,r: %5.2f",prev_left_dist,prev_right_dist);
+    pros::screen::print(pros::E_TEXT_MEDIUM,6,"l_spd: %5.2lf,r_spd: %5.2lf",l_spd,r_spd);
+    pros::screen::print(pros::E_TEXT_MEDIUM,7,"RPM  l: %5.2lf,r: %5.2lf",drive_chassis.left_velocity(),drive_chassis.left_velocity());
+    //以下速度单位为m/s^2
   
-    float pose_spd=inch_to_meter(delta_dist)/gps_rate_hz;
+    // float pose_spd=inch_to_meter(delta_dist)/gps_cycle;
+    float pose_spd=(l_spd+r_spd)/2;
 
+    pros::screen::print(pros::E_TEXT_MEDIUM,2,"spd: %5.2f",pose_spd);
 
     if(!(fabs(delta_heading)<1e-5)){
-      pose_spd=2*sin(delta_heading/2)*(pose_spd/delta_heading+inch_to_meter(chassis_config.wheel_distance)/2.0);
+      pose_spd=2*sin(delta_heading/2)*(pose_spd/delta_heading);
     }
 
+    pros::screen::print(pros::E_TEXT_MEDIUM,3,"spd_convert: %5.2f",pose_spd);
     Pose odom_spd;
     odom_spd.x=pose_spd*sin(avg_heading); 
     odom_spd.y=pose_spd*cos(avg_heading);
@@ -152,12 +163,12 @@ void Gps_Drive::gps_task_fn() {
 
     set_position(Pose{static_cast<float>(kf.state()(0)), static_cast<float>(kf.state()(3)), static_cast<float>(heading)});
 
-    pros::screen::print(pros::E_TEXT_MEDIUM,0,"x:%.2f,y:%.2f,theta:%.2f",get_position().x,get_position().y,to_deg(heading));
-    pros::screen::print(pros::E_TEXT_MEDIUM,1,"x:%.2f,y:%.2f,theta:%.2f",odom_spd.x,odom_spd.y,to_deg(odom_spd.theta));
-    pros::screen::print(pros::E_TEXT_MEDIUM,3,"heading:%.2lf",gps_sensor.get_heading());
+    pros::screen::print(pros::E_TEXT_MEDIUM,0,"x:%5.2f,y:%5.2f,theta:%6.2f",get_position().x,get_position().y,to_deg(heading));
+    pros::screen::print(pros::E_TEXT_MEDIUM,1,"x:%5.2f,y:%5.2f,theta:%6.2f",odom_spd.x,odom_spd.y,to_deg(odom_spd.theta));
+
     // write_position_to_csv(odom_spd,gps_data_path);
 
-    pros::delay(GPS_RATE);
+    pros::Task::delay_until(&scalar_time,GPS_RATE);
   }
 }
 
