@@ -40,12 +40,12 @@ Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_por
   // Set ports to a global vector
   for (auto i : left_motor_ports) {
     pros::Motor temp(abs(i), util::is_reversed(i));
-    temp.set_gearing(pros::E_MOTOR_GEAR_600);
+    temp.set_gearing(motor_gearset);
     left_motors.push_back(temp);
   }
   for (auto i : right_motor_ports) {
     pros::Motor temp(abs(i), util::is_reversed(i));
-    temp.set_gearing(pros::E_MOTOR_GEAR_600);
+    temp.set_gearing(motor_gearset);
     right_motors.push_back(temp);
   }
   

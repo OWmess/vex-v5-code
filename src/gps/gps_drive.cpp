@@ -169,7 +169,7 @@ void Gps_Drive::gps_task_fn() {
         0, pow(gps_error, 2), 0, 0,
         0, 0, 0.005, 0,
         0, 0, 0, 0.005; 
-    kf.update(y);
+    kf.update(y,r);
 
     set_position(Pose{static_cast<float>(kf.state()(0)), static_cast<float>(kf.state()(3)), static_cast<float>(heading)});
 
