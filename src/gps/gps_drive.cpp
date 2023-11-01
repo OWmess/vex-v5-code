@@ -20,11 +20,15 @@ using namespace ez::util;
 
 constexpr float gps_cycle=GPS_RATE/1000.0;
 
-inline void write_position_to_csv(const Pose& position, const std::string& filename) {
-  std::ofstream file;
-  file.open(filename, std::ios::app); // Open file in append mode
-  file << position.x << "," << position.y << "," << position.theta << "\n";
-  file.close();
+
+template<typename T, typename... Args>
+inline void write_to_csv(const std::string& filename, const T first,const Args... args) {
+    std::ofstream file;
+    file.open(filename, std::ios::app); // Open file in append mode
+    file << first;
+    ((file << "," << args), ...);
+    file << "\n";
+    file.close();
 }
 
 inline float inch_to_meter(float inch) {
@@ -110,8 +114,9 @@ void Gps_Drive::gps_task_fn() {
   float prev_heading = 0;
   double prev_left_dist=0;
   double prev_right_dist=0;
-  const char* gps_data_path = "/usd/spd.csv";
+  const char* gps_data_path = "/usd/gps_data.csv";
   auto scalar_time=pros::millis();
+  pros::delay(5000);
   while (true) {
     auto status_raw = gps_sensor.get_status();
     auto heading = to_rad(gps_sensor.get_heading());//角度都为弧度制
@@ -166,7 +171,7 @@ void Gps_Drive::gps_task_fn() {
     pros::screen::print(pros::E_TEXT_MEDIUM,0,"x:%5.2f,y:%5.2f,theta:%6.2f",get_position().x,get_position().y,to_deg(heading));
     pros::screen::print(pros::E_TEXT_MEDIUM,1,"x:%5.2f,y:%5.2f,theta:%6.2f",odom_spd.x,odom_spd.y,to_deg(odom_spd.theta));
 
-    // write_position_to_csv(odom_spd,gps_data_path);
+    write_to_csv(gps_data_path,odom_spd.x,kf.state()(1),odom_spd.y,kf.state()(4),kf.state()(0),kf.state()(3),to_deg(heading));
 
     pros::Task::delay_until(&scalar_time,GPS_RATE);
   }

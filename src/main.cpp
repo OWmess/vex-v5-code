@@ -165,7 +165,9 @@ void autonomous() {
  */
 void opcontrol() {
   std::cout<<"opcontrol"<<std::endl;
-
+  while(!Controller_Button_State::A_new_press()){
+    pros::delay(10);
+  }
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
   bool cata_throwing=false;
