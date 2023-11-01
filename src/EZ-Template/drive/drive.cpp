@@ -24,14 +24,28 @@ Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_por
       right_rotation(-1),
       ez_auto([this] { this->ez_auto_task(); }) {
   is_tracker = DRIVE_INTEGRATED;
+  pros::motor_gearset_e_t motor_gearset;
+  if(ez::util::areEqual(ticks,100)){
+    motor_gearset=pros::E_MOTOR_GEAR_100;
+  }else if(ez::util::areEqual(ticks,200)){
+    motor_gearset=pros::E_MOTOR_GEAR_200;
+  }else if(ez::util::areEqual(ticks,600)){
+    motor_gearset=pros::E_MOTOR_GEAR_600;
+  }else {
+    motor_gearset=pros::E_MOTOR_GEAR_600;
+  }
+
+
 
   // Set ports to a global vector
   for (auto i : left_motor_ports) {
     pros::Motor temp(abs(i), util::is_reversed(i));
+    temp.set_gearing(pros::E_MOTOR_GEAR_600);
     left_motors.push_back(temp);
   }
   for (auto i : right_motor_ports) {
     pros::Motor temp(abs(i), util::is_reversed(i));
+    temp.set_gearing(pros::E_MOTOR_GEAR_600);
     right_motors.push_back(temp);
   }
   

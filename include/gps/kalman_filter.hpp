@@ -45,7 +45,7 @@ public:
   void update(const Eigen::VectorXd& Z);
 
   /**
-  * Update the estimated state based on measured values,
+  * Update the estimated state based on measured values,6
   * using the given time step and dynamics matrix.
   */
   void update(const Eigen::VectorXd& Z, double dt, const Eigen::MatrixXd F);
@@ -55,6 +55,16 @@ public:
   */
   Eigen::VectorXd state() { return x_hat; };
   double time() { return t; };
+
+  /**
+   * @brief  Update the estimated state based on measured values and update the covariance matrix.
+   * 
+   * @param Z estimated state
+   * @param R estimated covariance
+   */
+  void update(const Eigen::VectorXd& Z,const Eigen::MatrixXd R);
+
+
 
 private:
 

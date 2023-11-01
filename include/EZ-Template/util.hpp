@@ -114,5 +114,9 @@ float to_deg(float angle_rad);
  */
 float angleError(float angle1, float angle2, bool radians=false);
 
+template<typename T,typename Y>
+inline bool areEqual(T a, Y b, float epsilon = 0.0001f) {
+    return std::abs(a - b) < epsilon;
+}
 }  // namespace util
 }  // namespace ez
