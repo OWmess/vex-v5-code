@@ -14,7 +14,7 @@
 
 //********************************************
 
-#define GPS_RATE 10
+#define GPS_RATE 5
 #define CHASE_POWER 2
 using namespace ez::util;
 
@@ -35,6 +35,11 @@ inline float inch_to_meter(float inch) {
   return inch * 0.0254;
 }
 
+template<typename T>
+inline T meter_to_inch(T meter) {
+  return meter / 0.0254;
+}
+
 
 Gps_Drive::Gps_Drive(Drive &drive_chassis, const std::uint8_t gps_port) : gps_sensor(gps_port), drive_chassis(drive_chassis),
 gps_task([this]() { this->gps_task_fn(); }) {
@@ -46,14 +51,16 @@ gps_task([this]() { this->gps_task_fn(); }) {
 }
 
 Gps_Drive::Gps_Drive(Drive &drive_chassis, const std::uint8_t gps_port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset) : Gps_Drive(drive_chassis, gps_port) {
-  initlize_gps(xInitial, yInitial, headingInitial, xOffset, yOffset);
+  initalize_gps(xInitial, yInitial, headingInitial, xOffset, yOffset);
 }
 
-void Gps_Drive::initlize_gps(double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset) {
+void Gps_Drive::initalize_gps(double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset) {
+  this->headingInital=headingInitial;
   gps_sensor.initialize_full(xInitial, yInitial, headingInitial, xOffset, yOffset);
   Eigen::MatrixXd x0(6, 1);
   x0 << xInitial, 0, 0, yInitial, 0, 0;
   kf.init(0, x0);
+  printf("gps initalized. headingInital%lf,xInitial%lf,yInitial%lf,xOffset%lf,yOffset%lf\n",headingInitial,xInitial,yInitial,xOffset,yOffset);
 }
 
 void Gps_Drive::initlize_kf() {
@@ -120,10 +127,10 @@ void Gps_Drive::gps_task_fn() {
   double prev_right_dist=0;
   const char* gps_data_path = "/usd/gps_data.csv";
   auto scalar_time=pros::millis();
-  pros::delay(5000);
+  pros::delay(4000);
   while (true) {
     auto status_raw = gps_sensor.get_status();
-    float heading = to_rad(gps_sensor.get_heading());//角度都为弧度制
+    float heading = to_rad(fmod(gps_sensor.get_heading()+headingInital,360));//角度都为弧度制
     double gps_error = gps_sensor.get_error();
     // double left_traveled_dist=get_traveled_dist(drive_chassis.left_sensor());
     // double right_traveled_dist=get_traveled_dist(drive_chassis.right_sensor());
@@ -144,17 +151,17 @@ void Gps_Drive::gps_task_fn() {
     // float pose_spd=inch_to_meter(delta_dist)/gps_cycle;
     float pose_spd=(l_spd+r_spd)/2;
 
-    pros::screen::print(pros::E_TEXT_MEDIUM,3,"spd: %5.2f",pose_spd);
 //rpm:79   spd:0.21
     if(!(fabs(delta_heading)<1e-5)){
       pose_spd=2*sin(delta_heading/2)*(pose_spd/delta_heading);
     }
+    pros::screen::print(pros::E_TEXT_MEDIUM,3,"spd: %5.2f",pose_spd);
 
     Pose odom_spd;
-    odom_spd.x=pose_spd*sin(avg_heading); 
+    
+    odom_spd.x=pose_spd*sin(avg_heading);
     odom_spd.y=pose_spd*cos(avg_heading);
     odom_spd.theta=heading;
-    
 
     // prev_left_dist=left_traveled_dist;
     // prev_right_dist=right_traveled_dist;
@@ -163,29 +170,27 @@ void Gps_Drive::gps_task_fn() {
 
     Eigen::VectorXd y(4);
     Eigen::MatrixXd r(4,4);
-
     y << status_raw.x, status_raw.y, odom_spd.x, odom_spd.y; 
     r << pow(gps_error, 2), 0, 0, 0,
         0, pow(gps_error, 2), 0, 0,
-        0, 0, 0.005, 0,
-        0, 0, 0, 0.005; 
+        0, 0, 0.01, 0,
+        0, 0, 0, 0.01; 
     kf.update(y,r);
 
     set_position(Pose{static_cast<float>(kf.state()(0)), static_cast<float>(kf.state()(3)), static_cast<float>(heading)});
-
-    pros::screen::print(pros::E_TEXT_MEDIUM,0,"kf  x:%5.2f,y:%5.2f,theta:%6.2f",get_position().x,get_position().y,to_deg(heading));
+    pros::screen::print(pros::E_TEXT_MEDIUM,0,"kf  x:%5.2f,y:%5.2f,theta:%6.2f",get_position().x,get_position().y,gps_sensor.get_heading());
     pros::screen::print(pros::E_TEXT_MEDIUM,1,"raw x:%5.2f,y:%5.2f",status_raw.x,status_raw.y);
     pros::screen::print(pros::E_TEXT_MEDIUM,2,"spd x:%5.2f,y:%5.2f,theta:%6.2f",odom_spd.x,odom_spd.y,to_deg(odom_spd.theta));
     pros::screen::print(pros::E_TEXT_MEDIUM,4,"RPM: l: %5.2f,r: %5.2f",drive_chassis.left_velocity(),drive_chassis.right_velocity());
-    pros::screen::print(pros::E_TEXT_MEDIUM,5,"gps err: %6lf",gps_sensor.get_error());
+    pros::screen::print(pros::E_TEXT_MEDIUM,5,"gps err: %6lf",gps_error);
 
-    write_to_csv(gps_data_path,odom_spd.x,kf.state()(1),odom_spd.y,kf.state()(4),kf.state()(0),kf.state()(3),status_raw.x,status_raw.y,to_deg(heading));
+    // write_to_csv(gps_data_path,odom_spd.x,kf.state()(1),odom_spd.y,kf.state()(4),kf.state()(0),kf.state()(3),status_raw.x,status_raw.y,to_deg(heading));
 
     pros::Task::delay_until(&scalar_time,GPS_RATE);
   }
 }
 
-void Gps_Drive::move_to(float x, float y, float heading, int max_speed, bool forward, float chasePower, float lead) {
+void Gps_Drive::move_to(float x, float y, float heading, int max_speed, bool forward, float chasePower, float lead,int timeout) {
   // 读取底盘PID参数并配置
   auto [kp1, ki1, kd1, si1] = forward ? drive_chassis.forward_drivePID.constants : drive_chassis.backward_drivePID.constants;
   PID linear_pid{kp1, ki1, kd1, si1};
@@ -196,31 +201,34 @@ void Gps_Drive::move_to(float x, float y, float heading, int max_speed, bool for
   linear_pid.set_exit_condition(80, 50, 300, 150, 500, 5000);
   angular_pid.set_exit_condition(100, 3, 500, 7, 500, 5000);
 
+  this->max_speed=max_speed;
 
-
-  auto gps_move_fn = [this, &linear_pid, &angular_pid, &forward, &max_speed, &chasePower, &lead,x,y,heading]() {
-
+  auto gps_move_fn = [this, &linear_pid, &angular_pid, forward, &chasePower, lead,x,y,heading,timeout]() {
+    printf("running gps_move_fn\n");
     float prev_linear_power = 0;
     Pose target_pose{x, y, static_cast<float>(M_PI_2) - to_rad(heading)};
 
     if (!forward) target_pose.theta = fmod(target_pose.theta + M_PI, 2 * M_PI);
     bool close = false;
     if (chasePower == 0) chasePower = CHASE_POWER;
-    
+    auto start_t=pros::millis();
     auto comp_state=pros::competition::get_status();
-    while (comp_state== pros::competition::get_status()) {
+    while (comp_state== pros::competition::get_status()&&pros::millis()-start_t<timeout) {
       Pose now_pose = get_position();
+      now_pose=Pose{meter_to_inch(now_pose.x),meter_to_inch(now_pose.y),meter_to_inch(now_pose.theta)};
       if (!forward) now_pose.theta += M_PI;
 
       now_pose.theta = M_PI_2 - now_pose.theta;  //???
 
       if (now_pose.distance(target_pose) < 7.5 && !close) {
         close = true;
-        max_speed = fmax(fabs(prev_linear_power), 30.0);
+        this->max_speed = fmax(fabs(prev_linear_power), 30.0);
+        std::cout<<"close"<<std::endl;
       }
       // 计算carrot point
       Pose carrot = close ? target_pose : target_pose - (Pose(cos(target_pose.theta), sin(target_pose.theta)) * lead * now_pose.distance(target_pose));
-
+      std::cout<<"now"<<now_pose.x<<" , "<<now_pose.y<<std::endl;
+      std::cout<<"carrot"<<carrot.x<<" , "<<carrot.y<<std::endl;
       float angular_error;
       if(!close)
         angular_error=angleError(now_pose.angle(carrot), now_pose.theta,true);
@@ -234,31 +242,36 @@ void Gps_Drive::move_to(float x, float y, float heading, int max_speed, bool for
       float linear_power = linear_pid.compute(linear_error, 0);
       float angular_power=-angular_pid.compute(to_deg(angular_error), 0);
 
-
       // calculate radius of turn
       float curvature = fabs(getCurvature(now_pose, carrot));
       if (curvature == 0) curvature = -1;
       float radius = 1 / curvature;
+      std::cout<<"curvature:"<<curvature<<std::endl;
 
       // calculate the maximum speed at which the robot can turn
       // using the formula v = sqrt( u * r * g )
       if (radius != -1) {
           float maxTurnSpeed = sqrt(chasePower * radius * 9.8);
+          std::cout<<"maxTurnSpeed:"<<maxTurnSpeed<<std::endl;
           // the new linear power is the minimum of the linear power and the max turn speed
           if (linear_power > maxTurnSpeed && !close) linear_power = maxTurnSpeed;
           else if (linear_power < -maxTurnSpeed && !close) linear_power = -maxTurnSpeed;
       }
 
       // prioritize turning over moving
-      float overturn = fabs(angular_power) + fabs(linear_power) - max_speed;
+      
+      float overturn = fabs(angular_power) + fabs(linear_power) - this->max_speed;
+      std::cout<<"overturn:"<<overturn<<std::endl;
       if (overturn > 0) linear_power -= linear_power > 0 ? overturn : -overturn;
       prev_linear_power = linear_power;
-
+      printf("linear_power:%f,angular_power:%f\n",linear_power,angular_power);
       // calculate motor powers
       drive_chassis.set_tank(linear_power + angular_power, linear_power - angular_power);
 
       pros::delay(10);
     }
+    printf("gps_move_fn out\n");
+
   };
   moving_mutex.take();
   pros::Task gps_move_task(gps_move_fn);
@@ -266,15 +279,15 @@ void Gps_Drive::move_to(float x, float y, float heading, int max_speed, bool for
 }
 
 void Gps_Drive::set_position(const Pose &position) {
-  position_mutex.take(10);
+  // position_mutex.take(10);
   this->position = position;
-  position_mutex.give();
+  // position_mutex.give();
 }
 
 Pose Gps_Drive::get_position() {
-  position_mutex.take(10);
+  // position_mutex.take(10);
   return position;
-  position_mutex.give();
+  // position_mutex.give();
 }
 
 /**

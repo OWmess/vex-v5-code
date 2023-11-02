@@ -118,5 +118,15 @@ template<typename T,typename Y>
 inline bool areEqual(T a, Y b, float epsilon = 0.0001f) {
     return std::abs(a - b) < epsilon;
 }
+
+/**
+ * @brief  Converts inches to meters
+ * 
+ * @param inch 
+ * @return constexpr double 
+ */
+constexpr double inch2meter(double inch){
+    return inch*0.0254;
+}
 }  // namespace util
 }  // namespace ez

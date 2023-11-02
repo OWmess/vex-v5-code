@@ -33,7 +33,7 @@ Drive chassis=Drive(
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
   // Intake 电机组端口，（负端口将反转电机！）
-  {-14, 17}
+  {-11, 10}
 
   // Intake 电机组的RPM,
   //可选项有：
@@ -60,7 +60,7 @@ Control control=Control(
   ,{'B'}
 );
 
-Gps_Drive gps_drive(chassis,17,0,0,0,0,15*0.0254/2);
+Gps_Drive gps_drive(chassis,17,0,0,180,util::inch2meter(0.5/2.0),util::inch2meter(-12/2.0));
 
 
 /**
@@ -91,7 +91,6 @@ void initialize() {
   chassis.initialize();
   std::cout<<"chassis initialized"<<std::endl;
   as::initialize();
-
   std::cout<<"initialized"<<std::endl;
 }
 
@@ -168,27 +167,31 @@ void opcontrol() {
   while(!Controller_Button_State::A_new_press()){
     pros::delay(100);
   }
+
+  gps_drive.move_to(-24,-24,180,30);
+  gps_drive.wait_drive();
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
+
   bool cata_throwing=false;
   auto cata_motor_reference=control.get_catapult_motor();
   int spd=0;
   bool set_flag=false;
-  chassis.set_tank(spd, spd);
-  while (true)
-  {
-    if(Controller_Button_State::R1_new_press()){
-      spd+=10;
-      set_flag=true;
-    }
-    if(Controller_Button_State::R2_new_press()){
-      spd-=10;
-      set_flag=true;
-    }
-    if(set_flag){
-      chassis.set_tank(spd, spd);
-      set_flag=false;
-    }
+  // chassis.set_tank(spd, spd);
+  // while (true)
+  // {
+    // if(Controller_Button_State::R1_new_press()){
+    //   spd+=10;
+    //   set_flag=true;
+    // }
+    // if(Controller_Button_State::R2_new_press()){
+    //   spd-=10;
+    //   set_flag=true;
+    // }
+    // if(set_flag){
+    //   chassis.set_tank(spd, spd);
+    //   set_flag=false;
+    // }
     // chassis.arcade_standard(SPLIT);
     // // chassis.tank();
     // //根据按钮状态控制机器人
@@ -233,7 +236,7 @@ void opcontrol() {
     //   }
     // }
     // pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
-  }
+  // }
 
 
 }

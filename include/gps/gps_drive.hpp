@@ -12,9 +12,10 @@ class Gps_Drive{
     Gps_Drive(Drive &drive_chassis,const std::uint8_t gps_port);
     Gps_Drive(Drive &drive_chassis,const std::uint8_t gps_port, double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset);
 
-    void initlize_gps(double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset);
 
-    void move_to(float x, float y, float heading, int max_speed,bool forward = true,float chasePower=0,float lead=0.6);
+    void initalize_gps(double xInitial, double yInitial, double headingInitial, double xOffset, double yOffset);
+
+    void move_to(float x, float y, float heading, int max_speed,bool forward = true,float chasePower=0,float lead=0.6,int timeout=3000);
     
     void wait_drive();
     private:
@@ -27,6 +28,7 @@ class Gps_Drive{
     void set_position(const Pose &position);
 
     double get_traveled_dist(double tick);
+
 
     /**
     * @brief Get the signed curvature of a circle that intersects the first pose and the second pose
@@ -51,6 +53,8 @@ class Gps_Drive{
     pros::Mutex moving_mutex;
     Drive::Drive_Config chassis_config;
     double tick_per_inch;
+    int8_t max_speed;
+    double headingInital;
 };
 
 
