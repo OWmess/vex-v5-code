@@ -7,6 +7,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "main.h"
 #include "pros/misc.hpp"
 #include <chrono>
+#include <cmath>
 using namespace ez;
 
 void Drive::ez_auto_task() {
@@ -35,7 +36,44 @@ void Drive::drive_pid_task() {
   // Compute PID
   double l_sensor = left_sensor();
   double r_sensor = right_sensor();
+  static double prev_l_sensor=l_sensor;
+  static double prev_r_sensor=r_sensor;
   double gyro_pos = get_gyro();
+
+  //inclined check
+  bool incline=false;
+  static const char* path="/usd/incline.csv";
+
+  float degree=abs(fmod(imu_initial_heading,180)==0?imu.get_pitch():imu.get_roll());
+  double delta_l_sensor=l_sensor-prev_l_sensor;
+  double delta_r_sensor=r_sensor-prev_r_sensor;
+  if(incline_check){
+    // 根据imu的初始朝向判断是pitch还是roll,取绝对值
+    // float degree=abs(fmod(imu_initial_heading,180)==0?imu.get_pitch():imu.get_roll());
+
+    incline_deg_vec.push_back(degree);
+    //保证incline_deg_vec的长度不超过5
+    if(incline_deg_vec.size()>5)
+      incline_deg_vec.pop_front();
+    //求队列最大项
+    float max_element=*std::max_element(incline_deg_vec.begin(),incline_deg_vec.end());
+
+    if(max_element>incline_deg_threshold){
+      incline=true;
+      //如果倾斜角度大于阈值，则将target加上上一次的偏移量
+      leftPID.set_target(leftPID.get_target()+delta_l_sensor);
+      rightPID.set_target(rightPID.get_target()+delta_r_sensor);
+
+    }
+
+    std::cout<<"degree:"<<degree<<std::endl;
+  }
+  util::write_to_csv(path,degree,delta_l_sensor,delta_r_sensor,leftPID.get_target(),rightPID.get_target(),std::to_string(incline));
+
+
+
+
+
   leftPID.compute(l_sensor);
   rightPID.compute(r_sensor);
   headingPID.compute(gyro_pos);
@@ -51,8 +89,10 @@ void Drive::drive_pid_task() {
   // Clip leftPID and rightPID to slew (if slew is disabled, it returns max_speed)
   double l_drive_out = util::clip_num(leftPID.output, l_slew_out, -l_slew_out);
   double r_drive_out = util::clip_num(rightPID.output, r_slew_out, -r_slew_out);
+
+
   // Toggle heading
-  double gyro_out = heading_on ? headingPID.output : 0;
+  double gyro_out = heading_on&&!incline ? headingPID.output : 0;
 
   if(isnan(gyro_out)) {//check if gyro data is nan(gyro is not working)
     gyro_out = 0;
@@ -65,6 +105,8 @@ void Drive::drive_pid_task() {
   // Set motors
   if (drive_toggle)
     set_tank(l_out, r_out);
+  prev_l_sensor=l_sensor;
+  prev_r_sensor=r_sensor;
 }
 
 // Turn PID task

@@ -504,7 +504,7 @@ class Drive {
 
   /**
    * @brief Set the drive pid with incline check object,if the incline is greater than the set value, 
-   *         the encoder will not be used to control the movement,just straight forward/backward
+   *        mileage will not be recorded
    * @param target target value in inches
    * @param speed  0 to 127, max speed during motion
    * @param slew_on  ramp up from slew_min to speed over slew_distance.  only use when you're going over about 14"
@@ -896,9 +896,11 @@ class Drive {
     gyro_vec.clear();
   }
 
+
   bool incline_check;
-  float incline_deg;
+  float incline_deg_threshold;
   int imu_initial_heading;
+  std::deque<float> incline_deg_vec;
 public:
   /**
    * 用于记录pid数据

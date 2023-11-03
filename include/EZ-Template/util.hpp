@@ -118,5 +118,15 @@ constexpr inline T meter2inch(T meter) {
   return meter / 0.0254;
 }
 
+
+template<typename T, typename... Args>
+inline void write_to_csv(const std::string& filename, const T& first,const Args& ... args) {
+    std::ofstream file;
+    file.open(filename, std::ios::app); // Open file in append mode
+    file << first;
+    ((file << "," << args), ...);
+    file << "\n";
+    file.close();
+}
 }  // namespace util
 }  // namespace ez

@@ -80,6 +80,7 @@ void Drive::wait_drive(){
       interfered = true;
     }
   }
+  incline_check=false;
 }
 
 // Function to wait until a certain position is reached.  Wrapper for exit condition.

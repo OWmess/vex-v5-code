@@ -444,18 +444,6 @@ void skill_match(){
 
 
 void test_pid(){
-  chassis.set_pid_logger(true);
-  chassis.set_drive_pid(50,DRIVE_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(-50,DRIVE_SPEED);
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(180, TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_turn_pid(0, TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_swing_pid(RIGHT_SWING, 90, SWING_SPEED);
-  chassis.wait_drive();
-  chassis.set_swing_pid(LEFT_SWING, 0, SWING_SPEED);
+  chassis.set_drive_pid_with_incline_check(-72,DRIVE_SPEED,true,true,9,90);
   chassis.wait_drive();
 }
