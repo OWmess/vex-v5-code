@@ -42,8 +42,6 @@ void Drive::drive_pid_task() {
 
   //inclined check
   bool incline=false;
-  static const char* path="/usd/incline.csv";
-
   float degree=abs(fmod(imu_initial_heading,180)==0?imu.get_pitch():imu.get_roll());
   double delta_l_sensor=l_sensor-prev_l_sensor;
   double delta_r_sensor=r_sensor-prev_r_sensor;
@@ -63,17 +61,9 @@ void Drive::drive_pid_task() {
       //如果倾斜角度大于阈值，则将target加上上一次的偏移量
       leftPID.set_target(leftPID.get_target()+delta_l_sensor);
       rightPID.set_target(rightPID.get_target()+delta_r_sensor);
-
     }
-
-    std::cout<<"degree:"<<degree<<std::endl;
+    
   }
-  util::write_to_csv(path,degree,delta_l_sensor,delta_r_sensor,leftPID.get_target(),rightPID.get_target(),std::to_string(incline));
-
-
-
-
-
   leftPID.compute(l_sensor);
   rightPID.compute(r_sensor);
   headingPID.compute(gyro_pos);
@@ -86,6 +76,7 @@ void Drive::drive_pid_task() {
   double l_slew_out = slew_calculate(left_slew, left_sensor());
   double r_slew_out = slew_calculate(right_slew, right_sensor());
 
+  // printf("l_slew_out:%f,r_slew_out:%f\n",l_slew_out,r_slew_out);
   // Clip leftPID and rightPID to slew (if slew is disabled, it returns max_speed)
   double l_drive_out = util::clip_num(leftPID.output, l_slew_out, -l_slew_out);
   double r_drive_out = util::clip_num(rightPID.output, r_slew_out, -r_slew_out);

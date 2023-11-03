@@ -514,6 +514,7 @@ class Drive {
    */
   void set_drive_pid_with_incline_check(double target, int speed, bool slew_on = false, bool toggle_heading = true,float deg=15.f,int imu_initial_heading=0);
 
+  void set_arc_drive_pid(double target,int left_speed,int right_speed,bool slew_on = false);
   /**
    * Sets the robot to turn using PID.
    *
@@ -783,6 +784,8 @@ class Drive {
    * Max speed for autonomous.
    */
   int max_speed;
+  int l_max_spd;
+  int r_max_spd;
 
   /**
    * Tasks

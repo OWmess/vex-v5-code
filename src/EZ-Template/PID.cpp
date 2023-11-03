@@ -72,6 +72,7 @@ double PID::compute(double current) {
     
   }
   output = (error * constants.kp) + (integral * constants.ki) + (derivative * constants.kd);
+  // printf("p out: %lf d out: %lf i out: %lf\n",error*constants.kp,prev_error*constants.kd,integral*constants.ki);
 
   prev_error = error;
 
