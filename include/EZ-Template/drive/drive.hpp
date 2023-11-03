@@ -13,7 +13,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "EZ-Template/PID.hpp"
 #include "EZ-Template/util.hpp"
 #include "pros/motors.h"
-#include "EZ-Template/drive/odom.hpp"
 #include "EZ-Template/PID_Logger.hpp"
 using namespace ez;
 
@@ -504,6 +503,18 @@ class Drive {
   void set_drive_pid(double target, int speed, bool slew_on = false, bool toggle_heading = true);
 
   /**
+   * @brief Set the drive pid with incline check object,if the incline is greater than the set value, 
+   *         the encoder will not be used to control the movement,just straight forward/backward
+   * @param target target value in inches
+   * @param speed  0 to 127, max speed during motion
+   * @param slew_on  ramp up from slew_min to speed over slew_distance.  only use when you're going over about 14"
+   * @param toggle_heading toggle for heading correction
+   * @param deg incline degree ,based on the horizontal plane
+   * @param imu_initial_heading imu initial heading, 0 or 90 or 180 or 270
+   */
+  void set_drive_pid_with_incline_check(double target, int speed, bool slew_on = false, bool toggle_heading = true,float deg=15.f,int imu_initial_heading=0);
+
+  /**
    * Sets the robot to turn using PID.
    *
    * \param target
@@ -702,11 +713,29 @@ class Drive {
 
   void set_turn_pid_gyro_free(double target, int speed);
 
+  /**
+   * Creates a Drive Controller using internal encoders.
+   *
+   * \param left_motor_ports
+   *        Input {1, -2...}.  Make ports negative if reversed!
+   * \param right_motor_ports
+   *        Input {-3, 4...}.  Make ports negative if reversed!
+   * \param imu_port
+   *        Port the IMU is plugged into.
+   * \param wheel_diameter
+   *        Diameter of your drive wheels.  Remember 4" is 4.125"!
+   * \param ticks
+   *        Motor cartridge RPM
+   * \param ratio
+   *        External gear ratio, wheel gear / motor gear.
+   * \param wheel_distance
+   *        left and right wheel distance
+   */
   Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio,double wheel_distance);
   /**
    * odometry variables and functions
    */
-  Odom odom;
+
   /**
    * initialize odometry variables
    */
@@ -866,11 +895,15 @@ class Drive {
     r_sensor_vec.clear();
     gyro_vec.clear();
   }
+
+  bool incline_check;
+  float incline_deg;
+  int imu_initial_heading;
 public:
   /**
    * 用于记录pid数据
    */
   void set_pid_logger(bool logger);
 
-
+  
 };

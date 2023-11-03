@@ -39,9 +39,11 @@ void Drive::drive_pid_task() {
   leftPID.compute(l_sensor);
   rightPID.compute(r_sensor);
   headingPID.compute(gyro_pos);
-  l_sensor_vec.emplace_back(l_sensor);
-  r_sensor_vec.emplace_back(r_sensor);
-  gyro_vec.emplace_back(gyro_pos);
+  if(pid_logger){
+    l_sensor_vec.emplace_back(l_sensor);
+    r_sensor_vec.emplace_back(r_sensor);
+    gyro_vec.emplace_back(gyro_pos);
+  }
   // Compute slew
   double l_slew_out = slew_calculate(left_slew, left_sensor());
   double r_slew_out = slew_calculate(right_slew, right_sensor());
@@ -70,7 +72,8 @@ void Drive::turn_pid_task() {
   // Compute PID
   double gyro_pos=get_gyro();
   turnPID.compute(gyro_pos);
-  gyro_vec.emplace_back(gyro_pos);
+  if(pid_logger)
+    gyro_vec.emplace_back(gyro_pos);
 
   // Clip gyroPID to max speed
   double gyro_out = util::clip_num(turnPID.output, max_speed, -max_speed);
@@ -91,7 +94,8 @@ void Drive::swing_pid_task() {
   // Compute PID
   double gyro_pos=get_gyro();
   swingPID.compute(gyro_pos);
-  gyro_vec.emplace_back(gyro_pos);
+  if(pid_logger)
+    gyro_vec.emplace_back(gyro_pos);
   // Clip swingPID to max speed
   double swing_out = util::clip_num(swingPID.output, max_speed, -max_speed);
 

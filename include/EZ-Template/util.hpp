@@ -67,6 +67,10 @@ enum e_mode { DISABLE = 0,
               DRIVE = 3,
               TRUN_GYRO_FREE = 4 };
 
+
+
+
+
 /**
  * Outputs string for exit_condition enum.
  */
@@ -104,7 +108,15 @@ float to_rad(float angle_deg);
 
 float to_deg(float angle_rad);
 
+template<typename T>
+constexpr inline T inch2meter(T inch) {
+  return inch * 0.0254;
+}
 
+template<typename T>
+constexpr inline T meter2inch(T meter) {
+  return meter / 0.0254;
+}
 
 }  // namespace util
 }  // namespace ez

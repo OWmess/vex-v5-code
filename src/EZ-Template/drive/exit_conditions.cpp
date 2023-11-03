@@ -39,7 +39,8 @@ void Drive::wait_drive(){
       pros::delay(util::DELAY_TIME);
     }
     if (print_toggle) std::cout << "  Left: " << exit_to_string(left_exit) << " Exit.   Right: " << exit_to_string(right_exit) << " Exit.\n";
-    logger.save_data_to_file(l_sensor_vec,r_sensor_vec,gyro_vec);
+    if(pid_logger)
+      logger.save_data_to_file(l_sensor_vec,r_sensor_vec,gyro_vec);
     clear_vec();
     if (left_exit == mA_EXIT || left_exit == VELOCITY_EXIT || right_exit == mA_EXIT || right_exit == VELOCITY_EXIT) {
       interfered = true;
@@ -54,8 +55,10 @@ void Drive::wait_drive(){
       pros::delay(util::DELAY_TIME);
     }
     if (print_toggle) std::cout << "  Turn: " << exit_to_string(turn_exit) << " Exit.\n";
-    logger.save_data_to_file(gyro_vec);
+    if(pid_logger)
+      logger.save_data_to_file(gyro_vec);
     clear_vec();
+
     if (turn_exit == mA_EXIT || turn_exit == VELOCITY_EXIT) {
       interfered = true;
     }
@@ -70,7 +73,8 @@ void Drive::wait_drive(){
       pros::delay(util::DELAY_TIME);
     }
     if (print_toggle) std::cout << "  Swing: " << exit_to_string(swing_exit) << " Exit.\n";
-    logger.save_data_to_file(gyro_vec);
+    if(pid_logger)
+      logger.save_data_to_file(gyro_vec);
     clear_vec();
     if (swing_exit == mA_EXIT || swing_exit == VELOCITY_EXIT) {
       interfered = true;

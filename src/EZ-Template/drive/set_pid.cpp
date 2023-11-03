@@ -39,6 +39,7 @@ e_mode Drive::get_mode() { return mode; }
 
 // Set drive PID
 void Drive::set_drive_pid(double target, int speed, bool slew_on, bool toggle_heading) {
+  incline_check=false;
   TICK_PER_INCH = get_tick_per_inch();
   // Print targets
   if (print_toggle) printf("Drive Started... Target Value: %f (%f ticks)", target, target * TICK_PER_INCH);
@@ -152,3 +153,10 @@ void Drive::set_turn_pid_gyro_free(double target, int speed) {
   // Run task
   set_mode(TRUN_GYRO_FREE);
 }
+
+ void Drive::set_drive_pid_with_incline_check(double target, int speed, bool slew_on, bool toggle_heading,float deg,int imu_initial_heading){
+  this->imu_initial_heading=imu_initial_heading;
+  this->incline_deg=deg;
+  incline_check=true;
+  set_drive_pid(target,speed,slew_on,toggle_heading);
+ }
