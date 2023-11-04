@@ -170,9 +170,9 @@ void Drive::arc_turn_pid_task(){
     gyro_vec.emplace_back(gyro_pos);
   
   int sgn= (this->l_max_spd!=0) ? util::sgn(this->l_max_spd) : util::sgn(this->r_max_spd);
-  printf("sgn_1:%d\n",sgn);
+  // printf("sgn_1:%d\n",sgn);
   sgn*=util::sgn(turnPID.output);
-  printf("sgn_2:%d\n",sgn);
+  // printf("sgn_2:%d\n",sgn);
   int l_max_spd=abs(this->l_max_spd);
   int r_max_spd=abs(this->r_max_spd);
   // Clip gyroPID to max speed
@@ -185,14 +185,14 @@ void Drive::arc_turn_pid_task(){
       right_out= util::clip_num(right_out, get_turn_min(), -get_turn_min());
     }
   }
-  printf("raw left_out: %f,right_out: %f\n",left_out,right_out);
+  // printf("raw left_out: %f,right_out: %f\n",left_out,right_out);
   float alpha=l_max_spd/static_cast<float>(r_max_spd);
   if(!util::areEqual(left_out/right_out,alpha)&&l_max_spd>r_max_spd){
     right_out=left_out/2;
   }else if(!util::areEqual(left_out/right_out,alpha)&&l_max_spd<r_max_spd){
     left_out=right_out/2;
   }
-  printf("left_out: %f,right_out: %f\n",sgn*left_out,sgn*right_out);
+  // printf("left_out: %f,right_out: %f\n",sgn*left_out,sgn*right_out);
   // Set motors
   if (drive_toggle)
     set_tank(sgn*left_out, sgn*right_out);
