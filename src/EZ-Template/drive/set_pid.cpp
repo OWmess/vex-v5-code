@@ -139,7 +139,6 @@ void Drive::set_turn_pid_gyro_free(double target, int speed) {
 
 
   printf("l_target_encoder:%f,r_target_encoder:%f\n",l_target_encoder,r_target_encoder);
-  ///TODO:: 这里的PID参数可能需要调整
   auto consts=turnPID_gyro_free.get_constants();
   leftPID.set_constants(consts.kp,consts.ki,consts.kd,consts.start_i);
   rightPID.set_constants(consts.kp,consts.ki,consts.kd,consts.start_i);
@@ -160,54 +159,69 @@ void Drive::set_turn_pid_gyro_free(double target, int speed) {
   set_drive_pid(target,speed,slew_on,toggle_heading);
  }
 
- void Drive::set_arc_drive_pid(double target,int left_speed,int right_speed,bool slew_on){
-    TICK_PER_INCH=get_tick_per_inch();
-    // Print targets
-    if (print_toggle) printf("Arc Drive Started... Target Value: %f (%f ticks)", target, target * TICK_PER_INCH);
-    if (slew_on && print_toggle) printf(" with slew");
-    if (print_toggle) printf("\n");
+ void Drive::set_arc_drive_pid(double target, int left_speed, int right_speed, bool slew_on) {
+  TICK_PER_INCH = get_tick_per_inch();
+  // Print targets
+  if (print_toggle) printf("Arc Drive Started... Target Value: %f (%f ticks)", target, target * TICK_PER_INCH);
+  if (slew_on && print_toggle) printf(" with slew");
+  if (print_toggle) printf("\n");
 
-    
-    float spd=(left_speed-right_speed)/2.0+right_speed;
-    float l_target=left_speed/spd*target;
-    float r_target=right_speed/spd*target;
-    // printf("spd: %f,l_target:%f,r_target:%f\n",spd,l_target,r_target);
-    // Global setup
-    heading_on = false;
-    bool l_is_backwards = false;
-    bool r_is_backwards= false;
-    l_start = left_sensor();
-    r_start = right_sensor();
-    double l_target_encoder, r_target_encoder;
+  float spd = (left_speed - right_speed) / 2.0 + right_speed;
+  float l_target = left_speed / spd * target;
+  float r_target = right_speed / spd * target;
+  // printf("spd: %f,l_target:%f,r_target:%f\n",spd,l_target,r_target);
+  // Global setup
+  heading_on = false;
+  bool l_is_backwards = false;
+  bool r_is_backwards = false;
+  l_start = left_sensor();
+  r_start = right_sensor();
+  double l_target_encoder, r_target_encoder;
 
-    // Figure actual target value
-    l_target_encoder = l_start + (l_target * TICK_PER_INCH);
-    r_target_encoder = r_start + (r_target * TICK_PER_INCH);
-    // printf("l_target_encoder: %lf ,r_target_encoder: %lf",l_target_encoder,r_target_encoder);
-    // Figure out if going forward or backward
-    auto straight_consts = forward_drivePID.get_constants();
-    auto backward_consts = backward_drivePID.get_constants();
-    if(l_target_encoder<l_start){
-      leftPID.set_constants(backward_consts.kp,backward_consts.ki,backward_consts.kd,backward_consts.start_i);
-      l_is_backwards=true;
-    }else{
-      leftPID.set_constants(straight_consts.kp,straight_consts.ki,straight_consts.kd,straight_consts.start_i);
-    }
-    if(r_target_encoder<r_start){
-      rightPID.set_constants(backward_consts.kp,backward_consts.ki,backward_consts.kd,backward_consts.start_i);
-      r_is_backwards=true;
-    }else{
-      rightPID.set_constants(straight_consts.kp,straight_consts.ki,straight_consts.kd,straight_consts.start_i);
-    }
+  // Figure actual target value
+  l_target_encoder = l_start + (l_target * TICK_PER_INCH);
+  r_target_encoder = r_start + (r_target * TICK_PER_INCH);
+  // printf("l_target_encoder: %lf ,r_target_encoder: %lf",l_target_encoder,r_target_encoder);
+  // Figure out if going forward or backward
+  auto straight_consts = forward_drivePID.get_constants();
+  auto backward_consts = backward_drivePID.get_constants();
+  if (l_target_encoder < l_start) {
+    leftPID.set_constants(backward_consts.kp, backward_consts.ki, backward_consts.kd, backward_consts.start_i);
+    l_is_backwards = true;
+  } else {
+    leftPID.set_constants(straight_consts.kp, straight_consts.ki, straight_consts.kd, straight_consts.start_i);
+  }
+  if (r_target_encoder < r_start) {
+    rightPID.set_constants(backward_consts.kp, backward_consts.ki, backward_consts.kd, backward_consts.start_i);
+    r_is_backwards = true;
+  } else {
+    rightPID.set_constants(straight_consts.kp, straight_consts.ki, straight_consts.kd, straight_consts.start_i);
+  }
 
-    // Set PID targets
-    leftPID.set_target(l_target_encoder);
-    rightPID.set_target(r_target_encoder);
+  // Set PID targets
+  leftPID.set_target(l_target_encoder);
+  rightPID.set_target(r_target_encoder);
 
-    // Initialize slew
-    slew_initialize(left_slew, slew_on, left_speed, l_target_encoder, left_sensor(), l_start, l_is_backwards);
-    slew_initialize(right_slew, slew_on, right_speed, r_target_encoder, right_sensor(), r_start, r_is_backwards);
+  // Initialize slew
+  slew_initialize(left_slew, slew_on, left_speed, l_target_encoder, left_sensor(), l_start, l_is_backwards);
+  slew_initialize(right_slew, slew_on, right_speed, r_target_encoder, right_sensor(), r_start, r_is_backwards);
 
-    // Run task
-    set_mode(DRIVE);
+  // Run task
+  set_mode(DRIVE);
  }
+
+ void Drive::set_arc_turn_pid(double target, int left_speed,int right_speed) {
+  // Print targets
+  if (print_toggle) printf("Turn Started... Target Value: %f\n", target);
+
+  // Set PID targets
+  turnPID.set_target(target);
+  headingPID.set_target(target);  // Update heading target for next drive motion
+  this->l_max_spd=left_speed;
+  this->r_max_spd=right_speed;
+  if(pid_logger)
+    logger.create_log(DriveMode::TURN, turnPID.get_constants(), target);
+
+  // Run task
+  set_mode(ARC_TURN);
+}

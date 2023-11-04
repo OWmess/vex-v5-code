@@ -444,6 +444,7 @@ void skill_match(){
 
 
 void test_pid(){
-  chassis.set_arc_drive_pid(50,50,100,false);
+  chassis.set_arc_drive_pid(-40, 100, 50,true);
   chassis.wait_drive();
+  chassis.set_tank(0, 0);
 }

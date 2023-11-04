@@ -48,7 +48,7 @@ void Drive::wait_drive(){
   }
 
   // Turn Exit
-  else if (mode == TURN) {
+  else if (mode == TURN||mode==ARC_TURN) {
     exit_output turn_exit = RUNNING;
     while (turn_exit == RUNNING) {
       turn_exit = turn_exit != RUNNING ? turn_exit : turnPID.exit_condition({left_motors[0], right_motors[0]});
@@ -80,6 +80,7 @@ void Drive::wait_drive(){
       interfered = true;
     }
   }
+  set_mode(DISABLE);
   incline_check=false;
 }
 

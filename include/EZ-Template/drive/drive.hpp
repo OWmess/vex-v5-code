@@ -514,6 +514,14 @@ class Drive {
    */
   void set_drive_pid_with_incline_check(double target, int speed, bool slew_on = false, bool toggle_heading = true,float deg=15.f,int imu_initial_heading=0);
 
+  /**
+   * @brief Set the arc drive pid object
+   * 
+   * @param target target value in inches
+   * @param left_speed left motors speed
+   * @param right_speed  right motors speed
+   * @param slew_on ramp up from slew_min to speed over slew_distance.  only use when you're going over about 14"
+   */
   void set_arc_drive_pid(double target,int left_speed,int right_speed,bool slew_on = false);
   /**
    * Sets the robot to turn using PID.
@@ -525,6 +533,14 @@ class Drive {
    */
   void set_turn_pid(double target, int speed);
 
+
+  /**
+   * @brief sets the robot to turn using PID with differential speed
+   * \param target      target value in degrees
+   *  \param left_speed   left motors speed
+   *  \param right_speed  right motors speed
+   */
+   void set_arc_turn_pid(double target, int left_speed,int right_speed);
   /**
    * Turn using only the left or right side.
    *
@@ -795,6 +811,7 @@ class Drive {
   void turn_pid_task();
   void ez_auto_task();
   void turn_pid_gyro_free_task();
+  void arc_turn_pid_task();
   /**
    * Constants for slew
    */

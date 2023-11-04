@@ -19,8 +19,10 @@ void Drive::ez_auto_task() {
       turn_pid_task();
     else if (get_mode() == SWING)
       swing_pid_task();
-    if(get_mode()==TRUN_GYRO_FREE)
+    else if(get_mode()==TRUN_GYRO_FREE)
       turn_pid_gyro_free_task();
+    else if(get_mode()==ez::ARC_TURN)
+      arc_turn_pid_task();
     if (pros::competition::is_autonomous() && !util::AUTON_RAN)
       util::AUTON_RAN = true;
     else if (!pros::competition::is_autonomous())
@@ -47,7 +49,6 @@ void Drive::drive_pid_task() {
   double delta_r_sensor=r_sensor-prev_r_sensor;
   if(incline_check){
     // 根据imu的初始朝向判断是pitch还是roll,取绝对值
-    // float degree=abs(fmod(imu_initial_heading,180)==0?imu.get_pitch():imu.get_roll());
 
     incline_deg_vec.push_back(degree);
     //保证incline_deg_vec的长度不超过5
@@ -159,4 +160,40 @@ void Drive::turn_pid_gyro_free_task(){
     r_out=r_max_speed;
   set_tank(l_out, r_out);
 
+}
+
+void Drive::arc_turn_pid_task(){
+  // Compute PID
+  double gyro_pos=get_gyro();
+  turnPID.compute(gyro_pos);
+  if(pid_logger)
+    gyro_vec.emplace_back(gyro_pos);
+  
+  int sgn= (this->l_max_spd!=0) ? util::sgn(this->l_max_spd) : util::sgn(this->r_max_spd);
+  printf("sgn_1:%d\n",sgn);
+  sgn*=util::sgn(turnPID.output);
+  printf("sgn_2:%d\n",sgn);
+  int l_max_spd=abs(this->l_max_spd);
+  int r_max_spd=abs(this->r_max_spd);
+  // Clip gyroPID to max speed
+  double left_out = util::clip_num(turnPID.output, l_max_spd, -l_max_spd);
+  double right_out= util::clip_num(turnPID.output, r_max_spd, -r_max_spd);
+  // Clip the speed of the turn when the robot is within StartI, only do this when target is larger then StartI
+  if (turnPID.constants.ki != 0 && (fabs(turnPID.get_target()) > turnPID.constants.start_i && fabs(turnPID.error) < turnPID.constants.start_i)) {
+    if (get_turn_min() != 0){
+      left_out = util::clip_num(left_out, get_turn_min(), -get_turn_min());
+      right_out= util::clip_num(right_out, get_turn_min(), -get_turn_min());
+    }
+  }
+  printf("raw left_out: %f,right_out: %f\n",left_out,right_out);
+  float alpha=l_max_spd/static_cast<float>(r_max_spd);
+  if(!util::areEqual(left_out/right_out,alpha)&&l_max_spd>r_max_spd){
+    right_out=left_out/2;
+  }else if(!util::areEqual(left_out/right_out,alpha)&&l_max_spd<r_max_spd){
+    left_out=right_out/2;
+  }
+  printf("left_out: %f,right_out: %f\n",sgn*left_out,sgn*right_out);
+  // Set motors
+  if (drive_toggle)
+    set_tank(sgn*left_out, sgn*right_out);
 }

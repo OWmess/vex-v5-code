@@ -65,11 +65,8 @@ enum e_mode { DISABLE = 0,
               SWING = 1,
               TURN = 2,
               DRIVE = 3,
-              TRUN_GYRO_FREE = 4 };
-
-
-
-
+              TRUN_GYRO_FREE = 4,
+              ARC_TURN = 5 };
 
 /**
  * Outputs string for exit_condition enum.
@@ -127,6 +124,11 @@ inline void write_to_csv(const std::string& filename, const T& first,const Args&
     ((file << "," << args), ...);
     file << "\n";
     file.close();
+}
+
+template<typename T,typename Y>
+inline bool areEqual(T a, Y b, float epsilon = 0.0001f) {
+    return std::abs(a - b) < epsilon;
 }
 }  // namespace util
 }  // namespace ez
