@@ -62,8 +62,10 @@ void Drive::drive_pid_task() {
       //如果倾斜角度大于阈值，则将target加上上一次的偏移量
       leftPID.set_target(leftPID.get_target()+delta_l_sensor);
       rightPID.set_target(rightPID.get_target()+delta_r_sensor);
+      if(delta_l_sensor<0)
+        cout<<"max_element"<<max_element<<endl;
+
     }
-    
   }
   leftPID.compute(l_sensor);
   rightPID.compute(r_sensor);
