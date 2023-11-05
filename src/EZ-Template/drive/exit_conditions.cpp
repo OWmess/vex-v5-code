@@ -6,7 +6,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "EZ-Template/util.hpp"
 #include "main.h"
-
 using namespace ez;
 
 // Set exit condition timeouts
@@ -80,7 +79,6 @@ void Drive::wait_drive(){
       interfered = true;
     }
   }
-  set_mode(DISABLE);
   incline_check=false;
 }
 
@@ -130,7 +128,7 @@ void Drive::wait_until(double target) {
   }
 
   // If robot is turning or swinging...
-  else if (mode == TURN || mode == SWING) {
+  else if (mode == TURN || mode == SWING||mode==ARC_TURN) {
     // Calculate error between current and target (target needs to be an in between position)
     int g_error = target - get_gyro();
     int g_sgn = util::sgn(g_error);

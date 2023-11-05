@@ -512,7 +512,7 @@ class Drive {
    * @param deg incline degree ,based on the horizontal plane
    * @param imu_initial_heading imu initial heading, 0 or 90 or 180 or 270
    */
-  void set_drive_pid_with_incline_check(double target, int speed, bool slew_on = false, bool toggle_heading = true,float deg=15.f,int imu_initial_heading=0);
+  void set_drive_pid_with_incline_check(double target, int speed, bool slew_on = false, bool toggle_heading = true,float deg=10.f,int imu_initial_heading=0);
 
   /**
    * @brief Set the arc drive pid object

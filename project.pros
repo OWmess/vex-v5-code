@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "test_",
+    "project_name": "test",
     "target": "v5",
     "templates": {
       "kernel": {
@@ -311,10 +311,10 @@
     },
     "upload_options": {
       "compress_bin": true,
-      "description": "making code ez-pz",
+      "description": "test code",
       "remote_name": "EZ-Template",
-      "slot": 3,
-      "icon": "planet"
+      "slot": 2,
+      "icon": "power"
     }
   }
 }

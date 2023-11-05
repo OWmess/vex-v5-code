@@ -21,3 +21,5 @@ void guard_1();
 void attack_aggressive();
 
 void guard_aggressive();
+
+void get_sensor_data();
