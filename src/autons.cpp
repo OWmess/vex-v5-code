@@ -336,6 +336,11 @@ void conservatively_attack(){
 }
 
 void skill_match(){
+    chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 13, 0);
+  chassis.set_pid_constants(&chassis.forward_drivePID, 1, 0.001, 2, 150);
+  chassis.set_pid_constants(&chassis.backward_drivePID, 0.5, 0.001, 4, 150);
+  chassis.set_pid_constants(&chassis.turnPID, 4, 0.05,25, 15);
+  chassis.set_pid_constants(&chassis.swingPID, 7, 0.05, 45, 10);
   chassis.set_exit_condition(chassis.drive_exit,10,50, 10, 100, 2000, 500);
   chassis.set_exit_condition(chassis.turn_exit, 10, 3, 10, 7, 500, 500);
   chassis.set_exit_condition(chassis.swing_exit, 10, 3, 10, 7, 500, 500);
@@ -355,7 +360,7 @@ void skill_match(){
   // chassis.wait_drive();
   chassis.set_swing_pid(ez::RIGHT_SWING, -18, 120);
   chassis.wait_drive();
-  chassis.set_drive_pid(10, 25);
+  chassis.set_drive_pid(10, 25,false,false);
   chassis.wait_drive();
   // chassis.set_turn_pid(-18, turn_speed);
   // chassis.toggle_auto_drive(false);
@@ -364,7 +369,7 @@ void skill_match(){
 
   auto cata_motor_reference=control.get_catapult_motor();
   cata_motor_reference.move(120);
-  while(pros::millis()-start_t<10000){//30000ms=30s
+  while(pros::millis()-start_t<3000){//30000ms=30s
     cata_motor_reference.move(120);
 
     pros::delay(100);
@@ -374,6 +379,8 @@ void skill_match(){
   // chassis.set_drive_pid(-20, drive_speed);
   // chassis.wait_drive();
   chassis.set_arc_turn_pid(-80, -120, -50);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-20, drive_speed,false,true);
   chassis.wait_drive();
   chassis.set_arc_turn_pid(0, -55, -125);
   chassis.wait_drive();
@@ -393,16 +400,19 @@ void skill_match(){
   chassis.wait_drive();
   chassis.set_drive_pid_with_incline_check(60 , 125,true,true,10.f,90);
   chassis.wait_drive();
-  pros::delay(2000);
+  // pros::delay(2000);
   chassis.set_turn_pid(-60, turn_speed);
   chassis.wait_drive();
   chassis.set_arc_turn_pid(-18, 120, 60);
   chassis.wait_drive();
-  chassis.set_drive_pid(20, 25);
+
+  chassis.set_drive_pid(30, drive_speed);
+  chassis.wait_until(20);
+  chassis.set_max_speed(25);
   chassis.wait_drive();
 
   start_t=pros::millis();
-  while(pros::millis()-start_t<10000){//30000ms=30s
+  while(pros::millis()-start_t<3000){//30000ms=30s
     cata_motor_reference.move(120);
 
     pros::delay(100);
