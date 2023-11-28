@@ -200,10 +200,10 @@ void Drive::set_tank(int left, int right) {
   if (pros::millis() < 1500) return;
 
   for (auto i : left_motors) {
-    if (!pto_check(i)) i.move_voltage(left * (12000.0 / 127.0));  // If the motor is in the pto list, don't do anything to the motor.
+    if (!pto_active_check(i)) i.move_voltage(left * (12000.0 / 127.0));  // If the motor is in the pto list, don't do anything to the motor.
   }
   for (auto i : right_motors) {
-    if (!pto_check(i)) i.move_voltage(right * (12000.0 / 127.0));  // If the motor is in the pto list, don't do anything to the motor.
+    if (!pto_active_check(i)) i.move_voltage(right * (12000.0 / 127.0));  // If the motor is in the pto list, don't do anything to the motor.
   }
 }
 
@@ -213,10 +213,10 @@ void Drive::set_drive_current_limit(int mA) {
   }
   CURRENT_MA = mA;
   for (auto i : left_motors) {
-    if (!pto_check(i)) i.set_current_limit(abs(mA));  // If the motor is in the pto list, don't do anything to the motor.
+    if (!pto_active_check(i)) i.set_current_limit(abs(mA));  // If the motor is in the pto list, don't do anything to the motor.
   }
   for (auto i : right_motors) {
-    if (!pto_check(i)) i.set_current_limit(abs(mA));  // If the motor is in the pto list, don't do anything to the motor.
+    if (!pto_active_check(i)) i.set_current_limit(abs(mA));  // If the motor is in the pto list, don't do anything to the motor.
   }
 }
 
@@ -247,34 +247,34 @@ double Drive::right_sensor() {
     return right_tracker.get_value();
   else if (is_tracker == DRIVE_ROTATION)
     return right_rotation.get_position();
-  double position=0;
-  for_each(right_motors.begin(),right_motors.end(),[&position](pros::Motor m){
-    position+=m.get_position();});
-  position/=right_motors.size();
-  return position;
-  // return right_motors.front().get_position();
+  // double position=0;
+  // for_each(right_motors.begin(),right_motors.end(),[&position](pros::Motor m){
+  //   position+=m.get_position();});
+  // position/=right_motors.size();
+  // return position;
+  return right_motors[right_condition_index].get_position();
 }
 
-int Drive::right_velocity() { return right_motors.front().get_actual_velocity(); }
-double Drive::right_mA() { return right_motors.front().get_current_draw(); }
-bool Drive::right_over_current() { return right_motors.front().is_over_current(); }
+int Drive::right_velocity() { return right_motors[right_condition_index].get_actual_velocity(); }
+double Drive::right_mA() { return right_motors[right_condition_index].get_current_draw(); }
+bool Drive::right_over_current() { return right_motors[right_condition_index].is_over_current(); }
 
 double Drive::left_sensor() {
   if (is_tracker == DRIVE_ADI_ENCODER)
     return left_tracker.get_value();
   else if (is_tracker == DRIVE_ROTATION)
     return left_rotation.get_position();
-  double position=0;
-  for_each(left_motors.begin(),left_motors.end(),[&position](pros::Motor m){
-    position+=m.get_position();});
-  position/=left_motors.size();
-  return position;
-  // return left_motors.front().get_position();
+  // double position=0;
+  // for_each(left_motors.begin(),left_motors.end(),[&position](pros::Motor m){
+  //   position+=m.get_position();});
+  // position/=left_motors.size();
+  // return position;
+  return left_motors[left_condition_index].get_position();
 }
 
-int Drive::left_velocity() { return left_motors.front().get_actual_velocity(); }
-double Drive::left_mA() { return left_motors.front().get_current_draw(); }
-bool Drive::left_over_current() { return left_motors.front().is_over_current(); }
+int Drive::left_velocity() { return left_motors[left_condition_index].get_actual_velocity(); }
+double Drive::left_mA() { return left_motors[left_condition_index].get_current_draw(); }
+bool Drive::left_over_current() { return left_motors[left_condition_index].is_over_current(); }
 
 void Drive::reset_gyro(double new_heading) { imu.set_rotation(new_heading); }
 double Drive::get_gyro() { return imu.get_rotation(); }
@@ -338,10 +338,10 @@ bool Drive::imu_calibrate(bool run_loading_animation) {
 void Drive::set_drive_brake(pros::motor_brake_mode_e_t brake_type) {
   CURRENT_BRAKE = brake_type;
   for (auto i : left_motors) {
-    if (!pto_check(i)) i.set_brake_mode(brake_type);  // If the motor is in the pto list, don't do anything to the motor.
+    if (!pto_active_check(i)) i.set_brake_mode(brake_type);  // If the motor is in the pto list, don't do anything to the motor.
   }
   for (auto i : right_motors) {
-    if (!pto_check(i)) i.set_brake_mode(brake_type);  // If the motor is in the pto list, don't do anything to the motor.
+    if (!pto_active_check(i)) i.set_brake_mode(brake_type);  // If the motor is in the pto list, don't do anything to the motor.
   }
 }
 

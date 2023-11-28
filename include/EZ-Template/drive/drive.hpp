@@ -54,6 +54,11 @@ class Drive {
   std::vector<int> pto_active;
 
   /**
+   * @brief pto list
+   * 
+   */
+  std::vector<int> pto_list;
+  /**
    * Inertial sensor.
    */
   pros::Imu imu;
@@ -335,7 +340,7 @@ class Drive {
    * \param check_if_pto
    *        motor to check.
    */
-  bool pto_check(pros::Motor check_if_pto);
+  bool pto_active_check(pros::Motor check_if_pto);
 
   /**
    * Adds motors to the pto list, removing them from the drive.
@@ -343,7 +348,7 @@ class Drive {
    * \param pto_list
    *        list of motors to remove from the drive.
    */
-  void pto_add(std::vector<pros::Motor> pto_list);
+  void pto_add(std::vector<int> pto_list);
 
   /**
    * Removes motors from the pto list, adding them to the drive.  You cannot use the first index in a pto.
@@ -351,7 +356,7 @@ class Drive {
    * \param pto_list
    *        list of motors to add to the drive.
    */
-  void pto_remove(std::vector<pros::Motor> pto_list);
+  void pto_remove(std::vector<int> pto_list);
 
   /**
    * Adds/removes motors from drive.  You cannot use the first index in a pto.
@@ -361,8 +366,18 @@ class Drive {
    * \param toggle
    *        if true, adds to list.  if false, removes from list.
    */
-  void pto_toggle(std::vector<pros::Motor> pto_list, bool toggle);
+  void pto_toggle(bool toggle);
 
+
+  /**
+   * @brief initialize pto 
+   * 
+   * @param pto_list 
+   * @return Drive 
+   */
+  Drive with_pto(std::initializer_list<int> pto_list);
+
+  std::vector<pros::Motor&> get_pto_motors();
   /////
   //
   // PROS Wrapers
@@ -921,11 +936,13 @@ class Drive {
   float incline_deg_threshold;
   int imu_initial_heading;
   std::deque<float> incline_deg_vec;
+
+  int left_condition_index=0;
+  int right_condition_index=0;
 public:
   /**
    * 用于记录pid数据
    */
   void set_pid_logger(bool logger);
 
-  
 };
