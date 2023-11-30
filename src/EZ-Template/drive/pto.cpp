@@ -41,15 +41,15 @@ void Drive::pto_remove(std::vector<int> pto_list) {
     // Find index of motor
     int index = std::distance(pto_active.begin(), does_exist);
     pto_active.erase(pto_active.begin() + index);
-    // 将电机设置为默认的制动模式和电流限制
-    auto it=find(left_motors.begin(),left_motors.end(),[i](pros::Motor &motor){
+    //将电机设置为默认的制动模式和电流限制
+    auto it=find_if(left_motors.begin(),left_motors.end(),[i](pros::Motor &motor){
       return motor.get_port()==i;
     });
     if(it!=left_motors.end()){
       it->set_brake_mode(CURRENT_BRAKE); // Set the motor to the brake type of the drive
       it->set_current_limit(CURRENT_MA); // Set the motor to the mA of the drive
     }else {
-      it=find(right_motors.begin(),right_motors.end(),[i](pros::Motor &motor){
+      it=find_if(right_motors.begin(),right_motors.end(),[i](pros::Motor &motor){
         return motor.get_port()==i;
       });
       if(it!=right_motors.end()){
@@ -69,6 +69,9 @@ void Drive::pto_toggle(bool toggle) {
 
 Drive Drive::with_pto(std::initializer_list<int> list) {
   this->pto_list = {list};
+  for(auto &i:pto_list){
+    i=abs(i);
+  }
   for (auto i : pto_list) {
     auto comp = [i](pros::Motor &motor) {
       return motor.get_port() == i;
@@ -96,4 +99,23 @@ Drive Drive::with_pto(std::initializer_list<int> list) {
   });
   right_condition_index = std::distance(right_motors.begin(), it);
   return *this;
+}
+
+std::vector<pros::Motor> Drive::get_pto_motors() {
+  std::vector<pros::Motor> motors;
+  for(auto port:pto_list){
+    auto comp=[port](pros::Motor &motor){
+      return motor.get_port()==port;
+    };
+    auto it=find_if(left_motors.begin(),left_motors.end(),comp);
+    if(it!=left_motors.end()){
+      motors.push_back(*it);
+    }else {
+      it=find_if(right_motors.begin(),right_motors.end(),comp);
+      if(it!=right_motors.end()){
+        motors.push_back(*it);
+      }
+    }
+  }
+  return motors;
 }

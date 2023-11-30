@@ -138,22 +138,45 @@ public:
     inline Catapult_State get_catapult_state(){
         return catapult_state;
     }
-
+    
+    /**
+     * @brief 设置intake电机的制动模式
+     * 
+     * @param mode 
+     */
     inline void set_intake_brake_mode(const pros::motor_brake_mode_e_t mode) const{
         for(const auto& motor:intake_motors){
             motor.set_brake_mode(mode);
         }
     }
 
+    /**
+     * @brief 设置发射架电机的制动模式
+     * 
+     * @param mode 
+     */
     inline void set_catapult_brake_mode(const pros::motor_brake_mode_e_t mode) const{
         catapult_motor->set_brake_mode(mode);
     }
 
-
+    /**
+     * @brief 设置发射架的PID参数
+     * 
+     * @param pid 
+     * @param p 
+     * @param i 
+     * @param d 
+     * @param p_start_i 
+     */
     inline void set_pid_constants(PID *pid, double p, double i, double d, double p_start_i){
         pid->set_constants(p,i,d,p_start_i);
     }
 
+    /**
+     * @brief 获取发射架电机的引用
+     * 
+     * @return pros::Motor& 
+     */
     inline pros::Motor& get_catapult_motor(){
         return *catapult_motor;
     }
@@ -208,19 +231,24 @@ private:
     */
     void catapult_task_func();
 
+    void with_pto();
 public:
     PID cata_PID;
 private:
+    //气动结构体
     struct PneumaticsStruct{
         std::shared_ptr<pros::ADIDigitalOut> pneumatics;
         bool reversed;
 
     };
+    //电机及电磁阀的智能指针或实例
     std::unique_ptr<pros::Rotation> cata_rotation;
     std::vector<pros::Motor> intake_motors;
     std::unique_ptr<pros::Motor> catapult_motor;
     std::vector<PneumaticsStruct> wings;
     std::vector<PneumaticsStruct> armers;
+    std::map<std::string,std::unique_ptr<PneumaticsStruct>> pto;
+    std::unique_ptr<PneumaticsStruct> 
     double catapult_up_pos;
     double catapult_middle_pos;
     double catapult_down_pos;
@@ -239,6 +267,7 @@ private:
     static Control_State wings_state;
     static Catapult_State catapult_state;
     static Control_State armer_state;
+    bool enable_pto=false;
 };
 
 

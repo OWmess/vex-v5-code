@@ -377,7 +377,13 @@ class Drive {
    */
   Drive with_pto(std::initializer_list<int> pto_list);
 
-  std::vector<pros::Motor&> get_pto_motors();
+
+  /**
+   * @brief Get the pto motors object
+   * 
+   * @return std::vector<std::reference_wrapper<pros::Motor>> 
+   */
+  std::vector<pros::Motor> get_pto_motors();
   /////
   //
   // PROS Wrapers

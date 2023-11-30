@@ -258,7 +258,8 @@ void Control::control_task(){
     master.print(0, 0,"cata temp %lf",temperature);
     pros::delay(50);
   }
-
 }
 
-
+void Control::with_pto(){
+  
+}
