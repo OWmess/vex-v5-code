@@ -32,7 +32,7 @@ public:
      * \param wings_ports ports of the wings (negative port will reverse it!)
      * \param armer_ports ports of the armer (negative port will reverse it!)
     */
-    Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const int8_t &catapult_motor_port,
+    Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const std::vector<int8_t> &catapult_motor_port,
     pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_rotation_port,const std::vector<int8_t> &wings_ports,
     const std::vector<int8_t> &armer_ports);
 
@@ -156,7 +156,9 @@ public:
      * @param mode 
      */
     inline void set_catapult_brake_mode(const pros::motor_brake_mode_e_t mode) const{
-        catapult_motor->set_brake_mode(mode);
+        for(auto &i:catapult_motor){
+            i.set_brake_mode(mode);
+        }
     }
 
     /**
@@ -177,8 +179,8 @@ public:
      * 
      * @return pros::Motor& 
      */
-    inline pros::Motor& get_catapult_motor(){
-        return *catapult_motor;
+    inline std::vector<pros::Motor> get_catapult_motor(){
+        return catapult_motor;
     }
 
     inline void clean_cata_task_notify(){
@@ -244,11 +246,10 @@ private:
     //电机及电磁阀的智能指针或实例
     std::unique_ptr<pros::Rotation> cata_rotation;
     std::vector<pros::Motor> intake_motors;
-    std::unique_ptr<pros::Motor> catapult_motor;
+    std::vector<pros::Motor> catapult_motor;
     std::vector<PneumaticsStruct> wings;
     std::vector<PneumaticsStruct> armers;
     std::map<std::string,std::unique_ptr<PneumaticsStruct>> pto;
-    std::unique_ptr<PneumaticsStruct> 
     double catapult_up_pos;
     double catapult_middle_pos;
     double catapult_down_pos;

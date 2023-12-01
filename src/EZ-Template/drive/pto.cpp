@@ -37,7 +37,7 @@ void Drive::pto_remove(std::vector<int> pto_list) {
     auto does_exist = std::find(pto_active.begin(), pto_active.end(), i);
     // Return if the motor isn't in the list
     if (does_exist == pto_active.end()) continue;
-
+    
     // Find index of motor
     int index = std::distance(pto_active.begin(), does_exist);
     pto_active.erase(pto_active.begin() + index);
@@ -69,9 +69,12 @@ void Drive::pto_toggle(bool toggle) {
 
 Drive Drive::with_pto(std::initializer_list<int> list) {
   this->pto_list = {list};
+  std::cout<<"pto_list: ";
   for(auto &i:pto_list){
+    std::cout<<i<<", ";
     i=abs(i);
   }
+  std::cout<<"\n";
   for (auto i : pto_list) {
     auto comp = [i](pros::Motor &motor) {
       return motor.get_port() == i;
@@ -92,12 +95,14 @@ Drive Drive::with_pto(std::initializer_list<int> list) {
     });
   });
   left_condition_index = std::distance(left_motors.begin(), it);
+  std::cout<<"left_condition_index: "<<left_condition_index<<"\n";
   it = std::find_if(right_motors.begin(), right_motors.end(), [this](pros::Motor &motor) {
     return std::any_of(pto_list.begin(), pto_list.end(), [&motor](int pto_port) {
       return pto_port != motor.get_port();
     });
   });
   right_condition_index = std::distance(right_motors.begin(), it);
+  std::cout<<"right_condition_index: "<<right_condition_index<<"\n";
   return *this;
 }
 

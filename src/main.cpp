@@ -3,10 +3,10 @@
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {-2, 3, 4}
-
+  {10, 9, 8,-14}
+  
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{6, -7, -8}
+  ,{-1, -2, -3,17}
 
   // 陀螺仪端口
   ,20
@@ -24,12 +24,12 @@ Drive chassis=Drive(
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
   ,12.0
-);
+).with_pto({-14,17});
 
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
   // Intake 电机组端口，（负端口将反转电机！）
-  {-14, 17}
+  {-11,20}
 
   // Intake 电机组的RPM,
   //可选项有：
@@ -39,10 +39,10 @@ Control control=Control(
   ,pros::E_MOTOR_GEAR_200
 
   // 投石机电机端口（负端口将反转它！）
-  ,12
+  ,{-14,17}
 
   // 投石机 电机RPM,可选项同上
-  ,pros::E_MOTOR_GEAR_100
+  ,pros::E_MOTOR_GEAR_600
 
   // 投石机的角度传感器所在端口,若角度传感器正方向与投石机下压方向相反则为负
   ,19
@@ -142,10 +142,40 @@ void autonomous() {
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
   ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
 
-
-
+}
+pros::ADIDigitalOut chassis_pitson('H',LOW);
+pros::ADIDigitalOut arm_pitson('G',LOW);
+pros::ADIDigitalOut armlock_pitson('F',LOW);
+void pto_chassis_mode(){
+  chassis_pitson.set_value(LOW);
+  arm_pitson.set_value(LOW);
+  chassis.pto_toggle(false);
+  for(auto &i:chassis.pto_active){
+    cout<<i<<", ";
+  }
+  cout<<"\n";
 }
 
+void pto_cata_mode(){
+  chassis_pitson.set_value(HIGH);
+  arm_pitson.set_value(LOW);
+  chassis.pto_toggle(true);
+  for(auto &i:chassis.pto_active){
+    cout<<i<<", ";
+  }
+  cout<<"\n";
+}
+
+void pto_arm_mode(){
+  chassis_pitson.set_value(HIGH);
+  arm_pitson.set_value(HIGH);
+  chassis.pto_toggle(true);
+    for(auto &i:chassis.pto_active){
+    cout<<i<<", ";
+  }
+  cout<<"\n";
+
+}
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -165,10 +195,11 @@ void opcontrol() {
   control.set_intake_state(STOP);
   bool cata_throwing=false;
   auto cata_motor_reference=control.get_catapult_motor();
-  while (true)
-  {
-    chassis.arcade_standard(SPLIT);
-    // chassis.tank();
+
+
+  while (true){
+    // chassis.arcade_standard(SPLIT);
+    chassis.tank();
     //根据按钮状态控制机器人
     if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
         if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
@@ -196,20 +227,47 @@ void opcontrol() {
       // pros::delay(300);
     }
 
+    // if(Controller_Button_State::RIGHT_new_press()){
+    //   control.set_armer_state(OFF);
+    // }else if(Controller_Button_State::LEFT_new_press()){
+    //   control.set_armer_state(ON);
+    // }
+
+    if(Controller_Button_State::DOWN_new_press()){
+      std::cout<<"pto_chassis_mode\n";
+      pto_chassis_mode();
+    }
+    if(Controller_Button_State::LEFT_new_press()){
+      std::cout<<"pto_cata_mode\n";
+      pto_cata_mode();
+    }
     if(Controller_Button_State::RIGHT_new_press()){
-      control.set_armer_state(OFF);
-    }else if(Controller_Button_State::LEFT_new_press()){
-      control.set_armer_state(ON);
+      std::cout<<"pto_armlock\n";
+      armlock_pitson.set_value(HIGH);
+    }
+    if(Controller_Button_State::UP_new_press()){
+      std::cout<<"pto_arm_mode\n";
+      pto_arm_mode();
     }
 
-    if(Controller_Button_State::X_new_press()){///持续发射
-      cata_throwing=!cata_throwing;
-      if(cata_throwing){
-        cata_motor_reference.move(120);
-      }else{
-        cata_motor_reference.brake();
+    auto cata_motor_reference=control.get_catapult_motor();
+    if(Controller_Button_State::Y_pressed()){
+      for(auto &i:cata_motor_reference){
+        i.move(120);
+      }
+    }else{
+      for(auto &i:cata_motor_reference){
+        i.move(0);
       }
     }
+    // if(Controller_Button_State::X_new_press()){///持续发射
+    //   cata_throwing=!cata_throwing;
+    //   if(cata_throwing){
+    //     cata_motor_reference.move(120);
+    //   }else{
+    //     cata_motor_reference.brake();
+    //   }
+    // }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
 

@@ -367,13 +367,13 @@ void skill_match(){
   // chassis.set_tank(15, 15);
   auto start_t=pros::millis();
 
-  auto cata_motor_reference=control.get_catapult_motor();
-  cata_motor_reference.move(120);
-  while(pros::millis()-start_t<3000){//30000ms=30s
-    cata_motor_reference.move(120);
+  // auto cata_motor_reference=control.get_catapult_motor();
+  // cata_motor_reference.move(120);
+  // while(pros::millis()-start_t<3000){//30000ms=30s
+  //   cata_motor_reference.move(120);
 
-    pros::delay(100);
-  }
+  //   pros::delay(100);
+  // }
   // chassis.toggle_auto_drive(true);
   control.set_catapult_state(MIDDLE);
   // chassis.set_drive_pid(-20, drive_speed);
@@ -412,11 +412,11 @@ void skill_match(){
   chassis.wait_drive();
 
   start_t=pros::millis();
-  while(pros::millis()-start_t<3000){//30000ms=30s
-    cata_motor_reference.move(120);
+  // while(pros::millis()-start_t<3000){//30000ms=30s
+  //   cata_motor_reference.move(120);
 
-    pros::delay(100);
-  }
+  //   pros::delay(100);
+  // }
 
   control.set_catapult_state(MIDDLE);
   // chassis.set_drive_pid(-20, drive_speed);
