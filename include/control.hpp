@@ -12,6 +12,22 @@ enum Control_State{
     ON,
     OFF
 };
+
+inline Control_State operator!(Control_State state) {
+    switch (state) {
+        case ON:
+            return OFF;
+        case OFF:
+            return ON;
+        case INTAKE:
+            return OUTTAKE;
+        case OUTTAKE:
+            return INTAKE;
+        default:
+            return state;
+    }
+}
+
 enum Catapult_State{
     UP,
     MIDDLE,
@@ -21,6 +37,9 @@ enum Catapult_State{
     INIT_DOWN
 
 };
+
+
+
 class Control {
 public:
     /**
@@ -187,6 +206,20 @@ public:
         catapult_task.notify_clear();
     }
 
+
+    inline void cata_move(std::int32_t voltage) const{
+        for(const auto &motor:catapult_motor){
+            motor.move(voltage);
+        }
+        cout<<"cata move\n";
+    }
+
+    inline void cata_brake() const{
+        for(const auto &motor:catapult_motor){
+            motor.brake();
+        }
+    }
+    
 private:
 
     /**

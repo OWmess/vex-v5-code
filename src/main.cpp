@@ -141,19 +141,20 @@ void autonomous() {
   chassis.reset_drive_sensor(); // 重置电机编码器
   chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
   ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
-
 }
+
 pros::ADIDigitalOut chassis_pitson('H',LOW);
 pros::ADIDigitalOut arm_pitson('G',LOW);
 pros::ADIDigitalOut armlock_pitson('F',LOW);
+int8_t pto_mode=0;//0:chassis,1:cata,2:arm
 void pto_chassis_mode(){
   chassis_pitson.set_value(LOW);
-  arm_pitson.set_value(LOW);
   chassis.pto_toggle(false);
-  for(auto &i:chassis.pto_active){
+  for(auto &i:chassis.pto_active) {
     cout<<i<<", ";
   }
   cout<<"\n";
+  pto_mode=0;
 }
 
 void pto_cata_mode(){
@@ -164,6 +165,7 @@ void pto_cata_mode(){
     cout<<i<<", ";
   }
   cout<<"\n";
+  pto_mode=1;
 }
 
 void pto_arm_mode(){
@@ -174,7 +176,7 @@ void pto_arm_mode(){
     cout<<i<<", ";
   }
   cout<<"\n";
-
+  pto_mode=2;
 }
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -191,15 +193,14 @@ void pto_arm_mode(){
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
+  Control_State default_wings_state=OFF;
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
+  
   control.set_intake_state(STOP);
   bool cata_throwing=false;
-  auto cata_motor_reference=control.get_catapult_motor();
-
-
   while (true){
-    // chassis.arcade_standard(SPLIT);
-    chassis.tank();
+    chassis.arcade_standard(SPLIT);
+    // chassis.tank();
     //根据按钮状态控制机器人
     if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
         if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
@@ -211,63 +212,62 @@ void opcontrol() {
       control.set_intake_state(Control::reverse_intake(default_intake_state));
     }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
       control.set_intake_state(default_intake_state);
-    } 
-
-    if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
-      control.set_wings_state(ON);
-    }
-    else if(Controller_Button_State::L2_new_press()){//L2按下时，关闭翅膀
-      control.set_wings_state(OFF);
-    }
-    if(Controller_Button_State::A_new_press()){
-      control.set_catapult_state(MIDDLE);
-      // pros::delay(300);
-    }else if(Controller_Button_State::B_new_press()){
-      control.set_catapult_state(DOWN);
-      // pros::delay(300);
     }
 
-    // if(Controller_Button_State::RIGHT_new_press()){
-    //   control.set_armer_state(OFF);
-    // }else if(Controller_Button_State::LEFT_new_press()){
-    //   control.set_armer_state(ON);
-    // }
+    if(pto_mode==0){//底盘模式
+      if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
+        control.set_wings_state(ON);
+      }
+      else if(Controller_Button_State::L2_new_press()){//L2按下时，关闭翅膀
+        control.set_wings_state(OFF);
+      }
+    }else{//非底盘模式
+      if(Controller_Button_State::L2_pressed()){
+        control.cata_move(125);
+      }else if(Controller_Button_State::L1_pressed()){
+        control.cata_move(-125);
+      }else if(!cata_throwing){
+        control.cata_brake();
+      }
+    }
 
-    if(Controller_Button_State::DOWN_new_press()){
+
+    if(Controller_Button_State::RIGHT_new_press()){
+      control.set_armer_state(OFF);
+    }else if(Controller_Button_State::LEFT_new_press()){
+      control.set_armer_state(ON);
+    }
+
+    if(Controller_Button_State::B_new_press()){
       std::cout<<"pto_chassis_mode\n";
       pto_chassis_mode();
+      cata_throwing=false;
     }
-    if(Controller_Button_State::LEFT_new_press()){
+    if(Controller_Button_State::A_new_press()){
       std::cout<<"pto_cata_mode\n";
       pto_cata_mode();
+      cata_throwing=false;
     }
-    if(Controller_Button_State::RIGHT_new_press()){
-      std::cout<<"pto_armlock\n";
-      armlock_pitson.set_value(HIGH);
+    if(Controller_Button_State::Y_new_press()){
+      std::cout<<"pto_cata throwing\n";
+      pto_cata_mode();
+      cata_throwing=!cata_throwing;
+      if(cata_throwing){
+        control.cata_move(-120);
+      }else{
+        control.cata_brake();
+      }
     }
-    if(Controller_Button_State::UP_new_press()){
+    if(Controller_Button_State::X_new_press()){
       std::cout<<"pto_arm_mode\n";
       pto_arm_mode();
+      cata_throwing=false;
     }
 
-    auto cata_motor_reference=control.get_catapult_motor();
-    if(Controller_Button_State::Y_pressed()){
-      for(auto &i:cata_motor_reference){
-        i.move(120);
-      }
-    }else{
-      for(auto &i:cata_motor_reference){
-        i.move(0);
-      }
+    if(Controller_Button_State::DOWN_new_press()){
+      std::cout<<"armlock mode\n";
+      armlock_pitson.set_value(ON);
     }
-    // if(Controller_Button_State::X_new_press()){///持续发射
-    //   cata_throwing=!cata_throwing;
-    //   if(cata_throwing){
-    //     cata_motor_reference.move(120);
-    //   }else{
-    //     cata_motor_reference.brake();
-    //   }
-    // }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
 

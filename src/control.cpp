@@ -53,7 +53,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
 
   for(const auto &i:catapult_motor_port){
     pros::Motor tmp(abs(i),catapult_gearset,util::is_reversed(i));
-    tmp.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    // tmp.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
     catapult_motor.push_back(tmp);
   }
 
@@ -103,30 +103,22 @@ void Control::set_catapult(int speed,Catapult_State state) {
   double start_t=pros::millis();
   time_out=5000;
   auto cata_to_top_lambda=[this,start_t,speed](float degree){
-    for(auto &motor:catapult_motor){
-      motor.move(speed);
-    }
+    cata_move(speed);
     while(pros::millis()-start_t<time_out) {
       ////检测是否有其他task通知catapult运动
       if(check_task_notify(catapult_task,1,cata_exit_condition)){
-        for(auto &motor:catapult_motor){
-          motor.brake();
-        }
+        cata_brake();
         return;
       }
       if(cata_rotation->get_velocity()<-1){//发射架在复位途中,忽略
         break;
       }
     }
-    for(auto &motor:catapult_motor){
-      motor.brake();
-    }
+    cata_brake();
     std::deque<float> angle_queue;
     while(true){
       if(check_task_notify(catapult_task,30,cata_exit_condition)){
-        for(auto &motor:catapult_motor){
-          motor.brake();
-        }
+        cata_brake();
         return;
       }
       float angle=cata_rotation->get_angle()/100.f;
@@ -151,9 +143,7 @@ void Control::set_catapult(int speed,Catapult_State state) {
     while(pros::millis()-start_t<time_out){
       //检测是否有其他task通知catapult运动
       if(check_task_notify(catapult_task,10,cata_exit_condition)) {
-        for(auto &motor:catapult_motor){
-          motor.brake();
-        }
+        cata_brake();
         return;
       }
       auto cata_angle=cata_rotation->get_angle()/100.f;
@@ -169,9 +159,7 @@ void Control::set_catapult(int speed,Catapult_State state) {
       // cout<<"PID error "<<cata_PID.error<<"  PID out "<<out<<endl;
       // cout<<"cata angle "<<cata_angle<<endl;
       out=util::clip_num(out, speed, 0);
-      for(auto &motor:catapult_motor){
-        motor.move(out);
-      }
+      cata_move(out);
       //当pid输出<=0时，则说明已运动到目标位置或已越过目标位置，但由于棘轮的存在无法回到目标位置，此时退出循环
       auto exit_condition=cata_PID.exit_condition(catapult_motor.at(0));
       if(exit_condition!=RUNNING||out<=0||cata_angle>=degree){
@@ -180,15 +168,11 @@ void Control::set_catapult(int speed,Catapult_State state) {
       }
     }
     cata_exit_condition=false;
-    for(auto &motor:catapult_motor){
-      motor.brake();
-    }
+    cata_brake();
   };
 
   if(state==BRAKE){
-    for(auto &motor:catapult_motor){
-      motor.brake();
-    }
+    cata_brake();
   }else if(state==DOWN){
     if(cata_rotation->get_angle()/100.f>=catapult_down_pos-5||cata_exit_condition){
       cata_to_top_lambda(catapult_down_pos);
