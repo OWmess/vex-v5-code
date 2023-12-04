@@ -213,16 +213,16 @@ void Control::set_catapult_down_pos(double pos){
 }
 
 void Control::catapult_task_func(){
-  while (true) {
-    // block for up to 50ms waiting for a notification and clear the value
-    auto t=catapult_task.notify_take(true, 50);
-    if(t){
-      set_intake(0,STOP);
-      set_catapult(catapult_speed,catapult_state);
-      set_intake(intake_speed, intake_state);
-    }
-    // no need to delay here because the call to notify_take blocks
-  }
+  // while (true) {
+  //   // block for up to 50ms waiting for a notification and clear the value
+  //   auto t=catapult_task.notify_take(true, 50);
+  //   if(t){
+  //     set_intake(0,STOP);
+  //     set_catapult(catapult_speed,catapult_state);
+  //     set_intake(intake_speed, intake_state);
+  //   }
+  //   // no need to delay here because the call to notify_take blocks
+  // }
 
 }
 
