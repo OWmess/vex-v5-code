@@ -3,16 +3,16 @@
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {-2, 3, 4}
+  {-6, 3, 4}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{6, -7, -8}
+  ,{9, -7, -8}
 
   // 陀螺仪端口
   ,20
 
   // 车轮直径（英寸）
-  ,4.0
+  ,3.25
 
   // 底盘电机转速(100、200、600RPM)
   ,600
@@ -29,7 +29,7 @@ Drive chassis=Drive(
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
   // Intake 电机组端口，（负端口将反转电机！）
-  {-14, 17}
+  {1, -10}
 
   // Intake 电机组的RPM,
   //可选项有：
@@ -45,7 +45,7 @@ Control control=Control(
   ,pros::E_MOTOR_GEAR_100
 
   // 投石机的角度传感器所在端口,若角度传感器正方向与投石机下压方向相反则为负
-  ,19
+  ,0
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）

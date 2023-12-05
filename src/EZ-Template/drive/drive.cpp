@@ -161,9 +161,9 @@ void Drive::set_defaults() {
   set_slew_distance(7, 7);
 
   // Exit condition constants
-  set_exit_condition(turn_exit, 100, 3, 500, 7, 500, 5000);
-  set_exit_condition(swing_exit, 100, 3, 500, 7, 500, 5000);
-  set_exit_condition(drive_exit, 80, 50, 300, 150, 500, 5000);
+  set_exit_condition(turn_exit, 100, 3, 500, 7, 500, 1000);
+  set_exit_condition(swing_exit, 100, 3, 500, 7, 500, 1000);
+  set_exit_condition(drive_exit, 80, 50, 300, 150, 500, 1000);
 
   // Modify joystick curve on controller (defaults to disabled)
   toggle_modify_curve_with_controller(true);

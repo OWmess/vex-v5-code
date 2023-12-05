@@ -51,7 +51,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
     intake_motors.back().set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   }
   catapult_motor=std::make_unique<pros::Motor>(abs(catapult_motor_port),catapult_gearset,util::is_reversed(catapult_motor_port));
-  catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+  catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
   cata_rotation=std::make_unique<pros::Rotation>(abs(catapult_rotation_port),ez::util::is_reversed(catapult_rotation_port));
 
   for(const auto &wing_port:wings_ports){
@@ -217,9 +217,7 @@ void Control::catapult_task_func(){
     // block for up to 50ms waiting for a notification and clear the value
     auto t=catapult_task.notify_take(true, 50);
     if(t){
-      set_intake(0,STOP);
-      set_catapult(catapult_speed,catapult_state);
-      set_intake(intake_speed, intake_state);
+      catapult_motor->move_relative(1600,125);
     }
     // no need to delay here because the call to notify_take blocks
   }
@@ -247,12 +245,6 @@ void Control::control_task(){
       set_armer(armer_state);
 
       drive_armer=false;
-    }
-    auto cata_angle=cata_rotation->get_angle()/100.f;
-    if(cata_angle<catapult_middle_pos-5||(cata_angle>350.f&&cata_angle<360.f)){
-      set_intake(0, STOP);
-    }else{
-      set_intake(intake_speed, intake_state);
     }
     double temperature=catapult_motor->get_temperature();
     master.print(0, 0,"cata temp %lf",temperature);
