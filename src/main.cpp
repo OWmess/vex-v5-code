@@ -3,16 +3,16 @@
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {-2, 3, 4}
+  {18, 19, 20}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{6, -7, -8}
+  ,{-11, -12, -13}
 
   // 陀螺仪端口
-  ,20
+  ,1
 
   // 车轮直径（英寸）
-  ,4.0
+  ,3.25
 
   // 底盘电机转速(100、200、600RPM)
   ,600
@@ -20,10 +20,10 @@ Drive chassis=Drive(
   //外齿轮比（必须是小数）
   //例如。如果您的齿比是 84:36，其中 36t 连接电机，则您的 齿比 将为 2.333。
   //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
-  ,72.0/36.0
+  ,60.0/36.0
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
-  ,12.0
+  ,21.0
 );
 
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
@@ -39,21 +39,21 @@ Control control=Control(
   ,pros::E_MOTOR_GEAR_200
 
   // 投石机电机端口（负端口将反转它！）
-  ,12
+  ,16
 
   // 投石机 电机RPM,可选项同上
   ,pros::E_MOTOR_GEAR_100
 
   // 投石机的角度传感器所在端口,若角度传感器正方向与投石机下压方向相反则为负
-  ,19
+  ,15
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{'A', 'C'}
+  ,{'B', 'G'}
 
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
-  ,{'B'}
+  ,{'A'}
 );
 
 
@@ -167,8 +167,8 @@ void opcontrol() {
   auto cata_motor_reference=control.get_catapult_motor();
   while (true)
   {
-    chassis.arcade_standard(SPLIT);
-    // chassis.tank();
+    // chassis.arcade_standard(SPLIT);
+    chassis.tank();
     //根据按钮状态控制机器人
     if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
         if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
