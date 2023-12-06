@@ -165,22 +165,22 @@ void opcontrol() {
   control.set_intake_state(STOP);
   bool cata_throwing=false;
   auto cata_motor_reference=control.get_catapult_motor();
+  Control_State intake_state=STOP;
   while (true)
   {
     chassis.arcade_standard(SPLIT);
     // chassis.tank();
     //根据按钮状态控制机器人
-    if(Controller_Button_State::L1_new_press()){//R1按下时，打开或关闭intake
-        if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
-          control.set_intake_state(STOP);
-        }else{//如果intake没有运行，则打开
-          control.set_intake_state(default_intake_state);
-        }
-    }else if(Controller_Button_State::L2_pressed()){//R2按下时，翻转intake
-      control.set_intake_state(Control::reverse_intake(default_intake_state));
-    }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
-      control.set_intake_state(default_intake_state);
-    } 
+    if(Controller_Button_State::L1_pressed()&&intake_state!=INTAKE){
+      intake_state=INTAKE;
+      control.set_intake_state(INTAKE);
+    }else if(Controller_Button_State::L2_pressed()&&intake_state!=OUTTAKE){
+      intake_state=OUTTAKE;
+      control.set_intake_state(OUTTAKE);
+    }else if(intake_state!=STOP&&!Controller_Button_State::L1_pressed()&&!Controller_Button_State::L2_pressed()){
+      intake_state=STOP;
+      control.set_intake_state(STOP);
+    }
 
     if(Controller_Button_State::R1_pressed()){//L1按下时，打开翅膀
       cata_motor_reference.move(125);

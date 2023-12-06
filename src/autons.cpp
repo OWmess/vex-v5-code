@@ -247,16 +247,16 @@ void attack_aggressive() {
 void attack() {
   constexpr static int turn_speed=120;
   control.set_catapult_state(MIDDLE);
-  chassis.set_drive_pid(25,DRIVE_SPEED);//33
+  chassis.set_drive_pid(23,DRIVE_SPEED);//33
   chassis.wait_drive();
   control.set_intake_state(INTAKE);
 
   // chassis.set_turn_pid(90,turn_speed);
   chassis.set_swing_pid(ez::LEFT_SWING, 90, SWING_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(10,120);
-  chassis.wait_drive();
   control.set_intake_state(OUTTAKE);
+  chassis.set_drive_pid(10,125);
+  chassis.wait_drive();
   // pros::delay(200);
   chassis.set_drive_pid(-10,DRIVE_SPEED);
   chassis.wait_drive();
@@ -264,14 +264,13 @@ void attack() {
   chassis.set_swing_pid(LEFT_SWING,0,SWING_SPEED);
   chassis.wait_drive();
 
-  chassis.set_drive_pid(10,DRIVE_SPEED);
+  chassis.set_drive_pid(8,DRIVE_SPEED);
   chassis.wait_drive();
   chassis.set_turn_pid(90,turn_speed);
   chassis.wait_drive();
-  chassis.set_drive_pid(20,120);
-  chassis.wait_drive();
   control.set_intake_state(OUTTAKE);
-
+  chassis.set_drive_pid(20,125);
+  chassis.wait_drive();
   chassis.set_drive_pid(-20,DRIVE_SPEED);
   chassis.wait_drive();
   control.set_intake_state(INTAKE);
@@ -284,14 +283,14 @@ void attack() {
   chassis.wait_drive();
   chassis.set_turn_pid(90,turn_speed);
   chassis.wait_drive();
-  chassis.set_drive_pid(23,120);
-  chassis.wait_drive();
   control.set_intake_state(OUTTAKE);
+  chassis.set_drive_pid(23,125);
+  chassis.wait_drive();
   // pros::delay(200);
   chassis.set_drive_pid(-10,DRIVE_SPEED);
   control.set_intake_state(INTAKE);
   chassis.wait_drive();
-  chassis.set_turn_pid(230,turn_speed);
+  chassis.set_turn_pid(235,turn_speed);
   chassis.wait_drive();
   chassis.set_drive_pid(28,DRIVE_SPEED);
   chassis.wait_drive();
@@ -300,10 +299,9 @@ void attack() {
   chassis.wait_drive();
   chassis.set_turn_pid(80,turn_speed);
   chassis.wait_drive();
-  chassis.set_drive_pid(25,120);
-  chassis.wait_drive();
-
   control.set_intake_state(OUTTAKE);
+  chassis.set_drive_pid(25,125);
+  chassis.wait_drive();
   // pros::delay(200);
   chassis.set_drive_pid(-20,DRIVE_SPEED);
   chassis.wait_drive();
