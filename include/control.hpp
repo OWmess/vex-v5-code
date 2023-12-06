@@ -2,7 +2,7 @@
 #include <memory>
 #include "EZ-Template/util.hpp"
 #include "api.h"
-#include "EZ-template/api.hpp"
+#include "EZ-Template/api.hpp"
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
 enum Control_State{
