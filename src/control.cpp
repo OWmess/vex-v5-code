@@ -81,6 +81,11 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   cata_PID.set_velocity_out(0.1);
   cata_PID.set_exit_condition(20, 1, 50, 1, 2000, 3000);
   
+  //pto
+  chassis_pitson=std::make_unique<pros::ADIDigitalOut>('H',LOW);
+  arm_pitson=std::make_unique<pros::ADIDigitalOut>('G',LOW);
+  armlock_pitson=std::make_unique<pros::ADIDigitalOut>('F',LOW);
+  
 }
 
 
@@ -218,16 +223,16 @@ void Control::set_catapult_down_pos(double pos){
 }
 
 void Control::catapult_task_func(){
-  while (true) {
+  // while (true) {
     // block for up to 50ms waiting for a notification and clear the value
-    auto t=catapult_task.notify_take(true, 50);
+    // auto t=catapult_task.notify_take(true, 50);
     // if(t){
     //   set_intake(0,STOP);
     //   set_catapult(catapult_speed,catapult_state);
     //   set_intake(intake_speed, intake_state);
     // }
     // no need to delay here because the call to notify_take blocks
-  }
+  // }
 }
 
 
@@ -240,8 +245,8 @@ void Control::control_task(){
     }
     if(drive_catapult){
       //通知发射架运动
-      catapult_task.notify();
-      drive_catapult=false;
+      // catapult_task.notify();
+      // drive_catapult=false;
     }
     if(drive_wings){
       set_wings(wings_state);
@@ -252,14 +257,14 @@ void Control::control_task(){
 
       drive_armer=false;
     }
-    auto cata_angle=cata_rotation->get_angle()/100.f;
-    if(cata_angle<catapult_middle_pos-5||(cata_angle>350.f&&cata_angle<360.f)){
-      set_intake(0, STOP);
-    }else{
-      set_intake(intake_speed, intake_state);
-    }
-    double temperature=catapult_motor[0].get_temperature();
-    master.print(0, 0,"cata temp %lf",temperature);
+    // auto cata_angle=cata_rotation->get_angle()/100.f;
+    // if(cata_angle<catapult_middle_pos-5||(cata_angle>350.f&&cata_angle<360.f)){
+    //   set_intake(0, STOP);
+    // }else{
+    //   set_intake(intake_speed, intake_state);
+    // }
+    // double temperature=catapult_motor[0].get_temperature();
+    // master.print(0, 0,"cata temp %lf",temperature);
     pros::delay(50);
   }
 }

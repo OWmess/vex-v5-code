@@ -9,7 +9,7 @@ Drive chassis=Drive(
   ,{-1, -2, -3,17}
 
   // 陀螺仪端口
-  ,20
+  ,4
 
   // 车轮直径（英寸）
   ,4.0
@@ -24,7 +24,8 @@ Drive chassis=Drive(
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
   ,12.0
-).with_pto({-14,17});
+);
+
 
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
@@ -49,7 +50,7 @@ Control control=Control(
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{'A', 'C'}
+  ,{'A'}
 
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
@@ -67,8 +68,9 @@ void initialize() {
   pros::delay(500);
 
   //配置底盘参数
+  chassis.with_pto({-14,17});
   chassis.toggle_modify_curve_with_controller(false); //是否允许使用操纵杆上的按钮（左右键）修改控制器曲线
-  chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
+  chassis.set_active_brake(0.05); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
   chassis.set_joystick_threshold(5);//设置摇杆死区的阈值，摇杆的范围在[-127,127]
   chassis.set_tank_min_power(30,30);//设置坦克模式下的最小功率，范围在[0,127],当摇杆输出值小于该值时，底盘将以最小功率运行
@@ -76,13 +78,14 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
+    Auton("Guard.", guard_1),
+    Auton("Attack.", attack),
     Auton("guard_aggressive",guard_aggressive),
     Auton("attack_aggressive",attack_aggressive),
     Auton("skill match",skill_match),
-    Auton("Guard.", guard_1),
     Auton("Conservatively attack. ", conservatively_attack),
-    Auton("Attack.", attack),
     Auton("test_function.", test_pid),
+
   });
   chassis.initialize();
   as::initialize();
@@ -143,41 +146,8 @@ void autonomous() {
   ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
 }
 
-pros::ADIDigitalOut chassis_pitson('H',LOW);
-pros::ADIDigitalOut arm_pitson('G',LOW);
-pros::ADIDigitalOut armlock_pitson('F',LOW);
-int8_t pto_mode=0;//0:chassis,1:cata,2:arm
-void pto_chassis_mode(){
-  chassis_pitson.set_value(LOW);
-  chassis.pto_toggle(false);
-  for(auto &i:chassis.pto_active) {
-    cout<<i<<", ";
-  }
-  cout<<"\n";
-  pto_mode=0;
-}
 
-void pto_cata_mode(){
-  chassis_pitson.set_value(HIGH);
-  arm_pitson.set_value(LOW);
-  chassis.pto_toggle(true);
-  for(auto &i:chassis.pto_active){
-    cout<<i<<", ";
-  }
-  cout<<"\n";
-  pto_mode=1;
-}
 
-void pto_arm_mode(){
-  chassis_pitson.set_value(HIGH);
-  arm_pitson.set_value(HIGH);
-  chassis.pto_toggle(true);
-    for(auto &i:chassis.pto_active){
-    cout<<i<<", ";
-  }
-  cout<<"\n";
-  pto_mode=2;
-}
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -193,9 +163,12 @@ void pto_arm_mode(){
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
-  Control_State default_wings_state=OFF;
+  Control_State wings_state=OFF;
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
-  
+  control.cata_move(120);
+  pros::delay(200);
+  control.cata_brake();
+  control.pto_chassis_mode();
   control.set_intake_state(STOP);
   bool cata_throwing=false;
   while (true){
@@ -214,22 +187,27 @@ void opcontrol() {
       control.set_intake_state(default_intake_state);
     }
 
-    if(pto_mode==0){//底盘模式
-      if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
-        control.set_wings_state(ON);
-      }
-      else if(Controller_Button_State::L2_new_press()){//L2按下时，关闭翅膀
-        control.set_wings_state(OFF);
-      }
-    }else{//非底盘模式
-      if(Controller_Button_State::L2_pressed()){
-        control.cata_move(125);
-      }else if(Controller_Button_State::L1_pressed()){
-        control.cata_move(-125);
-      }else if(!cata_throwing){
-        control.cata_brake();
-      }
+    if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
+      wings_state=!wings_state;
+      control.set_wings_state(wings_state);
     }
+
+      
+    if(Controller_Button_State::UP_pressed()){
+      control.cata_move(-125);
+    }else if(!cata_throwing){
+      control.cata_brake();
+    }
+    if(Controller_Button_State::DOWN_new_press()){//L1按下时，打开翅膀
+      control.cata_move(125);
+      auto t=pros::millis();
+      while(pros::millis()-t<4000){
+        control.cata_move(125);
+        pros::delay(10);
+      }
+      control.armlock_pitson->set_value(HIGH);
+    }
+    
 
 
     if(Controller_Button_State::RIGHT_new_press()){
@@ -239,34 +217,35 @@ void opcontrol() {
     }
 
     if(Controller_Button_State::B_new_press()){
-      std::cout<<"pto_chassis_mode\n";
-      pto_chassis_mode();
+      std::cout<<"pto_cata_mode\n";
+      control.pto_cata_mode();
       cata_throwing=false;
     }
     if(Controller_Button_State::A_new_press()){
-      std::cout<<"pto_cata_mode\n";
-      pto_cata_mode();
+      std::cout<<"pto_chassis_mode\n";
+      control.pto_chassis_mode();
       cata_throwing=false;
     }
     if(Controller_Button_State::Y_new_press()){
       std::cout<<"pto_cata throwing\n";
-      pto_cata_mode();
+      control.pto_cata_mode();
+      pros::delay(200);
       cata_throwing=!cata_throwing;
       if(cata_throwing){
-        control.cata_move(-120);
+        control.cata_move(-125);
       }else{
         control.cata_brake();
       }
     }
     if(Controller_Button_State::X_new_press()){
       std::cout<<"pto_arm_mode\n";
-      pto_arm_mode();
       cata_throwing=false;
+      control.pto_arm_mode();
     }
 
     if(Controller_Button_State::DOWN_new_press()){
       std::cout<<"armlock mode\n";
-      armlock_pitson.set_value(ON);
+      control.armlock_pitson->set_value(ON);
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }

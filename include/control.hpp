@@ -5,6 +5,8 @@
 #include "EZ-template/api.hpp"
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
+
+extern Drive chassis;
 enum Control_State{
     INTAKE,
     OUTTAKE,
@@ -211,7 +213,6 @@ public:
         for(const auto &motor:catapult_motor){
             motor.move(voltage);
         }
-        cout<<"cata move\n";
     }
 
     inline void cata_brake() const{
@@ -220,6 +221,45 @@ public:
         }
     }
     
+    void pto_chassis_mode(){
+        chassis_pitson->set_value(LOW);
+        arm_pitson->set_value(LOW);
+        chassis.pto_toggle(false);
+        for(auto &i:chassis.pto_active) {
+            cout<<i<<", ";
+        }
+        set_catapult_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+        cout<<"\n";
+    }
+
+    void pto_cata_mode(){
+        chassis_pitson->set_value(HIGH);
+        arm_pitson->set_value(LOW);
+        chassis.pto_toggle(true);
+        for(auto &i:chassis.pto_active){
+            cout<<i<<", ";
+        }
+        cout<<"\n";
+        set_catapult_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+
+    }
+
+    void pto_arm_mode(){
+        chassis_pitson->set_value(HIGH);
+        arm_pitson->set_value(HIGH);
+        chassis.pto_toggle(true);
+            for(auto &i:chassis.pto_active){
+            cout<<i<<", ";
+        }
+        cout<<"\n";
+        pros::Task thread([this](){
+            cata_move(80);
+            pros::delay(300);
+            cata_brake();
+        });
+        set_catapult_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+        
+    }
 private:
 
     /**
@@ -267,8 +307,13 @@ private:
     void catapult_task_func();
 
     void with_pto();
+
+
 public:
     PID cata_PID;
+    std::unique_ptr<pros::ADIDigitalOut> chassis_pitson;
+    std::unique_ptr<pros::ADIDigitalOut> arm_pitson;
+    std::unique_ptr<pros::ADIDigitalOut> armlock_pitson;
 private:
     //气动结构体
     struct PneumaticsStruct{
@@ -302,6 +347,9 @@ private:
     static Catapult_State catapult_state;
     static Control_State armer_state;
     bool enable_pto=false;
+    
+    //pto
+
 };
 
 

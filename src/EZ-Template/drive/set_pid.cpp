@@ -52,11 +52,11 @@ void Drive::set_drive_pid(double target, int speed, bool slew_on, bool toggle_he
   l_start = left_sensor();
   r_start = right_sensor();
   double l_target_encoder, r_target_encoder;
-
+  cout<<"l_start:"<<l_start<<",r_start:"<<r_start<<endl;
   // Figure actual target value
   l_target_encoder = l_start + (target * TICK_PER_INCH);
   r_target_encoder = r_start + (target * TICK_PER_INCH);
-
+  cout<<"l_target_encoder:"<<l_target_encoder<<",r_target_encoder:"<<r_target_encoder<<endl;
   // Figure out if going forward or backward
   if (l_target_encoder < l_start && r_target_encoder < r_start) {
     auto consts = backward_drivePID.get_constants();

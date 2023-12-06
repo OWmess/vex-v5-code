@@ -67,7 +67,7 @@ void Drive::pto_toggle(bool toggle) {
     pto_remove(this->pto_list);
 }
 
-Drive Drive::with_pto(std::initializer_list<int> list) {
+void Drive::with_pto(std::initializer_list<int> list) {
   this->pto_list = {list};
   std::cout<<"pto_list: ";
   for(auto &i:pto_list){
@@ -103,7 +103,6 @@ Drive Drive::with_pto(std::initializer_list<int> list) {
   });
   right_condition_index = std::distance(right_motors.begin(), it);
   std::cout<<"right_condition_index: "<<right_condition_index<<"\n";
-  return *this;
 }
 
 std::vector<pros::Motor> Drive::get_pto_motors() {

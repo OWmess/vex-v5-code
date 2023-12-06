@@ -375,7 +375,7 @@ class Drive {
    * @param pto_list 
    * @return Drive 
    */
-  Drive with_pto(std::initializer_list<int> pto_list);
+  void with_pto(std::initializer_list<int> pto_list);
 
 
   /**
