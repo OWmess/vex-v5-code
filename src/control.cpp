@@ -52,6 +52,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   }
   catapult_motor=std::make_unique<pros::Motor>(abs(catapult_motor_port),catapult_gearset,util::is_reversed(catapult_motor_port));
   catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+  catapult_motor->tare_position();
   cata_rotation=std::make_unique<pros::Rotation>(abs(catapult_rotation_port),ez::util::is_reversed(catapult_rotation_port));
 
   for(const auto &wing_port:wings_ports){
@@ -68,6 +69,8 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
     armers.push_back(tmp);
   }
 
+  arm_motor=std::make_unique<pros::Motor>(abs(armer_ports[0]),pros::motor_gearset_e_t::E_MOTOR_GEAR_200,util::is_reversed(armer_ports[0]));
+  arm_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   set_catapult_up_pos(CATAPULT_UP_POS);
   set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
   set_catapult_down_pos(CATAPULT_DOWN_POS);
@@ -195,9 +198,25 @@ void Control::set_wings(Control_State state){
 }
 
 void Control::set_armer(Control_State state){
-  for(const auto &armer:armers){
-    armer.pneumatics->set_value(state==ON?!armer.reversed:armer.reversed);
-  }
+  // for(const auto &armer:armers){
+  //   armer.pneumatics->set_value(state==ON?!armer.reversed:armer.reversed);
+  // }
+  pros::Task task([this,state](){
+    if(state==ON){
+      arm_motor->move(127);
+      arm_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    }else{
+      arm_motor->move(-127);
+      arm_motor->set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+    }
+    pros::delay(50);
+    while(!arm_motor->is_over_current()){
+      pros::delay(10);
+    }
+    cout<<"arm motor mA out."<<endl;
+
+    arm_motor->brake();
+  });
 }
 
 void Control::set_catapult_up_pos(double pos){
@@ -213,16 +232,27 @@ void Control::set_catapult_down_pos(double pos){
 }
 
 void Control::catapult_task_func(){
-  // while (true) {
-  //   // block for up to 50ms waiting for a notification and clear the value
-  //   auto t=catapult_task.notify_take(true, 50);
-  //   if(t){
-  //     set_intake(0,STOP);
-  //     set_catapult(catapult_speed,catapult_state);
-  //     set_intake(intake_speed, intake_state);
-  //   }
-  //   // no need to delay here because the call to notify_take blocks
-  // }
+  while (true) {
+    // block for up to 50ms waiting for a notification and clear the value
+    auto t=catapult_task.notify_take(true, 50);
+    if(t){
+      // set_intake(0,STOP);
+      // set_catapult(catapult_speed,catapult_state);
+      // set_intake(intake_speed, intake_state);
+      if(catapult_state==UP){
+        catapult_motor->move_absolute(-3800, 120);
+        cout<<"catapult up"<<endl;
+      }else if(catapult_state==DOWN){
+        catapult_motor->move_absolute(0, 120);
+        cout<<"catapult down"<<endl;
+      }else if(catapult_state==MIDDLE){
+        catapult_motor->move_absolute(-1500, 120);
+        cout<<"catapult middle"<<endl;
+      }
+      cout<<"catapult task notified"<<endl;
+    }
+    // no need to delay here because the call to notify_take blocks
+  }
 
 }
 
@@ -237,6 +267,7 @@ void Control::control_task(){
     if(drive_catapult){
       //通知发射架运动
       catapult_task.notify();
+      
       drive_catapult=false;
     }
     if(drive_wings){
@@ -247,12 +278,6 @@ void Control::control_task(){
       set_armer(armer_state);
 
       drive_armer=false;
-    }
-    auto cata_angle=cata_rotation->get_angle()/100.f;
-    if(cata_angle<catapult_middle_pos-5||(cata_angle>350.f&&cata_angle<360.f)){
-      set_intake(0, STOP);
-    }else{
-      set_intake(intake_speed, intake_state);
     }
     double temperature=catapult_motor->get_temperature();
     master.print(0, 0,"cata temp %lf",temperature);

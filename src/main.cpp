@@ -53,7 +53,7 @@ Control control=Control(
 
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
-  ,{'B'}
+  ,{11}
 );
 
 
@@ -86,7 +86,7 @@ void initialize() {
   });
   chassis.initialize();
   as::initialize();
-
+  control.reset_motor_sensor();
 
 }
 
@@ -182,6 +182,7 @@ void opcontrol() {
       control.set_intake_state(STOP);
     }
 
+    
     if(Controller_Button_State::R1_pressed()){//L1按下时，打开翅膀
       cata_motor_reference.move(125);
     }
@@ -189,6 +190,12 @@ void opcontrol() {
       cata_motor_reference.move(-125);
     }else{
       cata_motor_reference.brake();
+    }
+
+    if(Controller_Button_State::LEFT_new_press()){
+      control.set_armer_state(OFF);
+    }else if(Controller_Button_State::RIGHT_new_press()){
+      control.set_armer_state(ON);
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }

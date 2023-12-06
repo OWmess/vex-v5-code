@@ -78,53 +78,60 @@ void guard() {
 
   control.set_intake_state(OUTTAKE);
 
-  chassis.set_drive_pid(28,DRIVE_SPEED,true);
+  chassis.set_drive_pid(25,DRIVE_SPEED,true);
   chassis.wait_drive();
 }
 
 
 void guard_1() {
-  control.set_catapult_state(MIDDLE);
   control.set_armer_state(ON);
   control.set_intake_state(OUTTAKE);
   pros::delay(500);
 
-  chassis.set_swing_pid(ez::RIGHT_SWING,-55,40);
+  chassis.set_swing_pid(ez::RIGHT_SWING,-90,50);
   chassis.wait_drive();
+  pros::delay(300);
+  chassis.set_drive_pid(5, DRIVE_SPEED,true);
+  chassis.wait_drive();
+
   control.set_armer_state(OFF);
+  chassis.set_drive_pid(-5, DRIVE_SPEED,true);
+  chassis.wait_drive();
+
   pros::delay(300);
   chassis.set_swing_pid(ez::RIGHT_SWING,0,SWING_SPEED);
   chassis.wait_drive();
   pros::delay(200);
-  chassis.set_drive_pid(-15, DRIVE_SPEED,true);
+  chassis.set_drive_pid(-14, DRIVE_SPEED,true);
   chassis.wait_drive();
   pros::delay(200);
   chassis.set_swing_pid(ez::RIGHT_SWING, 45, -SWING_SPEED);
   chassis.wait_drive();
   pros::delay(200);
 
-  chassis.set_drive_pid(-15, DRIVE_SPEED,true);
+  chassis.set_drive_pid(-13, DRIVE_SPEED,true);
   chassis.wait_drive();
   pros::delay(200);
-  chassis.set_drive_pid(12, DRIVE_SPEED,true);
-  chassis.wait_drive();
-  pros::delay(200);
-
-  chassis.set_drive_pid(-15, DRIVE_SPEED,true);
+  chassis.set_drive_pid(8, DRIVE_SPEED,true);
   chassis.wait_drive();
   pros::delay(200);
 
-  chassis.set_drive_pid(10, DRIVE_SPEED,true);
+  chassis.set_drive_pid(-13, DRIVE_SPEED,true);
   chassis.wait_drive();
-
-  chassis.set_turn_pid(0, TURN_SPEED);
+  pros::delay(200);
+  chassis.set_drive_pid(6, DRIVE_SPEED,true);
   chassis.wait_drive();
-  chassis.set_drive_pid(24, DRIVE_SPEED);
+  control.set_catapult_state(UP);
+  chassis.set_swing_pid(ez::RIGHT_SWING,-5, SWING_SPEED);
   chassis.wait_drive();
-  chassis.set_turn_pid(-45, TURN_SPEED);
+  chassis.set_drive_pid(20, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(140-360, TURN_SPEED);
   chassis.wait_drive();
   control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(32,80,true);
+  control.set_armer_state(ON);
+  
+  chassis.set_drive_pid(-37,80,true);
   chassis.wait_drive();
 
 }
@@ -132,51 +139,34 @@ void guard_1() {
 void guard_aggressive(){
   constexpr static int turn_speed=120;
   constexpr static int swing_speed=120;
-  control.set_catapult_state(INIT_DOWN);
-  control.set_intake_state(INTAKE);
-  chassis.set_drive_pid(15,DRIVE_SPEED);//33  15
-  chassis.wait_drive();
 
-  chassis.set_swing_pid(ez::LEFT_SWING, 15, swing_speed);
-  chassis.wait_drive();
-  // chassis.set_drive_pid(10,DRIVE_SPEED);//33
-  // chassis.wait_drive();
-  // chassis.set_swing_pid(ez::RIGHT_SWING, 0, swing_speed);
-  // chassis.wait_drive();
-  chassis.set_drive_pid(23,DRIVE_SPEED);//16  23
-  chassis.wait_drive();
-  pros::delay(200);
-  chassis.set_drive_pid(-5,DRIVE_SPEED);//33
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(-90,TURN_SPEED);//33
-  chassis.wait_drive();
   control.set_catapult_state(MIDDLE);
-
-  pros::delay(200);
-  chassis.set_turn_pid(-180,TURN_SPEED);//33
-  chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  pros::delay(6500);
+  control.set_armer_state(ON);
   control.set_intake_state(INTAKE);
-  chassis.set_turn_pid(-158,TURN_SPEED);//33
-  chassis.wait_drive();
-  chassis.set_drive_pid(40,DRIVE_SPEED);//33
-  chassis.wait_drive();
+  pros::delay(200);
 
-  chassis.set_turn_pid(-60,TURN_SPEED);//33
+  chassis.set_swing_pid(ez::RIGHT_SWING,-60,40);
   chassis.wait_drive();
+  pros::delay(1000);
 
-  chassis.set_drive_pid(20,DRIVE_SPEED);//33
+  chassis.set_turn_pid(240-360,turn_speed);
   chassis.wait_drive();
+  control.set_armer_state(OFF);
 
-  chassis.set_turn_pid(0,TURN_SPEED);//33
+  chassis.set_drive_pid(25, DRIVE_SPEED,true);
+  control.set_armer_state(ON);
   chassis.wait_drive();
-
-  chassis.set_drive_pid(15,DRIVE_SPEED);//33
+  chassis.set_swing_pid(ez::RIGHT_SWING,135-360,SWING_SPEED);
   chassis.wait_drive();
-
-  chassis.set_drive_pid(-15,DRIVE_SPEED);//33
+  chassis.set_drive_pid(12, DRIVE_SPEED,true);
+  chassis.wait_drive();
+  pros::delay(200);
+  chassis.set_drive_pid(-30, DRIVE_SPEED,true);
+  chassis.wait_drive();
+  control.set_armer_state(OFF);
+  chassis.set_turn_pid(225-360,turn_speed);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-25, DRIVE_SPEED,true);
   chassis.wait_drive();
 }
 
@@ -188,7 +178,7 @@ void guard_aggressive(){
 */
 void attack_aggressive() {
   constexpr static int turn_speed=120;
-  control.set_catapult_state(INIT_MIDDLE);
+  control.set_catapult_state(MIDDLE);
   control.set_wings_state(ON);
   //take ball
   chassis.set_drive_pid(42,DRIVE_SPEED);//33
@@ -244,6 +234,9 @@ void attack_aggressive() {
   chassis.wait_drive();
 
 }
+  /**
+* 进攻方自动程序
+*/
 void attack() {
   constexpr static int turn_speed=120;
   control.set_catapult_state(MIDDLE);
@@ -254,9 +247,9 @@ void attack() {
   // chassis.set_turn_pid(90,turn_speed);
   chassis.set_swing_pid(ez::LEFT_SWING, 90, SWING_SPEED);
   chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(10,125);
+  chassis.set_drive_pid(10,120);
   chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
   // pros::delay(200);
   chassis.set_drive_pid(-10,DRIVE_SPEED);
   chassis.wait_drive();
@@ -264,13 +257,14 @@ void attack() {
   chassis.set_swing_pid(LEFT_SWING,0,SWING_SPEED);
   chassis.wait_drive();
 
-  chassis.set_drive_pid(8,DRIVE_SPEED);
+  chassis.set_drive_pid(10,DRIVE_SPEED);
   chassis.wait_drive();
   chassis.set_turn_pid(90,turn_speed);
   chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(20,125);
+  chassis.set_drive_pid(20,120);
   chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
+
   chassis.set_drive_pid(-20,DRIVE_SPEED);
   chassis.wait_drive();
   control.set_intake_state(INTAKE);
@@ -283,25 +277,26 @@ void attack() {
   chassis.wait_drive();
   chassis.set_turn_pid(90,turn_speed);
   chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(23,125);
+  chassis.set_drive_pid(23,120);
   chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
   // pros::delay(200);
   chassis.set_drive_pid(-10,DRIVE_SPEED);
   control.set_intake_state(INTAKE);
   chassis.wait_drive();
-  chassis.set_turn_pid(235,turn_speed);
+  chassis.set_turn_pid(238,turn_speed);
   chassis.wait_drive();
   chassis.set_drive_pid(28,DRIVE_SPEED);
   chassis.wait_drive();
   // pros::delay(200);
   chassis.set_drive_pid(-15,DRIVE_SPEED);
   chassis.wait_drive();
-  chassis.set_turn_pid(80,turn_speed);
+  chassis.set_turn_pid(75,turn_speed);
   chassis.wait_drive();
+  chassis.set_drive_pid(31,120);
+  chassis.wait_drive();
+
   control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(25,125);
-  chassis.wait_drive();
   // pros::delay(200);
   chassis.set_drive_pid(-20,DRIVE_SPEED);
   chassis.wait_drive();
@@ -332,6 +327,7 @@ void conservatively_attack(){
   chassis.set_drive_pid(30,60);
   chassis.wait_drive();
 }
+
 
 void skill_match(){
   chassis.set_exit_condition(chassis.drive_exit, 80, 50, 300, 150, 500, 500);
