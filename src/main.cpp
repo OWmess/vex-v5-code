@@ -53,7 +53,7 @@ Control control=Control(
 
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
-  ,{'B'}
+  ,{11}
 );
 
 
@@ -86,7 +86,7 @@ void initialize() {
   });
   chassis.initialize();
   as::initialize();
-
+  control.reset_motor_sensor();
 
 }
 
@@ -165,23 +165,25 @@ void opcontrol() {
   control.set_intake_state(STOP);
   bool cata_throwing=false;
   auto cata_motor_reference=control.get_catapult_motor();
+  Control_State now_intake_state;
   while (true)
   {
     chassis.arcade_standard(SPLIT);
     // chassis.tank();
     //根据按钮状态控制机器人
-    if(Controller_Button_State::L1_new_press()){//R1按下时，打开或关闭intake
-        if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
-          control.set_intake_state(STOP);
-        }else{//如果intake没有运行，则打开
-          control.set_intake_state(default_intake_state);
-        }
-    }else if(Controller_Button_State::L2_pressed()){//R2按下时，翻转intake
-      control.set_intake_state(Control::reverse_intake(default_intake_state));
-    }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
-      control.set_intake_state(default_intake_state);
-    } 
+    if(Controller_Button_State::L1_pressed()&&now_intake_state!=INTAKE){
+      now_intake_state=INTAKE;
+      control.set_intake_state(INTAKE);
+    }else if(Controller_Button_State::L2_pressed()&&now_intake_state!=OUTTAKE){
+      now_intake_state=OUTTAKE;
+      control.set_intake_state(OUTTAKE);
+    }else if(now_intake_state!=STOP){
+      now_intake_state=STOP;
+      control.set_intake_state(STOP);
+    }
 
+
+    
     if(Controller_Button_State::R1_pressed()){//L1按下时，打开翅膀
       cata_motor_reference.move(125);
     }
@@ -189,6 +191,12 @@ void opcontrol() {
       cata_motor_reference.move(-125);
     }else{
       cata_motor_reference.brake();
+    }
+
+    if(Controller_Button_State::LEFT_new_press()){
+      control.set_armer_state(OFF);
+    }else if(Controller_Button_State::RIGHT_new_press()){
+      control.set_armer_state(ON);
     }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
