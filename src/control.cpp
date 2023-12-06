@@ -81,7 +81,6 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
 
 }
 
-
 void Control::set_intake(int speed,Control_State state){
   if(state==STOP){
     for(const pros::Motor &intake_motor:intake_motors){
@@ -92,9 +91,7 @@ void Control::set_intake(int speed,Control_State state){
   for(const pros::Motor &intake_motor:intake_motors){
     intake_motor.move(state==INTAKE?speed:-speed);
   }
-
 }
-
 
 void Control::set_catapult(int speed,Catapult_State state) {
   int cnt=0; 
