@@ -248,7 +248,7 @@ public:
         chassis_pitson->set_value(HIGH);
         arm_pitson->set_value(HIGH);
         chassis.pto_toggle(true);
-            for(auto &i:chassis.pto_active){
+        for(auto &i:chassis.pto_active){
             cout<<i<<", ";
         }
         cout<<"\n";

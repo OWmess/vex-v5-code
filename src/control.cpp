@@ -48,7 +48,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   for(auto port:intake_motor_ports){
     pros::Motor temp{static_cast<int8_t>(abs(port)),intake_gearset,util::is_reversed(port)};
     intake_motors.push_back(temp);
-    intake_motors.back().set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    intake_motors.back().set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
   }
 
   for(const auto &i:catapult_motor_port){
@@ -195,7 +195,6 @@ void Control::set_catapult(int speed,Catapult_State state) {
   }else if(state==INIT_DOWN){
     cata_to_degree_lambda(catapult_down_pos);
   }
-
 }
 
 void Control::set_wings(Control_State state){
