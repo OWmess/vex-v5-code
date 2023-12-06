@@ -95,7 +95,7 @@ void guard_1() {
   chassis.set_swing_pid(ez::RIGHT_SWING,0,SWING_SPEED);
   chassis.wait_drive();
   pros::delay(200);
-  chassis.set_drive_pid(-12, DRIVE_SPEED,true);
+  chassis.set_drive_pid(-14, DRIVE_SPEED,true);
   chassis.wait_drive();
   pros::delay(200);
   chassis.set_swing_pid(ez::RIGHT_SWING, 45, -SWING_SPEED);
@@ -129,51 +129,34 @@ void guard_1() {
 void guard_aggressive(){
   constexpr static int turn_speed=120;
   constexpr static int swing_speed=120;
-  control.set_catapult_state(INIT_DOWN);
-  control.set_intake_state(INTAKE);
-  chassis.set_drive_pid(15,DRIVE_SPEED);//33  15
-  chassis.wait_drive();
 
-  chassis.set_swing_pid(ez::LEFT_SWING, 15, swing_speed);
-  chassis.wait_drive();
-  // chassis.set_drive_pid(10,DRIVE_SPEED);//33
-  // chassis.wait_drive();
-  // chassis.set_swing_pid(ez::RIGHT_SWING, 0, swing_speed);
-  // chassis.wait_drive();
-  chassis.set_drive_pid(23,DRIVE_SPEED);//16  23
-  chassis.wait_drive();
-  pros::delay(200);
-  chassis.set_drive_pid(-5,DRIVE_SPEED);//33
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(-90,TURN_SPEED);//33
-  chassis.wait_drive();
   control.set_catapult_state(MIDDLE);
-
-  pros::delay(200);
-  chassis.set_turn_pid(-180,TURN_SPEED);//33
-  chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  pros::delay(6500);
+  control.set_armer_state(ON);
   control.set_intake_state(INTAKE);
-  chassis.set_turn_pid(-158,TURN_SPEED);//33
-  chassis.wait_drive();
-  chassis.set_drive_pid(40,DRIVE_SPEED);//33
-  chassis.wait_drive();
+  pros::delay(200);
 
-  chassis.set_turn_pid(-60,TURN_SPEED);//33
+  chassis.set_swing_pid(ez::RIGHT_SWING,-60,40);
   chassis.wait_drive();
+  pros::delay(1000);
 
-  chassis.set_drive_pid(20,DRIVE_SPEED);//33
+  chassis.set_turn_pid(240-360,turn_speed);
   chassis.wait_drive();
+  control.set_armer_state(OFF);
 
-  chassis.set_turn_pid(0,TURN_SPEED);//33
+  chassis.set_drive_pid(25, DRIVE_SPEED,true);
+  control.set_armer_state(ON);
   chassis.wait_drive();
-
-  chassis.set_drive_pid(15,DRIVE_SPEED);//33
+  chassis.set_swing_pid(ez::RIGHT_SWING,135-360,SWING_SPEED);
   chassis.wait_drive();
-
-  chassis.set_drive_pid(-15,DRIVE_SPEED);//33
+  chassis.set_drive_pid(12, DRIVE_SPEED,true);
+  chassis.wait_drive();
+  pros::delay(200);
+  chassis.set_drive_pid(-30, DRIVE_SPEED,true);
+  chassis.wait_drive();
+  control.set_armer_state(OFF);
+  chassis.set_turn_pid(225-360,turn_speed);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-25, DRIVE_SPEED,true);
   chassis.wait_drive();
 }
 
