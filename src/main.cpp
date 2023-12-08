@@ -28,7 +28,7 @@ Drive chassis=Drive(
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
   // Intake 电机组端口，（负端口将反转电机！）
-  {1, -10}
+  {1, -6}
 
   // Intake 电机组的RPM,
   //可选项有：
