@@ -29,7 +29,7 @@ Drive chassis=Drive(
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
   // Intake 电机组端口，（负端口将反转电机！）
-  {-1, 10}
+  {1, -10}
 
   // Intake 电机组的RPM,
   //可选项有：
@@ -53,7 +53,7 @@ Control control=Control(
 
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
-  ,{'B'}
+  ,{18}
 );
 
 
@@ -167,8 +167,8 @@ void opcontrol() {
   auto cata_motor_reference=control.get_catapult_motor();
   while (true)
   {
-    chassis.arcade_standard(SPLIT);
-    // chassis.tank();
+    // chassis.arcade_standard(SPLIT);
+    chassis.tank();
     //根据按钮状态控制机器人
     if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
         if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止

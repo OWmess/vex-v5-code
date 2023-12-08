@@ -68,6 +68,8 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
     armers.push_back(tmp);
   }
 
+  arm_motor=std::make_unique<pros::Motor>(abs(armer_ports[0]),pros::motor_gearset_e_t::E_MOTOR_GEAR_200,util::is_reversed(armer_ports[0]));
+  arm_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
   set_catapult_up_pos(CATAPULT_UP_POS);
   set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
   set_catapult_down_pos(CATAPULT_DOWN_POS);
@@ -195,9 +197,25 @@ void Control::set_wings(Control_State state){
 }
 
 void Control::set_armer(Control_State state){
-  for(const auto &armer:armers){
-    armer.pneumatics->set_value(state==ON?!armer.reversed:armer.reversed);
-  }
+  // for(const auto &armer:armers){
+  //   armer.pneumatics->set_value(state==ON?!armer.reversed:armer.reversed);
+  // }
+  pros::Task task([this,state](){
+    if(state==ON){
+      arm_motor->move(127);
+      arm_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    }else{
+      arm_motor->move(-127);
+      arm_motor->set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+    }
+    pros::delay(50);
+    while(!arm_motor->is_over_current()){
+      pros::delay(10);
+    }
+    cout<<"arm motor mA out."<<endl;
+
+    arm_motor->brake();
+  });
 }
 
 void Control::set_catapult_up_pos(double pos){

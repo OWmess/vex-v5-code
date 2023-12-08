@@ -221,6 +221,7 @@ private:
     std::unique_ptr<pros::Motor> catapult_motor;
     std::vector<PneumaticsStruct> wings;
     std::vector<PneumaticsStruct> armers;
+    std::unique_ptr<pros::Motor> arm_motor;
     double catapult_up_pos;
     double catapult_middle_pos;
     double catapult_down_pos;
