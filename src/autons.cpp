@@ -84,9 +84,9 @@ void guard() {
 
 
 void guard_1() {
-  chassis.set_drive_pid(8, DRIVE_SPEED,true);
+  chassis.set_drive_pid(18, DRIVE_SPEED,true);
   chassis.wait_drive();
-  control.set_armer_state(ON);
+  control.set_wings_state(ON);
   pros::delay(500);
   control.set_intake_state(OUTTAKE);
 
@@ -102,7 +102,6 @@ void guard_1() {
   chassis.set_drive_pid(-5, DRIVE_SPEED,true);
   chassis.wait_drive();
   pros::delay(200);
-  control.set_armer_state(OFF);
 
   chassis.set_drive_pid(10, DRIVE_SPEED,true);
   chassis.wait_drive();
@@ -113,32 +112,11 @@ void guard_1() {
   pros::delay(300);
   control.set_wings_state(OFF);
 
-  chassis.set_turn_pid(0, TURN_SPEED);
+  chassis.set_turn_pid(90, TURN_SPEED);
   chassis.wait_drive();
-  chassis.set_drive_pid(-26,DRIVE_SPEED,true);
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(-45, TURN_SPEED);
+  chassis.set_drive_pid(45,50,true);
   chassis.wait_drive();
 
-  control.pto_arm_mode();
-  chassis.set_mode(ez::DISABLE);
-  pros::delay(500);
-  control.set_catapult_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-  control.cata_move(-125);
-  pros::delay(1000);
-
-  pros::Task thread([](){
-    auto cata_motor=control.get_catapult_motor();
-    while(!cata_motor[0].is_over_current()&&!cata_motor[1].is_over_current()){
-        control.cata_move(-125);
-        pros::delay(10);
-    }
-    control.cata_brake();
-  });
-
-  chassis.set_drive_pid(-50,40,true);
-  chassis.wait_drive();
   
 
   // chassis.set_turn_pid(0, TURN_SPEED);
@@ -270,7 +248,6 @@ void attack_aggressive() {
 }
 void attack() {
   constexpr static int turn_speed=120;
-  control.set_catapult_state(MIDDLE);
   control.set_intake_state(INTAKE);
   chassis.set_drive_pid(20,DRIVE_SPEED);//33
   chassis.wait_drive();

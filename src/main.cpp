@@ -78,9 +78,9 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
-    Auton("skill match",skill_match),
     Auton("Guard.", guard_1),
     Auton("Attack.", attack),
+    Auton("skill match",skill_match),
     Auton("guard_aggressive",guard_aggressive),
     Auton("attack_aggressive",attack_aggressive),
     Auton("Conservatively attack. ", conservatively_attack),
@@ -163,6 +163,7 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
+  chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
   Control_State wings_state=OFF;
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.cata_move(120);
