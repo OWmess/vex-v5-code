@@ -76,12 +76,12 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
+    Auton("Attack.", attack),
+    Auton("Guard.", guard_1),
     Auton("guard_aggressive",guard_aggressive),
     Auton("attack_aggressive",attack_aggressive),
     Auton("skill match",skill_match),
-    Auton("Guard.", guard_1),
     Auton("Conservatively attack. ", conservatively_attack),
-    Auton("Attack.", attack),
     Auton("test_function.", test_pid),
   });
   chassis.initialize();
@@ -116,10 +116,11 @@ void disabled() {
  * starts.
  * 在连接到场地管理系统或VEX竞赛开关时运行，此任务将在比赛开始后退出。
  */
+ bool comptition_flag=false;
 void competition_initialize() {
   // . . .  
   printf("competition_initialize\n");
-
+  comptition_flag=true;
 }
 
 /**
@@ -161,6 +162,9 @@ void autonomous() {
  * 手控阶段运行的代码，在没有连接到场地控制器时，此函数将在初始化后立即运行。
  */
 void opcontrol() {
+  if(comptition_flag==true){
+    control.set_catapult_state(DOWN);
+  }
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   control.set_intake_state(STOP);
   bool cata_throwing=false;

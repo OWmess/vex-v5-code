@@ -240,10 +240,10 @@ void Control::catapult_task_func(){
         catapult_motor->move_absolute(-3800, 120);
         cout<<"catapult up"<<endl;
       }else if(catapult_state==DOWN){
-        catapult_motor->move_absolute(0, 120);
+        catapult_motor->move_absolute(600, 120);
         cout<<"catapult down"<<endl;
       }else if(catapult_state==MIDDLE){
-        catapult_motor->move_absolute(-1500, 120);
+        catapult_motor->move_absolute(-2200, 120);
         cout<<"catapult middle"<<endl;
       }
       cout<<"catapult task notified"<<endl;

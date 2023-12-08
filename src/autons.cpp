@@ -240,7 +240,8 @@ void attack_aggressive() {
 void attack() {
   constexpr static int turn_speed=120;
   control.set_catapult_state(MIDDLE);
-  chassis.set_drive_pid(23,DRIVE_SPEED);//33
+
+  chassis.set_drive_pid(24,DRIVE_SPEED);//33
   chassis.wait_drive();
   control.set_intake_state(INTAKE);
 
@@ -283,6 +284,7 @@ void attack() {
   // pros::delay(200);
   chassis.set_drive_pid(-10,DRIVE_SPEED);
   control.set_intake_state(INTAKE);
+  control.set_catapult_state(DOWN);
   chassis.wait_drive();
   chassis.set_turn_pid(238,turn_speed);
   chassis.wait_drive();
@@ -433,9 +435,9 @@ void skill_match(){
 
 
 void test_pid(){
-  chassis.set_arc_drive_pid(-40, 100, 50,true);
-  chassis.wait_drive();
-  chassis.set_tank(0, 0);
+  control.set_catapult_state(MIDDLE);
+  pros::delay(2000);
+  
 }
 
 void get_sensor_data(){
