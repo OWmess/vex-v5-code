@@ -206,7 +206,7 @@ void Control::set_armer(Control_State state){
       arm_motor->move(-127);
       arm_motor->set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
     }
-    pros::delay(50);
+    pros::delay(150);
     while(!arm_motor->is_over_current()){
       pros::delay(10);
     }

@@ -187,10 +187,10 @@ void opcontrol() {
     }
 
     
-    if(Controller_Button_State::R1_pressed()){//L1按下时，打开翅膀
+    if(Controller_Button_State::R2_pressed()){//L1按下时，打开翅膀
       cata_motor_reference.move(125);
     }
-    else if(Controller_Button_State::R2_pressed()){//L2按下时，关闭翅膀
+    else if(Controller_Button_State::R1_pressed()){//L2按下时，关闭翅膀
       cata_motor_reference.move(-125);
     }else{
       cata_motor_reference.brake();
