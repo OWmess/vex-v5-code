@@ -53,7 +53,7 @@ Control control=Control(
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{'D', 'C'}
+  ,{'B', 'H'}
 
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
@@ -185,7 +185,7 @@ void opcontrol() {
           control.set_intake_state(default_intake_state);
         }
     }else if(Controller_Button_State::R2_pressed()){//R2按下时，翻转intake
-      control.set_intake_state(Control::reverse_intake(default_intake_state));
+      control.set_intake_state(!default_intake_state);
     }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
       control.set_intake_state(default_intake_state);
     }
