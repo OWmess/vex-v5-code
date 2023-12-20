@@ -4,10 +4,10 @@
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {17, 18, -19,-20}
+  {18, 17, -19,-20}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{-7, -8, 9,10}
+  ,{-8, -7, 9,10}
   
 
   // 陀螺仪端口
@@ -71,7 +71,7 @@ void initialize() {
   //配置底盘参数
   chassis.with_pto({10,20});
   chassis.toggle_modify_curve_with_controller(false); //是否允许使用操纵杆上的按钮（左右键）修改控制器曲线
-  chassis.set_active_brake(0.0); // 设置主动制动kP，建议为0.1。
+  chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
   chassis.set_joystick_threshold(5);//设置摇杆死区的阈值，摇杆的范围在[-127,127]
   chassis.set_tank_min_power(30,30);//设置坦克模式下的最小功率，范围在[0,127],当摇杆输出值小于该值时，底盘将以最小功率运行
