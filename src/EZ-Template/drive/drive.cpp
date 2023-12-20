@@ -222,12 +222,12 @@ void Drive::set_drive_current_limit(int mA) {
 
 // Motor telemetry
 void Drive::reset_drive_sensor() {
-  // left_motors.front().tare_position();
-  // right_motors.front().tare_position();
-  for(auto &i:left_motors)
-    i.tare_position();
-  for(auto &i:right_motors)
-    i.tare_position();
+  left_motors.front().tare_position();
+  right_motors.front().tare_position();
+  // for(auto &i:left_motors)
+  //   i.tare_position();
+  // for(auto &i:right_motors)
+  //   i.tare_position();
   
 
 
@@ -247,12 +247,12 @@ double Drive::right_sensor() {
     return right_tracker.get_value();
   else if (is_tracker == DRIVE_ROTATION)
     return right_rotation.get_position();
-  double position=0;
-  for_each(right_motors.begin(),right_motors.end(),[&position](pros::Motor m){
-    position+=m.get_position();});
-  position/=right_motors.size();
-  return position;
-  // return right_motors.front().get_position();
+  // double position=0;
+  // for_each(right_motors.begin(),right_motors.end(),[&position](pros::Motor m){
+  //   position+=m.get_position();});
+  // position/=right_motors.size();
+  // return position;
+  return right_motors.front().get_position();
 }
 
 int Drive::right_velocity() { return right_motors.front().get_actual_velocity(); }
@@ -264,12 +264,12 @@ double Drive::left_sensor() {
     return left_tracker.get_value();
   else if (is_tracker == DRIVE_ROTATION)
     return left_rotation.get_position();
-  double position=0;
-  for_each(left_motors.begin(),left_motors.end(),[&position](pros::Motor m){
-    position+=m.get_position();});
-  position/=left_motors.size();
-  return position;
-  // return left_motors.front().get_position();
+  // double position=0;
+  // for_each(left_motors.begin(),left_motors.end(),[&position](pros::Motor m){
+  //   position+=m.get_position();});
+  // position/=left_motors.size();
+  // return position;
+  return left_motors.front().get_position();
 }
 
 int Drive::left_velocity() { return left_motors.front().get_actual_velocity(); }

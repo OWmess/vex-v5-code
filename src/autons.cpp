@@ -192,7 +192,7 @@ void attack() {
   chassis.wait_drive();
   chassis.set_turn_pid(75,turn_speed);
   chassis.wait_drive();
-  chassis.set_drive_pid(33,120);
+  chassis.set_drive_pid(29,120);
   chassis.wait_drive();
 
   control.set_intake_state(OUTTAKE);

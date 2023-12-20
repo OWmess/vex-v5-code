@@ -12,7 +12,7 @@
  *        
 */
 #define CATAPULT_UP_POS     10.0
-#define CATAPULT_MIDDLE_POS  44.0
+#define CATAPULT_MIDDLE_POS  49.0
 #define CATAPULT_DOWN_POS    54.0
 
 
@@ -48,7 +48,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   for(auto port:intake_motor_ports){
     pros::Motor temp{static_cast<int8_t>(abs(port)),intake_gearset,util::is_reversed(port)};
     intake_motors.push_back(temp);
-    intake_motors.back().set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+    intake_motors.back().set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
   }
   catapult_motor=std::make_unique<pros::Motor>(abs(catapult_motor_port),catapult_gearset,util::is_reversed(catapult_motor_port));
   catapult_motor->set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
@@ -249,7 +249,7 @@ void Control::control_task(){
       drive_armer=false;
     }
     auto cata_angle=cata_rotation->get_angle()/100.f;
-    if(cata_angle<catapult_middle_pos-5||(cata_angle>350.f&&cata_angle<360.f)){
+    if(cata_angle<catapult_middle_pos-15||(cata_angle>350.f&&cata_angle<360.f)){
       set_intake(0, STOP);
     }else{
       set_intake(intake_speed, intake_state);

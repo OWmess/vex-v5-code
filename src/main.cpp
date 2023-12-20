@@ -23,7 +23,7 @@ Drive chassis=Drive(
   ,60.0/36.0
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
-  ,21.0
+  ,12.0
 );
 
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
@@ -86,7 +86,7 @@ void initialize() {
   });
   chassis.initialize();
   as::initialize();
-
+  chassis.set_exit_condition(chassis.drive_exit, 30, 50, 100, 150, 500, 1000);
 
 }
 
