@@ -15,7 +15,8 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 /**
  * Controller.
  */
-extern pros::Controller master;
+extern pros::Controller master_controller;
+extern pros::Controller partner_controller;
 
 namespace ez {
 

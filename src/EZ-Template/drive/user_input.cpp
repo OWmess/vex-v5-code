@@ -139,19 +139,19 @@ void Drive::toggle_modify_curve_with_controller(bool toggle) { disable_controlle
 void Drive::modify_curve_with_controller() {
   if (!disable_controller) return;  // True enables, false disables.
 
-  button_press(&l_increase_, master.get_digital(l_increase_.button), ([this] { this->l_increase(); }), ([this] { this->save_l_curve_sd(); }));
-  button_press(&l_decrease_, master.get_digital(l_decrease_.button), ([this] { this->l_decrease(); }), ([this] { this->save_l_curve_sd(); }));
+  button_press(&l_increase_, master_controller.get_digital(l_increase_.button), ([this] { this->l_increase(); }), ([this] { this->save_l_curve_sd(); }));
+  button_press(&l_decrease_, master_controller.get_digital(l_decrease_.button), ([this] { this->l_decrease(); }), ([this] { this->save_l_curve_sd(); }));
   if (!is_tank) {
-    button_press(&r_increase_, master.get_digital(r_increase_.button), ([this] { this->r_increase(); }), ([this] { this->save_r_curve_sd(); }));
-    button_press(&r_decrease_, master.get_digital(r_decrease_.button), ([this] { this->r_decrease(); }), ([this] { this->save_r_curve_sd(); }));
+    button_press(&r_increase_, master_controller.get_digital(r_increase_.button), ([this] { this->r_increase(); }), ([this] { this->save_r_curve_sd(); }));
+    button_press(&r_decrease_, master_controller.get_digital(r_decrease_.button), ([this] { this->r_decrease(); }), ([this] { this->save_r_curve_sd(); }));
   }
 
   auto sr = std::to_string(right_curve_scale);
   auto sl = std::to_string(left_curve_scale);
   if (!is_tank)
-    master.set_text(2, 0, sl + "   " + sr);
+    master_controller.set_text(2, 0, sl + "   " + sr);
   else
-    master.set_text(2, 0, sl);
+    master_controller.set_text(2, 0, sl);
 }
 
 // Left curve function
@@ -211,8 +211,8 @@ void Drive::tank() {
   modify_curve_with_controller();
   
   // Put the joysticks through the curve function
-  int l_stick = left_curve_function(master.get_analog(ANALOG_LEFT_Y));
-  int r_stick = left_curve_function(master.get_analog(ANALOG_RIGHT_Y));
+  int l_stick = left_curve_function(master_controller.get_analog(ANALOG_LEFT_Y));
+  int r_stick = left_curve_function(master_controller.get_analog(ANALOG_RIGHT_Y));
   // Set robot to l_stick and r_stick, check joystick threshold, set active brake
   l_stick=(abs(l_stick)<l_tank_min_power)?l_tank_min_power*util::sgn(l_stick):l_stick;
   r_stick=(abs(r_stick)<r_tank_min_power)?r_tank_min_power*util::sgn(r_stick):r_stick;
@@ -231,12 +231,12 @@ void Drive::arcade_standard(e_type stick_type) {
   // Check arcade type (split vs single, normal vs flipped)
   if (stick_type == SPLIT) {
     // Put the joysticks through the curve function
-    fwd_stick = left_curve_function(master.get_analog(ANALOG_LEFT_Y));
-    turn_stick = right_curve_function(master.get_analog(ANALOG_RIGHT_X));
+    fwd_stick = left_curve_function(master_controller.get_analog(ANALOG_LEFT_Y));
+    turn_stick = right_curve_function(master_controller.get_analog(ANALOG_RIGHT_X));
   } else if (stick_type == SINGLE) {
     // Put the joysticks through the curve function
-    fwd_stick = left_curve_function(master.get_analog(ANALOG_LEFT_Y));
-    turn_stick = right_curve_function(master.get_analog(ANALOG_LEFT_X));
+    fwd_stick = left_curve_function(master_controller.get_analog(ANALOG_LEFT_Y));
+    turn_stick = right_curve_function(master_controller.get_analog(ANALOG_LEFT_X));
   }
 
   // Set robot to l_stick and r_stick, check joystick threshold, set active brake
@@ -255,12 +255,12 @@ void Drive::arcade_flipped(e_type stick_type) {
   // Check arcade type (split vs single, normal vs flipped)
   if (stick_type == SPLIT) {
     // Put the joysticks through the curve function
-    fwd_stick = right_curve_function(master.get_analog(ANALOG_RIGHT_Y));
-    turn_stick = left_curve_function(master.get_analog(ANALOG_LEFT_X));
+    fwd_stick = right_curve_function(master_controller.get_analog(ANALOG_RIGHT_Y));
+    turn_stick = left_curve_function(master_controller.get_analog(ANALOG_LEFT_X));
   } else if (stick_type == SINGLE) {
     // Put the joysticks through the curve function
-    fwd_stick = right_curve_function(master.get_analog(ANALOG_RIGHT_Y));
-    turn_stick = left_curve_function(master.get_analog(ANALOG_RIGHT_X));
+    fwd_stick = right_curve_function(master_controller.get_analog(ANALOG_RIGHT_Y));
+    turn_stick = left_curve_function(master_controller.get_analog(ANALOG_RIGHT_X));
   }
 
   // Set robot to l_stick and r_stick, check joystick threshold, set active brake

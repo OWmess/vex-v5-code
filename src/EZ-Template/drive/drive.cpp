@@ -329,7 +329,7 @@ bool Drive::imu_calibrate(bool run_loading_animation) {
     }
     pros::delay(util::DELAY_TIME);
   }
-  master.rumble(".");
+  master_controller.rumble(".");
   printf("IMU is done calibrating (took %d ms)\n", iter);
   return true;
 }

@@ -84,7 +84,7 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   //pto
   chassis_pitson=std::make_unique<pros::ADIDigitalOut>('H',LOW);
   arm_pitson=std::make_unique<pros::ADIDigitalOut>('G',LOW);
-  armlock_pitson=std::make_unique<pros::ADIDigitalOut>('F',LOW);
+  armlock_pitson=std::make_unique<pros::ADIDigitalOut>('A',LOW);
   
 }
 

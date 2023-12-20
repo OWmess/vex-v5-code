@@ -1,15 +1,17 @@
 #include "main.h"
+#include "control.hpp"
 
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {10, 9, 8,-14}
-  
+  {17, 18, -19,-20}
+
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{-1, -2, -3,17}
+  ,{-7, -8, 9,10}
+  
 
   // 陀螺仪端口
-  ,4
+  ,20
 
   // 车轮直径（英寸）
   ,4.0
@@ -20,17 +22,16 @@ Drive chassis=Drive(
   //外齿轮比（必须是小数）
   //例如。如果您的齿比是 84:36，其中 36t 连接电机，则您的 齿比 将为 2.333。
   //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
-  ,72.0/36.0
+  ,84.0/48.0
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
   ,12.0
 );
 
-
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
   // Intake 电机组端口，（负端口将反转电机！）
-  {-11,20}
+  {1, -11}
 
   // Intake 电机组的RPM,
   //可选项有：
@@ -40,17 +41,17 @@ Control control=Control(
   ,pros::E_MOTOR_GEAR_200
 
   // 投石机电机端口（负端口将反转它！）
-  ,{-14,17}
+  ,{10,-20}
 
   // 投石机 电机RPM,可选项同上
-  ,pros::E_MOTOR_GEAR_600
+  ,pros::E_MOTOR_GEAR_100
 
   // 投石机的角度传感器所在端口,若角度传感器正方向与投石机下压方向相反则为负
-  ,19
+  ,40
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{'A'}
+  ,{'D', 'C'}
 
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
@@ -68,9 +69,9 @@ void initialize() {
   pros::delay(500);
 
   //配置底盘参数
-  chassis.with_pto({-14,17});
+  chassis.with_pto({10,20});
   chassis.toggle_modify_curve_with_controller(false); //是否允许使用操纵杆上的按钮（左右键）修改控制器曲线
-  chassis.set_active_brake(0.05); // 设置主动制动kP，建议为0.1。
+  chassis.set_active_brake(0.0); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
   chassis.set_joystick_threshold(5);//设置摇杆死区的阈值，摇杆的范围在[-127,127]
   chassis.set_tank_min_power(30,30);//设置坦克模式下的最小功率，范围在[0,127],当摇杆输出值小于该值时，底盘将以最小功率运行
@@ -166,12 +167,11 @@ void opcontrol() {
   chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
   Control_State wings_state=OFF;
   Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
-  control.cata_move(120);
-  pros::delay(200);
-  control.cata_brake();
   control.pto_chassis_mode();
   control.set_intake_state(STOP);
+  bool mode_7motor=true;
   bool cata_throwing=false;
+
   while (true){
     chassis.arcade_standard(SPLIT);
     // chassis.tank();
@@ -191,23 +191,28 @@ void opcontrol() {
     if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
       wings_state=!wings_state;
       control.set_wings_state(wings_state);
+    }else if(Controller_Button_State::L2_new_press()){//L2按下时，关闭翅膀
+      wings_state=OFF;
+      control.set_wings_state(OFF);
     }
 
-      
+
     if(Controller_Button_State::UP_pressed()){
       control.cata_move(-125);
-    }else if(!cata_throwing){
+    }else if(Controller_Button_State::DOWN_pressed()){
+      control.cata_move(125);
+    }else if(!cata_throwing&&!mode_7motor){
       control.cata_brake();
     }
-    if(Controller_Button_State::DOWN_new_press()){//L1按下时，打开翅膀
-      control.cata_move(125);
-      auto t=pros::millis();
-      while(pros::millis()-t<4000){
-        control.cata_move(125);
-        pros::delay(10);
-      }
-      control.armlock_pitson->set_value(HIGH);
-    }
+    // if(Controller_Button_State::DOWN_new_press()){//L1按下时，打开翅膀
+    //   control.cata_move(125);
+    //   auto t=pros::millis();
+    //   while(pros::millis()-t<4000){
+    //     control.cata_move(125);
+    //     pros::delay(10);
+    //   }
+    //   control.armlock_pitson->set_value(HIGH);
+    // }
     
 
 
@@ -221,33 +226,36 @@ void opcontrol() {
       std::cout<<"pto_cata_mode\n";
       control.pto_cata_mode();
       cata_throwing=false;
+      mode_7motor=false;
     }
     if(Controller_Button_State::A_new_press()){
       std::cout<<"pto_chassis_mode\n";
       control.pto_chassis_mode();
       cata_throwing=false;
+      mode_7motor=true;
     }
+    // if(Controller_Button_State::Y_new_press()){
+    //   std::cout<<"pto_cata throwing\n";
+    //   control.pto_cata_mode();
+    //   pros::delay(200);
+    //   cata_throwing=!cata_throwing;
+    //   mode_7motor=false;
+    //   if(cata_throwing){
+    //     control.cata_move(-125);
+    //   }else{
+    //     control.cata_brake();
+    //   }
+    // }
     if(Controller_Button_State::Y_new_press()){
-      std::cout<<"pto_cata throwing\n";
-      control.pto_cata_mode();
-      pros::delay(200);
-      cata_throwing=!cata_throwing;
-      if(cata_throwing){
-        control.cata_move(-125);
-      }else{
-        control.cata_brake();
-      }
+      control.armlock_pitson->set_value(HIGH);
     }
     if(Controller_Button_State::X_new_press()){
       std::cout<<"pto_arm_mode\n";
       cata_throwing=false;
+      mode_7motor=false;
       control.pto_arm_mode();
     }
 
-    if(Controller_Button_State::DOWN_new_press()){
-      std::cout<<"armlock mode\n";
-      control.armlock_pitson->set_value(ON);
-    }
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
 
