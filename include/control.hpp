@@ -222,8 +222,8 @@ public:
     }
     
     void pto_chassis_mode(){
-        chassis_pitson->set_value(LOW);
-        arm_pitson->set_value(LOW);
+        chassis_piston->set_value(LOW);
+        // arm_piston->set_value(LOW);
         chassis.pto_toggle(false);
         for(auto &i:chassis.pto_active) {
             cout<<i<<", ";
@@ -233,8 +233,8 @@ public:
     }
 
     void pto_cata_mode(){
-        chassis_pitson->set_value(HIGH);
-        arm_pitson->set_value(LOW);
+        chassis_piston->set_value(HIGH);
+        // arm_piston->set_value(LOW);
         chassis.pto_toggle(true);
         for(auto &i:chassis.pto_active){
             cout<<i<<", ";
@@ -245,8 +245,8 @@ public:
     }
 
     void pto_arm_mode(){
-        chassis_pitson->set_value(HIGH);
-        arm_pitson->set_value(HIGH);
+        chassis_piston->set_value(HIGH);
+        // arm_piston->set_value(HIGH);
         chassis.pto_toggle(true);
         for(auto &i:chassis.pto_active){
             cout<<i<<", ";
@@ -311,9 +311,9 @@ private:
 
 public:
     PID cata_PID;
-    std::unique_ptr<pros::ADIDigitalOut> chassis_pitson;
-    std::unique_ptr<pros::ADIDigitalOut> arm_pitson;
-    std::unique_ptr<pros::ADIDigitalOut> armlock_pitson;
+    std::unique_ptr<pros::ADIDigitalOut> chassis_piston;
+    std::unique_ptr<pros::ADIDigitalOut> arm_piston;
+    std::unique_ptr<pros::ADIDigitalOut> armlock_piston;
 private:
     //气动结构体
     struct PneumaticsStruct{

@@ -82,9 +82,9 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   cata_PID.set_exit_condition(20, 1, 50, 1, 2000, 3000);
   
   //pto
-  chassis_pitson=std::make_unique<pros::ADIDigitalOut>('H',LOW);
-  arm_pitson=std::make_unique<pros::ADIDigitalOut>('G',LOW);
-  armlock_pitson=std::make_unique<pros::ADIDigitalOut>('A',LOW);
+  chassis_piston=std::make_unique<pros::ADIDigitalOut>('H',LOW);
+  arm_piston=std::make_unique<pros::ADIDigitalOut>('G',LOW);
+  armlock_piston=std::make_unique<pros::ADIDigitalOut>('A',LOW);
   
 }
 

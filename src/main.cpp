@@ -1,5 +1,7 @@
 #include "main.h"
+#include "EZ-Template/util.hpp"
 #include "control.hpp"
+#include "pros/misc.h"
 
 // 底盘构造
 Drive chassis=Drive(
@@ -170,12 +172,12 @@ void opcontrol() {
   control.pto_chassis_mode();
   control.set_intake_state(STOP);
   bool mode_7motor=true;
-  bool cata_throwing=false;
 
   while (true){
     chassis.arcade_standard(SPLIT);
     // chassis.tank();
     //根据按钮状态控制机器人
+    //intake状态控制
     if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
         if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
           control.set_intake_state(STOP);
@@ -188,6 +190,7 @@ void opcontrol() {
       control.set_intake_state(default_intake_state);
     }
 
+    //大翅膀状态控制
     if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
       wings_state=!wings_state;
       control.set_wings_state(wings_state);
@@ -196,62 +199,29 @@ void opcontrol() {
       control.set_wings_state(OFF);
     }
 
-
-    if(Controller_Button_State::UP_pressed()){
-      control.cata_move(-125);
-    }else if(Controller_Button_State::DOWN_pressed()){
-      control.cata_move(125);
-    }else if(!cata_throwing&&!mode_7motor){
-      control.cata_brake();
+    /**
+    * 以下partner_controller为副操遥控
+    */
+    //非底盘模式时控制高挂臂
+    if(!mode_7motor){
+      if(Controller_Button_State::UP_pressed()||partner_controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
+        control.cata_move(-125);
+      }else if(Controller_Button_State::DOWN_pressed()||partner_controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)){
+        control.cata_move(125);
+      }else {
+        control.cata_brake();
+      }
+      if(Controller_Button_State::Y_new_press()){
+        control.armlock_piston->set_value(HIGH);
+      }
     }
-    // if(Controller_Button_State::DOWN_new_press()){//L1按下时，打开翅膀
-    //   control.cata_move(125);
-    //   auto t=pros::millis();
-    //   while(pros::millis()-t<4000){
-    //     control.cata_move(125);
-    //     pros::delay(10);
-    //   }
-    //   control.armlock_pitson->set_value(HIGH);
-    // }
     
-
-
-    if(Controller_Button_State::RIGHT_new_press()){
-      control.set_armer_state(OFF);
-    }else if(Controller_Button_State::LEFT_new_press()){
-      control.set_armer_state(ON);
-    }
-
-    if(Controller_Button_State::B_new_press()){
-      std::cout<<"pto_cata_mode\n";
-      control.pto_cata_mode();
-      cata_throwing=false;
-      mode_7motor=false;
-    }
-    if(Controller_Button_State::A_new_press()){
+    if(Controller_Button_State::A_new_press()||partner_controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
       std::cout<<"pto_chassis_mode\n";
       control.pto_chassis_mode();
-      cata_throwing=false;
       mode_7motor=true;
-    }
-    // if(Controller_Button_State::Y_new_press()){
-    //   std::cout<<"pto_cata throwing\n";
-    //   control.pto_cata_mode();
-    //   pros::delay(200);
-    //   cata_throwing=!cata_throwing;
-    //   mode_7motor=false;
-    //   if(cata_throwing){
-    //     control.cata_move(-125);
-    //   }else{
-    //     control.cata_brake();
-    //   }
-    // }
-    if(Controller_Button_State::Y_new_press()){
-      control.armlock_pitson->set_value(HIGH);
-    }
-    if(Controller_Button_State::X_new_press()){
+    } else if(Controller_Button_State::X_new_press()||partner_controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){
       std::cout<<"pto_arm_mode\n";
-      cata_throwing=false;
       mode_7motor=false;
       control.pto_arm_mode();
     }
