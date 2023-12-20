@@ -76,12 +76,12 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
+    Auton("Guard.", guard_1),
+    Auton("Attack.", attack),
     Auton("guard_aggressive",guard_aggressive),
     Auton("attack_aggressive",attack_aggressive),
     Auton("skill match",skill_match),
-    Auton("Guard.", guard_1),
     Auton("Conservatively attack. ", conservatively_attack),
-    Auton("Attack.", attack),
     Auton("test_function.", test_pid),
   });
   chassis.initialize();
