@@ -131,6 +131,74 @@ void guard_1() {
 
 }
 
+
+void attack() {
+  constexpr static int turn_speed=120;
+  control.set_intake_state(INTAKE);
+  chassis.set_drive_pid(20,DRIVE_SPEED);//33
+  chassis.wait_drive();
+
+  // chassis.set_turn_pid(90,turn_speed);
+  chassis.set_swing_pid(ez::LEFT_SWING, 90, SWING_SPEED);
+  chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
+
+  chassis.set_drive_pid(10,125);
+  chassis.wait_drive();
+  // pros::delay(200);
+  chassis.set_drive_pid(-8,DRIVE_SPEED);
+  chassis.wait_drive();
+  control.set_intake_state(INTAKE);
+  chassis.set_swing_pid(LEFT_SWING,0,SWING_SPEED);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(7,DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90,turn_speed);
+  chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
+  chassis.set_drive_pid(20,120);
+  chassis.wait_drive();
+
+  chassis.set_drive_pid(-15,DRIVE_SPEED);
+  chassis.wait_drive();
+  control.set_intake_state(INTAKE);
+  chassis.set_turn_pid(-85,turn_speed);
+  chassis.wait_drive();
+  chassis.set_drive_pid(10,DRIVE_SPEED);
+  chassis.wait_drive();
+  // pros::delay(200);
+  chassis.set_drive_pid(-12,DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(90,turn_speed);
+  chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
+  chassis.set_drive_pid(18,120);
+  chassis.wait_drive();
+  // pros::delay(200);
+  chassis.set_drive_pid(-10,DRIVE_SPEED);
+  control.set_intake_state(INTAKE);
+  chassis.wait_drive();
+  chassis.set_turn_pid(235,turn_speed);
+  chassis.wait_drive();
+  chassis.set_drive_pid(19,DRIVE_SPEED);
+  chassis.wait_drive();
+  // pros::delay(200);
+  chassis.set_drive_pid(-15,DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(70,turn_speed);
+  chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
+  chassis.set_drive_pid(20,120);
+  chassis.wait_drive();
+  // pros::delay(200);
+  chassis.set_drive_pid(-18,DRIVE_SPEED);
+  chassis.wait_drive();
+
+
+}
+
+
 void guard_aggressive(){
   constexpr static int turn_speed=120;
   constexpr static int swing_speed=120;
@@ -246,71 +314,7 @@ void attack_aggressive() {
   chassis.wait_drive();
 
 }
-void attack() {
-  constexpr static int turn_speed=120;
-  control.set_intake_state(INTAKE);
-  chassis.set_drive_pid(20,DRIVE_SPEED);//33
-  chassis.wait_drive();
 
-  // chassis.set_turn_pid(90,turn_speed);
-  chassis.set_swing_pid(ez::LEFT_SWING, 90, SWING_SPEED);
-  chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-
-  chassis.set_drive_pid(10,125);
-  chassis.wait_drive();
-  // pros::delay(200);
-  chassis.set_drive_pid(-8,DRIVE_SPEED);
-  chassis.wait_drive();
-  control.set_intake_state(INTAKE);
-  chassis.set_swing_pid(LEFT_SWING,0,SWING_SPEED);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(7,DRIVE_SPEED);
-  chassis.wait_drive();
-  chassis.set_turn_pid(90,turn_speed);
-  chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(20,120);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(-15,DRIVE_SPEED);
-  chassis.wait_drive();
-  control.set_intake_state(INTAKE);
-  chassis.set_turn_pid(-85,turn_speed);
-  chassis.wait_drive();
-  chassis.set_drive_pid(10,DRIVE_SPEED);
-  chassis.wait_drive();
-  // pros::delay(200);
-  chassis.set_drive_pid(-12,DRIVE_SPEED);
-  chassis.wait_drive();
-  chassis.set_turn_pid(90,turn_speed);
-  chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(18,120);
-  chassis.wait_drive();
-  // pros::delay(200);
-  chassis.set_drive_pid(-10,DRIVE_SPEED);
-  control.set_intake_state(INTAKE);
-  chassis.wait_drive();
-  chassis.set_turn_pid(235,turn_speed);
-  chassis.wait_drive();
-  chassis.set_drive_pid(19,DRIVE_SPEED);
-  chassis.wait_drive();
-  // pros::delay(200);
-  chassis.set_drive_pid(-15,DRIVE_SPEED);
-  chassis.wait_drive();
-  chassis.set_turn_pid(70,turn_speed);
-  chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(20,120);
-  chassis.wait_drive();
-  // pros::delay(200);
-  chassis.set_drive_pid(-18,DRIVE_SPEED);
-  chassis.wait_drive();
-
-
-}
 
 void conservatively_attack(){
   control.set_catapult_state(MIDDLE);

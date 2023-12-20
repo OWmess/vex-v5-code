@@ -1,7 +1,9 @@
 #include "control.hpp"
+#include "EZ-Template/util.hpp"
 #include "main.h"
 #include "pros/motors.h"
 #include "pros/rtos.h"
+#include "pros/rtos.hpp"
 
 ///********************************参数配置*******************************************///
 /**
@@ -82,9 +84,9 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   cata_PID.set_exit_condition(20, 1, 50, 1, 2000, 3000);
   
   //pto
-  chassis_piston=std::make_unique<pros::ADIDigitalOut>('H',LOW);
+  chassis_piston=std::make_unique<pros::ADIDigitalOut>('A',LOW);
   arm_piston=std::make_unique<pros::ADIDigitalOut>('G',LOW);
-  armlock_piston=std::make_unique<pros::ADIDigitalOut>('A',LOW);
+  armlock_piston=std::make_unique<pros::ADIDigitalOut>('C',LOW);
   
 }
 
@@ -237,6 +239,19 @@ void Control::catapult_task_func(){
 
 void Control::control_task(){
   int cnt=0;
+  //监控pto电机的温度
+  pros::Task watch_dog_task([this](){
+    while(true){
+      double temperature=std::max(this->catapult_motor[0].get_temperature(),this->catapult_motor[1].get_temperature());
+      master_controller.print(0, 0,"cata temp %lf",temperature);
+      if(temperature>=54.9){
+        master_controller.rumble(". . . .");
+      }else if(temperature>=49.9){
+        master_controller.rumble("- - - -");
+      }
+      pros::delay(2000);
+    }
+  });
   while(true){
     if(drive_intake){
       set_intake(intake_speed,intake_state);
@@ -253,7 +268,6 @@ void Control::control_task(){
     }
     if(drive_armer){
       set_armer(armer_state);
-
       drive_armer=false;
     }
     // auto cata_angle=cata_rotation->get_angle()/100.f;
@@ -262,8 +276,7 @@ void Control::control_task(){
     // }else{
     //   set_intake(intake_speed, intake_state);
     // }
-    // double temperature=catapult_motor[0].get_temperature();
-    // master.print(0, 0,"cata temp %lf",temperature);
+    
     pros::delay(50);
   }
 }
