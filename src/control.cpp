@@ -241,13 +241,15 @@ void Control::control_task(){
   int cnt=0;
   //监控pto电机的温度
   pros::Task watch_dog_task([this](){
+    int cnt=0;
     while(true){
       double temperature=std::max(this->catapult_motor[0].get_temperature(),this->catapult_motor[1].get_temperature());
-      master_controller.print(0, 0,"cata temp %lf",temperature);
       if(temperature>=54.9){
-        master_controller.rumble(". . . .");
+          master_controller.rumble(". . ");
       }else if(temperature>=49.9){
-        master_controller.rumble("- - - -");
+        master_controller.rumble("- - ");
+      }else{
+        master_controller.print(0, 0,"cata temp %lf",temperature);
       }
       pros::delay(2000);
     }
