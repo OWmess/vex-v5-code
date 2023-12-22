@@ -172,7 +172,7 @@ void opcontrol() {
   control.pto_chassis_mode();
   control.set_intake_state(STOP);
   bool mode_7motor=true;
-
+  int lock_press_cnt=0;
   while (true){
     chassis.arcade_standard(SPLIT);
     // chassis.tank();
@@ -211,8 +211,14 @@ void opcontrol() {
       }else {
         control.cata_brake();
       }
-      if(Controller_Button_State::Y_new_press()){
+      if(Controller_Button_State::Y_new_press()) {
         control.armlock_piston->set_value(HIGH);
+      }
+    }else{
+      if(Controller_Button_State::B_new_press()){
+        if(++lock_press_cnt>=3){
+        control.armlock_piston->set_value(HIGH);
+        }
       }
     }
     
