@@ -127,7 +127,7 @@ void guard_1() {
   chassis.set_turn_pid(-45, TURN_SPEED);
   chassis.wait_drive();
   control.set_intake_state(OUTTAKE);
-  chassis.set_drive_pid(27,80,true);
+  chassis.set_drive_pid(28,80,true);
   chassis.wait_drive();
 
 }
@@ -148,7 +148,7 @@ void attack() {
   chassis.wait_drive();
   control.set_intake_state(INTAKE);
   pros::delay(100);
-  chassis.set_drive_pid(10,DRIVE_SPEED);
+  chassis.set_drive_pid(15,DRIVE_SPEED);
   chassis.wait_drive();
   pros::delay(300);
 
@@ -177,7 +177,7 @@ void attack() {
   chassis.set_drive_pid(-10,DRIVE_SPEED);
   control.set_intake_state(INTAKE);
   chassis.wait_drive();
-  chassis.set_turn_pid(228,turn_speed);
+  chassis.set_turn_pid(230,turn_speed);
   chassis.wait_drive();
   chassis.set_drive_pid(28,DRIVE_SPEED);
   chassis.wait_drive();
