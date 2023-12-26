@@ -15,14 +15,14 @@
 */
 #define CATAPULT_UP_POS     10.0
 #define CATAPULT_MIDDLE_POS  44.0
-#define CATAPULT_DOWN_POS    54.0
+#define CATAPULT_DOWN_POS    55.0
 
 
 /**
  * @brief 发射架的PID参数
 */
 #define CATA_KP             15
-#define CATA_KI             0.1
+#define CATA_KI             1
 #define CATA_KD             20
 #define CATA_START_I        5
 ///**********************************************************************************///
@@ -40,7 +40,7 @@ static inline bool check_task_notify(pros::Task &task,uint32_t delay,bool &flag)
 
 
 Control_State Control::intake_state=STOP;
-Catapult_State Control::catapult_state=MIDDLE;
+Catapult_State Control::catapult_state=RELEASE;
 Control_State Control::wings_state=OFF;
 Control_State Control::armer_state=OFF;
 Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const std::vector<int8_t> &catapult_motor_port,
@@ -108,8 +108,9 @@ void Control::set_intake(int speed,Control_State state){
 void Control::set_catapult(int speed,Catapult_State state) {
   int cnt=0; 
   double start_t=pros::millis();
-  time_out=5000;
-  auto cata_to_top_lambda=[this,start_t,speed](float degree){
+  time_out=2000;
+  auto cata_to_top_lambda=[this,start_t,speed](){
+    std::deque<float> angle_queue;
     cata_move(speed);
     while(pros::millis()-start_t<time_out) {
       ////检测是否有其他task通知catapult运动
@@ -117,35 +118,25 @@ void Control::set_catapult(int speed,Catapult_State state) {
         cata_brake();
         return;
       }
-      if(cata_rotation->get_velocity()<-1){//发射架在复位途中,忽略
-        break;
-      }
-    }
-    cata_brake();
-    std::deque<float> angle_queue;
-    while(true){
-      if(check_task_notify(catapult_task,30,cata_exit_condition)){
-        cata_brake();
-        return;
-      }
       float angle=cata_rotation->get_angle()/100.f;
       angle_queue.push_back(angle);
-      if(angle_queue.size()>5){
+      if(angle_queue.size()>3){
         angle_queue.pop_front();
       }
-      // cout<<"angle "<<angle<<endl;
       bool res=true;
       for_each(angle_queue.begin(),angle_queue.end(),[&res](float &angle){
-        if(!(angle>355.f||angle<2.f)){
+        if(!(angle>355.f||angle<30.f)){
           res=false;
         }
       });
       if(res) break;
     }
+    cata_brake();
   };
   
   auto cata_to_degree_lambda=[this,start_t,speed,state](float degree){
     //PID控制电机
+    set_catapult_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
     cata_PID.set_target(degree);
     while(pros::millis()-start_t<time_out){
       //检测是否有其他task通知catapult运动
@@ -178,25 +169,36 @@ void Control::set_catapult(int speed,Catapult_State state) {
     cata_brake();
   };
 
-  if(state==BRAKE){
-    cata_brake();
-  }else if(state==DOWN){
-    if(cata_rotation->get_angle()/100.f>=catapult_down_pos-5||cata_exit_condition){
-      cata_to_top_lambda(catapult_down_pos);
+  if(state==RELEASE){
+    cata_to_top_lambda();
+    set_catapult_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+  }else if(state==READY){
+    if(cata_rotation->get_angle()/100.f>=30||cata_exit_condition){
+      cata_to_top_lambda();
     }
     cata_to_degree_lambda(catapult_down_pos);
-  }else if(state==MIDDLE){
-    if(cata_rotation->get_angle()/100.f>=catapult_middle_pos-5||cata_exit_condition){
-      cata_to_top_lambda(catapult_down_pos);
-    }
-    cata_to_degree_lambda(catapult_middle_pos);
-  }else if(state==UP){
-    cata_to_top_lambda(catapult_down_pos);
-  }else if(state==INIT_MIDDLE){
-    cata_to_degree_lambda(catapult_middle_pos);
-  }else if(state==INIT_DOWN){
-    cata_to_degree_lambda(catapult_down_pos);
+  }else if(state==KEEP_LAUNCHING){
+    cata_move(125);
   }
+  // if(state==BRAKE){
+  //   cata_brake();
+  // }else if(state==DOWN){
+  //   if(cata_rotation->get_angle()/100.f>=catapult_down_pos-5||cata_exit_condition){
+  //     cata_to_top_lambda(catapult_down_pos);
+  //   }
+  //   cata_to_degree_lambda(catapult_down_pos);
+  // }else if(state==MIDDLE){
+  //   if(cata_rotation->get_angle()/100.f>=catapult_middle_pos-5||cata_exit_condition){
+  //     cata_to_top_lambda(catapult_down_pos);
+  //   }
+  //   cata_to_degree_lambda(catapult_middle_pos);
+  // }else if(state==UP){
+  //   cata_to_top_lambda(catapult_down_pos);
+  // }else if(state==INIT_MIDDLE){
+  //   cata_to_degree_lambda(catapult_middle_pos);
+  // }else if(state==INIT_DOWN){
+  //   cata_to_degree_lambda(catapult_down_pos);
+  // }
 }
 
 void Control::set_wings(Control_State state){
@@ -224,16 +226,14 @@ void Control::set_catapult_down_pos(double pos){
 }
 
 void Control::catapult_task_func(){
-  // while (true) {
+  while (true) {
     // block for up to 50ms waiting for a notification and clear the value
-    // auto t=catapult_task.notify_take(true, 50);
-    // if(t){
-    //   set_intake(0,STOP);
-    //   set_catapult(catapult_speed,catapult_state);
-    //   set_intake(intake_speed, intake_state);
-    // }
-    // no need to delay here because the call to notify_take blocks
-  // }
+    auto t=catapult_task.notify_take(true, 10);
+    if(t){
+      set_catapult(catapult_speed,catapult_state);
+    }
+    //no need to delay here because the call to notify_take blocks
+  }
 }
 
 
@@ -254,6 +254,10 @@ void Control::control_task(){
       pros::delay(2000);
     }
   });
+
+  
+
+
   while(true){
     if(drive_intake){
       set_intake(intake_speed,intake_state);
@@ -261,8 +265,8 @@ void Control::control_task(){
     }
     if(drive_catapult){
       //通知发射架运动
-      // catapult_task.notify();
-      // drive_catapult=false;
+      catapult_task.notify();
+      drive_catapult=false;
     }
     if(drive_wings){
       set_wings(wings_state);
@@ -272,17 +276,9 @@ void Control::control_task(){
       set_armer(armer_state);
       drive_armer=false;
     }
-    // auto cata_angle=cata_rotation->get_angle()/100.f;
-    // if(cata_angle<catapult_middle_pos-5||(cata_angle>350.f&&cata_angle<360.f)){
-    //   set_intake(0, STOP);
-    // }else{
-    //   set_intake(intake_speed, intake_state);
-    // }
     
-    pros::delay(50);
+    pros::delay(10);
   }
 }
 
-void Control::with_pto(){
-  
-}
+

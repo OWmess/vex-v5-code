@@ -36,8 +36,10 @@ enum Catapult_State{
     DOWN,
     BRAKE,
     INIT_MIDDLE,
-    INIT_DOWN
-
+    INIT_DOWN,
+    KEEP_LAUNCHING,
+    RELEASE,
+    READY,
 };
 
 
@@ -306,7 +308,7 @@ private:
     */
     void catapult_task_func();
 
-    void with_pto();
+
 
 
 public:
@@ -314,6 +316,7 @@ public:
     std::unique_ptr<pros::ADIDigitalOut> chassis_piston;
     std::unique_ptr<pros::ADIDigitalOut> arm_piston;
     std::unique_ptr<pros::ADIDigitalOut> armlock_piston;
+    std::unique_ptr<pros::Rotation> cata_rotation;
 private:
     //气动结构体
     struct PneumaticsStruct{
@@ -322,7 +325,6 @@ private:
 
     };
     //电机及电磁阀的智能指针或实例
-    std::unique_ptr<pros::Rotation> cata_rotation;
     std::vector<pros::Motor> intake_motors;
     std::vector<pros::Motor> catapult_motor;
     std::vector<PneumaticsStruct> wings;
@@ -340,7 +342,7 @@ private:
     bool drive_wings;
     bool drive_armer;
     int intake_speed=120;
-    int catapult_speed=120;
+    int catapult_speed=125;
     int time_out=2000;
     static Control_State intake_state;
     static Control_State wings_state;
