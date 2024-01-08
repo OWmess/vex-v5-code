@@ -31,13 +31,9 @@ inline Control_State operator!(Control_State state) {
 }
 
 enum Catapult_State{
-    UP,
-    MIDDLE,
-    DOWN,
-    BRAKE,
-    INIT_MIDDLE,
-    INIT_DOWN
-
+    READY,
+    LAUNCH,
+    RELEASE,
 };
 
 
@@ -53,10 +49,9 @@ public:
      * \param wings_ports ports of the wings (negative port will reverse it!)
      * \param armer_ports ports of the armer (negative port will reverse it!)
     */
-    Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const std::vector<int8_t> &catapult_motor_port,
-    pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_rotation_port,const std::vector<int8_t> &wings_ports,
-    const std::vector<int8_t> &armer_ports);
 
+    Control(pros::Motor_Group &intake_motors,pros::Motor_Group &catapult_motor,pros::Rotation &catapult_rotation,const std::vector<int8_t> &wings_ports,
+    const std::vector<int8_t> &armer_ports);
     /**
      * \param 设置投石机在下方的位置
     */
@@ -159,28 +154,6 @@ public:
     inline Catapult_State get_catapult_state(){
         return catapult_state;
     }
-    
-    /**
-     * @brief 设置intake电机的制动模式
-     * 
-     * @param mode 
-     */
-    inline void set_intake_brake_mode(const pros::motor_brake_mode_e_t mode) const{
-        for(const auto& motor:intake_motors){
-            motor.set_brake_mode(mode);
-        }
-    }
-
-    /**
-     * @brief 设置发射架电机的制动模式
-     * 
-     * @param mode 
-     */
-    inline void set_catapult_brake_mode(const pros::motor_brake_mode_e_t mode) const{
-        for(auto &i:catapult_motor){
-            i.set_brake_mode(mode);
-        }
-    }
 
     /**
      * @brief 设置发射架的PID参数
@@ -195,32 +168,6 @@ public:
         pid->set_constants(p,i,d,p_start_i);
     }
 
-    /**
-     * @brief 获取发射架电机的引用
-     * 
-     * @return pros::Motor& 
-     */
-    inline std::vector<pros::Motor> get_catapult_motor(){
-        return catapult_motor;
-    }
-
-    inline void clean_cata_task_notify(){
-        catapult_task.notify_clear();
-    }
-
-
-    inline void cata_move(std::int32_t voltage) const{
-        for(const auto &motor:catapult_motor){
-            motor.move(voltage);
-        }
-    }
-
-    inline void cata_brake() const{
-        for(const auto &motor:catapult_motor){
-            motor.brake();
-        }
-    }
-    
     void pto_chassis_mode(){
         chassis_piston->set_value(LOW);
         // arm_piston->set_value(LOW);
@@ -228,7 +175,7 @@ public:
         for(auto &i:chassis.pto_active) {
             cout<<i<<", ";
         }
-        set_catapult_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+        catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_COAST);
         cout<<"\n";
     }
 
@@ -240,7 +187,7 @@ public:
             cout<<i<<", ";
         }
         cout<<"\n";
-        set_catapult_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+        catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_COAST);
 
     }
 
@@ -253,13 +200,51 @@ public:
         }
         cout<<"\n";
         pros::Task thread([this](){
-            cata_move(80);
+            catapult_motors.move(60);
             pros::delay(300);
-            cata_brake();
+            catapult_motors.brake();
         });
-        set_catapult_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+        catapult_motors.brake();
         
     }
+
+    /**
+     * @brief 让发射架电机以一定的百分比转动
+     * 
+     * @param percentage 
+     */
+    void cata_move_rpm(int percentage){
+        for(int i=0;i<catapult_motors.size();i++){
+
+            auto gearing=catapult_motors[i].get_gearing();
+            int max_rpm=200;
+            switch (gearing) {
+                case pros::E_MOTOR_GEAR_100:
+                    max_rpm=100;
+                    break;
+                case pros::E_MOTOR_GEAR_200:
+                    max_rpm=200;
+                    break;
+                case pros::E_MOTOR_GEAR_600:
+                    max_rpm=600;
+                    break;
+                default:
+                    break;
+            }
+            catapult_motors[i].move_velocity((percentage/100.f)*max_rpm);
+        }
+    }
+    /**
+     * \brief 维护上层机构的task
+    */
+    void control_task_fn();
+
+    /**
+     * \brief 维护投石机的task
+    */
+    void catapult_task_fn();
+
+    void cata_temp_watchdog_fn();
 private:
 
     /**
@@ -280,7 +265,7 @@ private:
      * - MIDDLE: 中间
      * - DOWN: 放下
     */
-    void set_catapult(int speed,Catapult_State state=DOWN);
+    void set_catapult(int speed,Catapult_State state=RELEASE);
 
     /**
      * \param state 设置两侧挡板的状态
@@ -296,24 +281,16 @@ private:
     */
     void set_armer(Control_State state);
 
-    /**
-     * \brief 维护上层机构的task
-    */
-    void control_task();
+    void controller_event_handling();
 
-    /**
-     * \brief 维护投石机的task
-    */
-    void catapult_task_func();
-
-    void with_pto();
-
-
+    void drive_event_handling();
 public:
     PID cata_PID;
     std::unique_ptr<pros::ADIDigitalOut> chassis_piston;
     std::unique_ptr<pros::ADIDigitalOut> arm_piston;
     std::unique_ptr<pros::ADIDigitalOut> armlock_piston;
+    pros::Motor_Group &catapult_motors;
+
 private:
     //气动结构体
     struct PneumaticsStruct{
@@ -322,9 +299,8 @@ private:
 
     };
     //电机及电磁阀的智能指针或实例
-    std::unique_ptr<pros::Rotation> cata_rotation;
-    std::vector<pros::Motor> intake_motors;
-    std::vector<pros::Motor> catapult_motor;
+    pros::Rotation &cata_rotation;
+    pros::Motor_Group &intake_motors;
     std::vector<PneumaticsStruct> wings;
     std::vector<PneumaticsStruct> armers;
     std::map<std::string,std::unique_ptr<PneumaticsStruct>> pto;
@@ -332,8 +308,6 @@ private:
     double catapult_middle_pos;
     double catapult_down_pos;
     bool armer_reversed;
-    pros::Task task;
-    pros::Task catapult_task;
     bool cata_exit_condition=false;
     bool drive_catapult;
     bool drive_intake;
@@ -347,8 +321,7 @@ private:
     static Catapult_State catapult_state;
     static Control_State armer_state;
     bool enable_pto=false;
-    
-    //pto
+
 
 };
 

@@ -13,9 +13,7 @@
           数值越大，发射架越往下
  *        
 */
-#define CATAPULT_UP_POS     10.0
-#define CATAPULT_MIDDLE_POS  44.0
-#define CATAPULT_DOWN_POS    54.0
+#define CATA_READY_POS      50
 
 
 /**
@@ -40,26 +38,15 @@ static inline bool check_task_notify(pros::Task &task,uint32_t delay,bool &flag)
 
 
 Control_State Control::intake_state=STOP;
-Catapult_State Control::catapult_state=MIDDLE;
+Catapult_State Control::catapult_state=RELEASE;
 Control_State Control::wings_state=OFF;
 Control_State Control::armer_state=OFF;
-Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gearset_e_t intake_gearset,const std::vector<int8_t> &catapult_motor_port,
-    pros::motor_gearset_e_t catapult_gearset,const int8_t catapult_rotation_port,const std::vector<int8_t> &wings_ports,
-    const std::vector<int8_t> &armer_ports):task([this](){this->control_task();}),catapult_task([this](){this->catapult_task_func();}){
-  //创建各个电机、电磁阀对象
-  for(auto port:intake_motor_ports){
-    pros::Motor temp{static_cast<int8_t>(abs(port)),intake_gearset,util::is_reversed(port)};
-    intake_motors.push_back(temp);
-    intake_motors.back().set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
-  }
 
-  for(const auto &i:catapult_motor_port){
-    pros::Motor tmp(abs(i),catapult_gearset,util::is_reversed(i));
-    // tmp.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
-    catapult_motor.push_back(tmp);
-  }
 
-  cata_rotation=std::make_unique<pros::Rotation>(abs(catapult_rotation_port),ez::util::is_reversed(catapult_rotation_port));
+Control::Control(pros::Motor_Group &intake_motors,pros::Motor_Group &catapult_motor,pros::Rotation &catapult_rotation,const std::vector<int8_t> &wings_ports,
+    const std::vector<int8_t> &armer_ports):intake_motors(intake_motors),catapult_motors(catapult_motor),cata_rotation(catapult_rotation){
+
+
 
   for(const auto &wing_port:wings_ports){
     PneumaticsStruct tmp;
@@ -75,9 +62,8 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
     armers.push_back(tmp);
   }
 
-  set_catapult_up_pos(CATAPULT_UP_POS);
-  set_catapult_middle_pos(CATAPULT_MIDDLE_POS);
-  set_catapult_down_pos(CATAPULT_DOWN_POS);
+
+  cata_rotation.set_data_rate(5);
   // 配置catapult的pid参数
   cata_PID={CATA_KP,CATA_KI,CATA_KD,CATA_START_I};
   cata_PID.set_velocity_out(0.1);
@@ -87,115 +73,47 @@ Control::Control(const std::vector<int8_t> &intake_motor_ports,pros::motor_gears
   chassis_piston=std::make_unique<pros::ADIDigitalOut>('A',LOW);
   arm_piston=std::make_unique<pros::ADIDigitalOut>('G',LOW);
   armlock_piston=std::make_unique<pros::ADIDigitalOut>('C',LOW);
-  
 }
+
+
+
+
+
+
+
+
+
+
 
 
 void Control::set_intake(int speed,Control_State state){
   if(state==STOP){
-    for(const pros::Motor &intake_motor:intake_motors){
-      intake_motor.brake();
-    }
+    intake_motors.brake();
     return;
   }
-  for(const pros::Motor &intake_motor:intake_motors){
-    intake_motor.move(state==INTAKE?speed:-speed);
-  }
+  intake_motors.move(speed);
 
 }
 
 
 void Control::set_catapult(int speed,Catapult_State state) {
-  int cnt=0; 
-  double start_t=pros::millis();
-  time_out=5000;
-  auto cata_to_top_lambda=[this,start_t,speed](float degree){
-    cata_move(speed);
-    while(pros::millis()-start_t<time_out) {
-      ////检测是否有其他task通知catapult运动
-      if(check_task_notify(catapult_task,1,cata_exit_condition)){
-        cata_brake();
-        return;
-      }
-      if(cata_rotation->get_velocity()<-1){//发射架在复位途中,忽略
-        break;
+  if(state==RELEASE){
+    catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_BRAKE);
+    catapult_motors.brake();
+  }else if(state==READY){
+    catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
+    cata_move_rpm(speed);
+    if(cata_rotation.get_position()/100.f>CATA_READY_POS-15){
+      while(cata_rotation.get_position()/100.f>20){
+        pros::delay(5);
       }
     }
-    cata_brake();
-    std::deque<float> angle_queue;
-    while(true){
-      if(check_task_notify(catapult_task,30,cata_exit_condition)){
-        cata_brake();
-        return;
-      }
-      float angle=cata_rotation->get_angle()/100.f;
-      angle_queue.push_back(angle);
-      if(angle_queue.size()>5){
-        angle_queue.pop_front();
-      }
-      // cout<<"angle "<<angle<<endl;
-      bool res=true;
-      for_each(angle_queue.begin(),angle_queue.end(),[&res](float &angle){
-        if(!(angle>355.f||angle<2.f)){
-          res=false;
-        }
-      });
-      if(res) break;
+    while(cata_rotation.get_position()/100.f<CATA_READY_POS){
+      pros::delay(5);
     }
-  };
-  
-  auto cata_to_degree_lambda=[this,start_t,speed,state](float degree){
-    //PID控制电机
-    cata_PID.set_target(degree);
-    while(pros::millis()-start_t<time_out){
-      //检测是否有其他task通知catapult运动
-      if(check_task_notify(catapult_task,10,cata_exit_condition)) {
-        cata_brake();
-        return;
-      }
-      auto cata_angle=cata_rotation->get_angle()/100.f;
-      // if(cata_rotation->get_velocity()<-1){//发射架在复位途中,忽略
-      //   catapult_motor->brake();
-      //   continue;
-      // }
-      //防止因发射架挤压限位形变所导致的数值计算错误 
-      if(cata_angle>350.f&&cata_angle<360.f){
-        cata_angle=0.f;
-      }
-      double out=cata_PID.compute(cata_angle);
-      // cout<<"PID error "<<cata_PID.error<<"  PID out "<<out<<endl;
-      // cout<<"cata angle "<<cata_angle<<endl;
-      out=util::clip_num(out, speed, 0);
-      cata_move(out);
-      //当pid输出<=0时，则说明已运动到目标位置或已越过目标位置，但由于棘轮的存在无法回到目标位置，此时退出循环
-      auto exit_condition=cata_PID.exit_condition(catapult_motor.at(0));
-      if(exit_condition!=RUNNING||out<=0||cata_angle>=degree){
-        std::cout<<"exit condition: "<<exit_to_string(exit_condition)<<std::endl;
-        break;
-      }
-    }
-    cata_exit_condition=false;
-    cata_brake();
-  };
-
-  if(state==BRAKE){
-    cata_brake();
-  }else if(state==DOWN){
-    if(cata_rotation->get_angle()/100.f>=catapult_down_pos-5||cata_exit_condition){
-      cata_to_top_lambda(catapult_down_pos);
-    }
-    cata_to_degree_lambda(catapult_down_pos);
-  }else if(state==MIDDLE){
-    if(cata_rotation->get_angle()/100.f>=catapult_middle_pos-5||cata_exit_condition){
-      cata_to_top_lambda(catapult_down_pos);
-    }
-    cata_to_degree_lambda(catapult_middle_pos);
-  }else if(state==UP){
-    cata_to_top_lambda(catapult_down_pos);
-  }else if(state==INIT_MIDDLE){
-    cata_to_degree_lambda(catapult_middle_pos);
-  }else if(state==INIT_DOWN){
-    cata_to_degree_lambda(catapult_down_pos);
+    catapult_motors.brake();
+  }else if(state==LAUNCH){
+    cata_move_rpm(speed);
   }
 }
 
@@ -223,7 +141,7 @@ void Control::set_catapult_down_pos(double pos){
   catapult_down_pos=pos;
 }
 
-void Control::catapult_task_func(){
+void Control::catapult_task_fn(){
   // while (true) {
     // block for up to 50ms waiting for a notification and clear the value
     // auto t=catapult_task.notify_take(true, 50);
@@ -236,51 +154,83 @@ void Control::catapult_task_func(){
   // }
 }
 
+void Control::control_task_fn(){
+  while(true){
+    controller_event_handling();
+    drive_event_handling();
+    pros::delay(20);
+  }
+}
 
-void Control::control_task(){
-  int cnt=0;
-  //监控pto电机的温度
-  pros::Task watch_dog_task([this](){
-    while(true){
-      double temperature=std::max(this->catapult_motor[0].get_temperature(),this->catapult_motor[1].get_temperature());
+void Control::controller_event_handling(){
+  static Control_State wings_state=OFF;
+  static Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
+  //根据按钮状态控制机器人
+  //intake状态控制
+  if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
+      if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
+        control.set_intake_state(STOP);
+      }else{//如果intake没有运行，则打开
+        control.set_intake_state(default_intake_state);
+      }
+  }else if(Controller_Button_State::R2_pressed()){//R2按下时，翻转intake
+    control.set_intake_state(!default_intake_state);
+  }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
+    control.set_intake_state(default_intake_state);
+  }
+
+  //大翅膀状态控制
+  if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
+    wings_state=!wings_state;
+    control.set_wings_state(wings_state);
+  }else if(Controller_Button_State::L2_new_press()){//L2按下时，关闭翅膀
+    wings_state=OFF;
+    control.set_wings_state(OFF);
+  }
+
+  if(Controller_Button_State::A_new_press()){
+    control.set_catapult_state(RELEASE);
+  }else if(Controller_Button_State::B_new_press()){
+    control.set_catapult_state(READY);
+  }else if(Controller_Button_State::X_new_press()){
+    control.set_catapult_state(LAUNCH);
+  }
+}
+
+
+void Control::drive_event_handling(){
+  if(drive_intake){
+    set_intake(intake_speed,intake_state);
+    drive_intake=false;
+  }
+  if(drive_catapult){
+    set_catapult(90,catapult_state);
+    drive_catapult=false;
+  }
+  if(drive_wings){
+    set_wings(wings_state);
+    drive_wings=false;
+  }
+  if(drive_armer){
+    set_armer(armer_state);
+    drive_armer=false;
+  }
+}
+
+void Control::cata_temp_watchdog_fn(){
+  bool flag=false;
+  while(true){
+    flag=!flag;
+    double temperature=std::max(this->catapult_motors[0].get_temperature(),this->catapult_motors[1].get_temperature());
+    if(flag){
       master_controller.print(0, 0,"cata temp %lf",temperature);
+    }else{
       if(temperature>=54.9){
         master_controller.rumble(". . . .");
       }else if(temperature>=49.9){
         master_controller.rumble("- - - -");
       }
-      pros::delay(2000);
     }
-  });
-  while(true){
-    if(drive_intake){
-      set_intake(intake_speed,intake_state);
-      drive_intake=false;
-    }
-    if(drive_catapult){
-      //通知发射架运动
-      // catapult_task.notify();
-      // drive_catapult=false;
-    }
-    if(drive_wings){
-      set_wings(wings_state);
-      drive_wings=false;
-    }
-    if(drive_armer){
-      set_armer(armer_state);
-      drive_armer=false;
-    }
-    // auto cata_angle=cata_rotation->get_angle()/100.f;
-    // if(cata_angle<catapult_middle_pos-5||(cata_angle>350.f&&cata_angle<360.f)){
-    //   set_intake(0, STOP);
-    // }else{
-    //   set_intake(intake_speed, intake_state);
-    // }
-    
-    pros::delay(50);
+    pros::delay(2000);
   }
-}
-
-void Control::with_pto(){
-  
 }

@@ -3,17 +3,18 @@
 #include "control.hpp"
 #include "pros/misc.h"
 
+///TODO: 编码电机掉线检测
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {18, 17, -19,-20}
+  {1, 2, -3}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{-8, -7, 9,10}
+  ,{-9, 8,-10}
   
 
   // 陀螺仪端口
-  ,13
+  ,12
 
   // 车轮直径（英寸）
   ,4.0
@@ -24,32 +25,30 @@ Drive chassis=Drive(
   //外齿轮比（必须是小数）
   //例如。如果您的齿比是 84:36，其中 36t 连接电机，则您的 齿比 将为 2.333。
   //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
-  ,84.0/48.0
+  ,72.0/36.0
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
   ,12.0
 );
 
+pros::Motor intake_motor1(4, pros::E_MOTOR_GEAR_200, false, pros::E_MOTOR_ENCODER_DEGREES);
+pros::MotorGroup intake_motor_group({intake_motor1});
+
+pros::Motor cata_motor1(6,pros::E_MOTOR_GEAR_200,false,pros::E_MOTOR_ENCODER_DEGREES);
+pros::Motor cata_motor2(7,pros::E_MOTOR_GEAR_100,true,pros::E_MOTOR_ENCODER_DEGREES);
+pros::MotorGroup cata_motor_group({cata_motor1,cata_motor2});
+
+pros::Rotation cata_rotation(5,false);
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
-  // Intake 电机组端口，（负端口将反转电机！）
-  {1, -11}
+  // Intake 电机组实例
+  intake_motor_group
 
-  // Intake 电机组的RPM,
-  //可选项有：
-  //pros::E_MOTOR_GEAR_200（200RPM）
-  //pros::E_MOTOR_GEAR_100（100RPM）
-  //pros::E_MOTOR_GEAR_600（600RPM）
-  ,pros::E_MOTOR_GEAR_200
+  // 发射架电机组实例
+  ,cata_motor_group
 
-  // 投石机电机端口（负端口将反转它！）
-  ,{10,-20}
-
-  // 投石机 电机RPM,可选项同上
-  ,pros::E_MOTOR_GEAR_100
-
-  // 投石机的角度传感器所在端口,若角度传感器正方向与投石机下压方向相反则为负
-  ,40
+  //角度传感器实例
+  ,cata_rotation
 
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
@@ -58,20 +57,20 @@ Control control=Control(
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
   ,{'B'}
-);
+); 
 
+pros::Task control_task([](){control.control_task_fn();});
 
+pros::Task catapult_task([](){control.catapult_task_fn();});
 
-
+pros::Task cata_temp_watchdog_task([](){control.cata_temp_watchdog_fn();});
 /**
 *运行初始化代码。发生在程序刚启动的时候，在所有比赛模式、初始化之前
 *推荐将此模式的执行时间保持在几秒钟以内。
 */
 void initialize() {
   pros::delay(500);
-
   //配置底盘参数
-  chassis.with_pto({10,20});
   chassis.toggle_modify_curve_with_controller(false); //是否允许使用操纵杆上的按钮（左右键）修改控制器曲线
   chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
@@ -167,8 +166,7 @@ void autonomous() {
  */
 void opcontrol() {
   chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
-  Control_State wings_state=OFF;
-  Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
+
   control.pto_chassis_mode();
   control.set_intake_state(STOP);
   bool mode_7motor=true;
@@ -176,55 +174,6 @@ void opcontrol() {
   while (true){
     chassis.arcade_standard(SPLIT);
     // chassis.tank();
-    //根据按钮状态控制机器人
-    //intake状态控制
-    if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
-        if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
-          control.set_intake_state(STOP);
-        }else{//如果intake没有运行，则打开
-          control.set_intake_state(default_intake_state);
-        }
-    }else if(Controller_Button_State::R2_pressed()){//R2按下时，翻转intake
-      control.set_intake_state(!default_intake_state);
-    }else if(control.get_intake_state()!=STOP){//如果intake没有停止，则恢复默认状态
-      control.set_intake_state(default_intake_state);
-    }
-
-    //大翅膀状态控制
-    if(Controller_Button_State::L1_new_press()){//L1按下时，打开翅膀
-      wings_state=!wings_state;
-      control.set_wings_state(wings_state);
-    }else if(Controller_Button_State::L2_new_press()){//L2按下时，关闭翅膀
-      wings_state=OFF;
-      control.set_wings_state(OFF);
-    }
-
-    /**
-    * 以下partner_controller为副操遥控
-    */
-    //非底盘模式时控制高挂臂
-    if(!mode_7motor){
-      if(Controller_Button_State::UP_pressed()||partner_controller.get_digital(pros::E_CONTROLLER_DIGITAL_UP)){
-        control.cata_move(-125);
-      }else if(Controller_Button_State::DOWN_pressed()||partner_controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)){
-        control.cata_move(125);
-      }else {
-        control.cata_brake();
-      }
-      if(Controller_Button_State::Y_new_press()){
-        control.armlock_piston->set_value(HIGH);
-      }
-    }
-    
-    if(Controller_Button_State::A_new_press()||partner_controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)){
-      std::cout<<"pto_chassis_mode\n";
-      control.pto_chassis_mode();
-      mode_7motor=true;
-    } else if(Controller_Button_State::X_new_press()||partner_controller.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)){
-      std::cout<<"pto_arm_mode\n";
-      mode_7motor=false;
-      control.pto_arm_mode();
-    }
 
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
