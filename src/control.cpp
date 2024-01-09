@@ -13,8 +13,8 @@
           数值越大，发射架越往下
  *        
 */
-#define CATA_READY_POS      50
-
+#define CATA_READY_POS      65
+#define CATA_PERCENTAGE     100
 
 /**
  * @brief 发射架的PID参数
@@ -43,8 +43,8 @@ Control_State Control::wings_state=OFF;
 Control_State Control::armer_state=OFF;
 
 
-Control::Control(pros::Motor_Group &intake_motors,pros::Motor_Group &catapult_motor,pros::Rotation &catapult_rotation,const std::vector<int8_t> &wings_ports,
-    const std::vector<int8_t> &armer_ports):intake_motors(intake_motors),catapult_motors(catapult_motor),cata_rotation(catapult_rotation){
+Control::Control(pros::Motor_Group &intake_motors,pros::Motor_Group &catapult_motor,pros::Rotation &catapult_rotation,pros::Optical &opt,const std::vector<int8_t> &wings_ports,
+    const std::vector<int8_t> &armer_ports):intake_motors(intake_motors),catapult_motors(catapult_motor),cata_rotation(catapult_rotation),optical(opt){
 
 
 
@@ -69,10 +69,11 @@ Control::Control(pros::Motor_Group &intake_motors,pros::Motor_Group &catapult_mo
   cata_PID.set_velocity_out(0.1);
   cata_PID.set_exit_condition(20, 1, 50, 1, 2000, 3000);
   
-  //pto
-  chassis_piston=std::make_unique<pros::ADIDigitalOut>('A',LOW);
-  arm_piston=std::make_unique<pros::ADIDigitalOut>('G',LOW);
-  armlock_piston=std::make_unique<pros::ADIDigitalOut>('C',LOW);
+  //配置光学传感器参数
+  //LED最高亮度
+  optical.set_led_pwm(100);
+  //禁用手势检测
+  optical.disable_gesture();
 }
 
 
@@ -96,24 +97,62 @@ void Control::set_intake(int speed,Control_State state){
 }
 
 
-void Control::set_catapult(int speed,Catapult_State state) {
+void Control::set_catapult(int percentage,Catapult_State state) {
+  auto detect_fn=[this,percentage](){
+    while(true){
+      double hue=optical.get_hue();
+      double sat=optical.get_saturation();
+      int proximity=optical.get_proximity();
+      bool triball_detected=(hue>85&&hue<105)&&(sat>0.3&&sat<0.7)&&proximity>240;
+      if(triball_detected){
+        cout<<"triball detected\n";
+        set_catapult(percentage,READY);
+        while(triball_detected) {
+          double hue=optical.get_hue();
+          double sat=optical.get_saturation();
+          int proximity=optical.get_proximity();
+          triball_detected=(hue>85&&hue<105)&&(sat>0.3&&sat<0.7)&&proximity>240;
+          pros::delay(5);
+        }
+      }
+      pros::delay(10);
+    }
+  };
+  static pros::Task detect_task(detect_fn);
+  static bool flag=false;
+  if(!flag){
+    flag=true;
+    detect_task.suspend();
+  }
   if(state==RELEASE){
     catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_BRAKE);
     catapult_motors.brake();
+    detect_task.suspend();
+    optical.set_led_pwm(0);
   }else if(state==READY){
     catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
-    cata_move_rpm(speed);
+    cata_move_rpm(percentage);
     if(cata_rotation.get_position()/100.f>CATA_READY_POS-15){
-      while(cata_rotation.get_position()/100.f>20){
+      while(cata_rotation.get_position()/100.f>CATA_READY_POS*0.5){
+        // if(drive_catapult){
+        //   return;
+        // }
         pros::delay(5);
       }
     }
     while(cata_rotation.get_position()/100.f<CATA_READY_POS){
+      // if(drive_catapult){
+      //   return;
+      // }
       pros::delay(5);
     }
     catapult_motors.brake();
   }else if(state==LAUNCH){
-    cata_move_rpm(speed);
+    cata_move_rpm(percentage);
+  }else if(state==DETECT){
+    cout<<"detect\n";
+    optical.set_led_pwm(100);
+    detect_task.resume();
   }
 }
 
@@ -142,16 +181,13 @@ void Control::set_catapult_down_pos(double pos){
 }
 
 void Control::catapult_task_fn(){
-  // while (true) {
-    // block for up to 50ms waiting for a notification and clear the value
-    // auto t=catapult_task.notify_take(true, 50);
-    // if(t){
-    //   set_intake(0,STOP);
-    //   set_catapult(catapult_speed,catapult_state);
-    //   set_intake(intake_speed, intake_state);
-    // }
-    // no need to delay here because the call to notify_take blocks
-  // }
+  while (true) {
+    if(drive_catapult){
+      drive_catapult=false;
+      set_catapult(CATA_PERCENTAGE,catapult_state);
+    }
+    pros::delay(20);
+  }
 }
 
 void Control::control_task_fn(){
@@ -194,6 +230,8 @@ void Control::controller_event_handling(){
     control.set_catapult_state(READY);
   }else if(Controller_Button_State::X_new_press()){
     control.set_catapult_state(LAUNCH);
+  }else if(Controller_Button_State::Y_new_press()){
+    control.set_catapult_state(DETECT);
   }
 }
 
@@ -202,10 +240,6 @@ void Control::drive_event_handling(){
   if(drive_intake){
     set_intake(intake_speed,intake_state);
     drive_intake=false;
-  }
-  if(drive_catapult){
-    set_catapult(90,catapult_state);
-    drive_catapult=false;
   }
   if(drive_wings){
     set_wings(wings_state);

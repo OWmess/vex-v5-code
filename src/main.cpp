@@ -39,6 +39,7 @@ pros::Motor cata_motor2(7,pros::E_MOTOR_GEAR_100,true,pros::E_MOTOR_ENCODER_DEGR
 pros::MotorGroup cata_motor_group({cata_motor1,cata_motor2});
 
 pros::Rotation cata_rotation(5,false);
+pros::Optical optical(11);
 /// 上层机构控制器构造,intake、catapult电机默认为hold模式,可通过调用
 Control control=Control(
   // Intake 电机组实例
@@ -49,7 +50,9 @@ Control control=Control(
 
   //角度传感器实例
   ,cata_rotation
-
+  
+  //光学传感器实例
+  ,optical
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
   ,{'B', 'H'}
@@ -124,7 +127,7 @@ void disabled() {
 void competition_initialize() {
   // . . .  
   printf("competition_initialize\n");
-
+  
 }
 
 /**
@@ -167,7 +170,6 @@ void autonomous() {
 void opcontrol() {
   chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
 
-  control.pto_chassis_mode();
   control.set_intake_state(STOP);
   bool mode_7motor=true;
 

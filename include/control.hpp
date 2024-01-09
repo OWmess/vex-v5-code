@@ -34,6 +34,7 @@ enum Catapult_State{
     READY,
     LAUNCH,
     RELEASE,
+    DETECT,
 };
 
 
@@ -50,7 +51,7 @@ public:
      * \param armer_ports ports of the armer (negative port will reverse it!)
     */
 
-    Control(pros::Motor_Group &intake_motors,pros::Motor_Group &catapult_motor,pros::Rotation &catapult_rotation,const std::vector<int8_t> &wings_ports,
+    Control(pros::Motor_Group &intake_motors,pros::Motor_Group &catapult_motor,pros::Rotation &catapult_rotation,pros::Optical &optical,const std::vector<int8_t> &wings_ports,
     const std::vector<int8_t> &armer_ports);
     /**
      * \param 设置投石机在下方的位置
@@ -265,7 +266,7 @@ private:
      * - MIDDLE: 中间
      * - DOWN: 放下
     */
-    void set_catapult(int speed,Catapult_State state=RELEASE);
+    void set_catapult(int percentage,Catapult_State state=RELEASE);
 
     /**
      * \param state 设置两侧挡板的状态
@@ -299,6 +300,7 @@ private:
 
     };
     //电机及电磁阀的智能指针或实例
+    pros::Optical &optical;
     pros::Rotation &cata_rotation;
     pros::Motor_Group &intake_motors;
     std::vector<PneumaticsStruct> wings;
