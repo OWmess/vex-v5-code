@@ -3,14 +3,13 @@
 #include "control.hpp"
 #include "pros/misc.h"
 
-///TODO: 编码电机掉线检测
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {1, 2, -3}
+  {-1, 2, -3}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{8,-9, -10}
+  ,{8,-9, 10}
   
 
   // 陀螺仪端口
@@ -169,10 +168,6 @@ void autonomous() {
  */
 void opcontrol() {
   chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
-
-  control.set_intake_state(STOP);
-  bool mode_7motor=true;
-
   while (true){
     chassis.arcade_standard(SPLIT);
     // chassis.tank();

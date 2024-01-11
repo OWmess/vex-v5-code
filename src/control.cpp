@@ -92,6 +92,7 @@ void Control::set_intake(int speed,Control_State state){
     intake_motors.brake();
     return;
   }
+  speed=(state==INTAKE)?speed:-speed;
   intake_motors.move(speed);
 
 }
@@ -201,10 +202,12 @@ void Control::control_task_fn(){
 void Control::controller_event_handling(){
   static Control_State wings_state=OFF;
   static Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
+  static bool launch=false;
+  static pros::ADIDigitalOut hanger_pneumatics('C');
   //根据按钮状态控制机器人
   //intake状态控制
   if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
-      if(control.get_intake_state()==INTAKE||control.get_intake_state()==OUTTAKE){//如果intake正在运行，则停止
+      if(control.get_intake_state()!=STOP){//如果intake正在运行，则停止
         control.set_intake_state(STOP);
       }else{//如果intake没有运行，则打开
         control.set_intake_state(default_intake_state);
@@ -224,14 +227,24 @@ void Control::controller_event_handling(){
     control.set_wings_state(OFF);
   }
 
-  if(Controller_Button_State::A_new_press()){
-    control.set_catapult_state(RELEASE);
-  }else if(Controller_Button_State::B_new_press()){
-    control.set_catapult_state(READY);
-  }else if(Controller_Button_State::X_new_press()){
-    control.set_catapult_state(LAUNCH);
-  }else if(Controller_Button_State::Y_new_press()){
-    control.set_catapult_state(DETECT);
+  if(Controller_Button_State::X_new_press()){//A按下时，打开armer
+    launch=!launch;
+    if(launch)
+      control.set_catapult_state(LAUNCH);
+    else
+      control.set_catapult_state(RELEASE);
+  }
+
+  if(Controller_Button_State::RIGHT_new_press()){
+    control.set_armer_state(ON);
+  }else if(Controller_Button_State::LEFT_new_press()){
+    control.set_armer_state(OFF);
+  }
+
+  if(Controller_Button_State::UP_new_press()){
+    hanger_pneumatics.set_value(ON);
+  }else if(Controller_Button_State::DOWN_new_press()){
+    hanger_pneumatics.set_value(OFF);
   }
 }
 
