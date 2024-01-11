@@ -54,11 +54,11 @@ Control control=Control(
   ,optical
   // Wings Ports:{left wing port,right wing port} (negative port will reverse it!)
   // 翅膀的电磁阀端口：{左翼端口，右翼端口}（负端口将反转它！）
-  ,{'B', 'H'}
+  ,{'A', 'B'}
 
   // Hanger Ports: (negative port will reverse it!)
   //钩子的电磁阀端口：（负端口将反转它！）
-  ,{'B'}
+  ,{'C'}
 ); 
 
 pros::Task control_task([](){control.control_task_fn();});

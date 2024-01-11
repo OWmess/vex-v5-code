@@ -203,7 +203,7 @@ void Control::controller_event_handling(){
   static Control_State wings_state=OFF;
   static Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   static bool launch=false;
-  static pros::ADIDigitalOut hanger_pneumatics('C');
+  static pros::ADIDigitalOut hanger_pneumatics('D');
   //根据按钮状态控制机器人
   //intake状态控制
   if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
