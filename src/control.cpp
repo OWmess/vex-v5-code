@@ -233,6 +233,11 @@ void Control::controller_event_handling(){
       control.set_catapult_state(LAUNCH);
     else
       control.set_catapult_state(RELEASE);
+  }else if(Controller_Button_State::B_new_press()){//B按下时，关闭armer
+    launch=false;
+    control.set_catapult_state(RELEASE);
+  }else if(Controller_Button_State::A_new_press()){//Y按下时，关闭armer
+    control.set_catapult_state(READY);
   }
 
   if(Controller_Button_State::RIGHT_new_press()){
