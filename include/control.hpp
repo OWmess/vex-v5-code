@@ -12,7 +12,11 @@ enum Control_State{
     OUTTAKE,
     STOP,
     ON,
-    OFF
+    OFF,
+    LEFT_ON,
+    LEFT_OFF,
+    RIGHT_ON,
+    RIGHT_OFF,
 };
 
 inline Control_State operator!(Control_State state) {
@@ -25,6 +29,14 @@ inline Control_State operator!(Control_State state) {
             return OUTTAKE;
         case OUTTAKE:
             return INTAKE;
+        case LEFT_ON:
+            return LEFT_OFF;
+        case LEFT_OFF:
+            return LEFT_ON;
+        case RIGHT_ON:
+            return RIGHT_OFF;
+        case RIGHT_OFF:
+            return RIGHT_ON;
         default:
             return state;
     }

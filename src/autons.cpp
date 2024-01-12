@@ -311,30 +311,6 @@ void attack_aggressive() {
 
 }
 
-
-void conservatively_attack(){
-  chassis.set_drive_pid(39,DRIVE_SPEED);
-  chassis.wait_drive();
-  control.set_intake_state(INTAKE);
-  chassis.set_turn_pid(90,TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(15,DRIVE_SPEED);
-  chassis.wait_drive();
-  control.set_intake_state(OUTTAKE);
-  pros::delay(100);
-  chassis.set_drive_pid(-20,DRIVE_SPEED);
-  chassis.wait_drive();
-  chassis.set_turn_pid(180,TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(26,DRIVE_SPEED);
-  chassis.wait_drive();
-  pros::delay(100);
-  chassis.set_turn_pid(250,TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(30,60);
-  chassis.wait_drive();
-}
-
 void skill_match(){
   //   chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 13, 0);
   // chassis.set_pid_constants(&chassis.forward_drivePID, 1, 0.001, 2, 150);
@@ -348,22 +324,20 @@ void skill_match(){
   constexpr static int turn_speed=100;
   constexpr static int drive_speed=120;
   constexpr static int swing_speed=120;
-  control.set_wings_state(ON);
+  control.set_wings_state(RIGHT_ON);
   control.set_intake_state(STOP);
   pros::delay(400);
-  control.set_wings_state(OFF);
+  control.set_wings_state(RIGHT_OFF);
 
-  chassis.set_arc_turn_pid(90,120,40);
+  chassis.set_arc_turn_pid(90,120,30);
   chassis.wait_drive();
 
   chassis.set_drive_pid(10,drive_speed);
   chassis.wait_drive();
-
+  pros::delay(200);
   chassis.set_drive_pid(-10,drive_speed);
   chassis.wait_drive();
-
-
-
+  
   chassis.set_turn_pid(160,turn_speed);
   chassis.wait_drive();
 
@@ -371,119 +345,16 @@ void skill_match(){
   chassis.wait_drive();
 
   auto start_t=pros::millis();
-  control.pto_cata_mode();
   chassis.set_mode(ez::DISABLE);
   pros::delay(500);
   // cata_motor_reference.move(120);
+  control.set_catapult_state(LAUNCH);
   while(pros::millis()-start_t<3000){//30000ms=30s
-    control.catapult_motors.move(120);
-
     pros::delay(100);
   }
-  control.pto_chassis_mode();
-  pros::delay(200);
-  
-  chassis.set_swing_pid(ez::LEFT_SWING,220,swing_speed);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(17,drive_speed);
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(180, turn_speed);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(47,drive_speed);
-  chassis.wait_drive();
-
-  chassis.set_arc_turn_pid(90,40,120);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(20,125);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(-15,125);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(20,125);
-  chassis.wait_drive();
 
 
 
-  pros::delay(200);
-  chassis.set_drive_pid(-7,125,true);
-  chassis.wait_drive();
-  pros::delay(2000);
-
-  chassis.set_turn_pid(0,TURN_SPEED);
-  chassis.wait_drive();
-
-  chassis.set_drive_pid(35,45);
-  chassis.wait_drive();
-  pros::delay(2000);
-
-  chassis.set_turn_pid(130,TURN_SPEED);
-  chassis.wait_drive();
-  control.set_wings_state(ON);
-  pros::delay(2000);
-
-  chassis.set_arc_drive_pid(35,120,80);
-  chassis.wait_drive();
-  pros::delay(400);
-  control.set_wings_state(OFF);
-  pros::delay(2000);
-  chassis.set_arc_turn_pid(90,-120,-40);
-  chassis.wait_drive();
-  pros::delay(2000);
-  chassis.set_drive_pid(30, 50,true);
-  chassis.wait_drive();
-  control.set_wings_state(ON);
-  chassis.set_swing_pid(ez::LEFT_SWING, 250, 50);
-  chassis.wait_drive();
-  chassis.set_arc_drive_pid(35,40,120);
-  chassis.wait_drive();
-  pros::delay(400);
-  chassis.set_drive_pid(-20, 120,true,false);
-  chassis.wait_drive();
 
 }
 
-
-
-
-void test_pid(){
-  
-}
-
-void get_sensor_data(){
-  pros::lcd::clear();
-  chassis.set_active_brake(0);
-  while(true){
-    double left=chassis.left_sensor();
-    double right=chassis.right_sensor();
-    double tick_per_inch=chassis.get_tick_per_inch();
-    left/=tick_per_inch;
-    right/=tick_per_inch;
-    double heading=chassis.get_gyro();
-
-    pros::screen::print(pros::E_TEXT_MEDIUM,0,"distance left:%lf ,right:%lf",left,right);
-    pros::screen::print(pros::E_TEXT_MEDIUM,1,"heading:%lf",heading);
-    auto bt=pros::lcd::read_buttons();
-    bt&=0x00000010;
-    bt=bt>>1;
-    if(bt==1){
-      auto t=pros::millis();
-      while(bt==1){
-        bt=pros::lcd::read_buttons();
-        bt&=0x00000010;
-        bt=bt>>1;
-        pros::delay(10);
-      }
-      if(pros::millis()-t>1000){
-        chassis.imu.set_heading(0);
-      }else{
-        chassis.reset_drive_sensor();
-      }
-    }
-    pros::delay(10);
-  }
-}

@@ -27,7 +27,7 @@ Drive chassis=Drive(
   ,72.0/36.0
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
-  ,12.0
+  ,10.5
 );
 
 pros::Motor intake_motor1(4, pros::E_MOTOR_GEAR_200, false, pros::E_MOTOR_ENCODER_DEGREES);
@@ -82,13 +82,11 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
-    Auton("Guard.", guard_1),
-    Auton("Attack.", attack),
     Auton("skill match",skill_match),
+    Auton("Guard.", guard),
+    Auton("Attack.", attack),
     Auton("guard_aggressive",guard_aggressive),
     Auton("attack_aggressive",attack_aggressive),
-    Auton("Conservatively attack. ", conservatively_attack),
-    Auton("test_function.", test_pid),
 
   });
   chassis.initialize();
@@ -108,6 +106,7 @@ void initialize() {
  */
 void disabled() {
   // . . .
+
   printf("disabled\n");
 }
 

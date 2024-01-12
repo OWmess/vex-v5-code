@@ -158,8 +158,14 @@ void Control::set_catapult(int percentage,Catapult_State state) {
 }
 
 void Control::set_wings(Control_State state){
-  for(const auto &wing:wings){
-    wing.pneumatics->set_value(state==ON?!wing.reversed:wing.reversed);
+  if(state==ON||state==OFF){
+    for(const auto &wing:wings){
+      wing.pneumatics->set_value(state==ON?!wing.reversed:wing.reversed);
+    }
+  }else if(state==LEFT_OFF||state==LEFT_ON){
+    wings[0].pneumatics->set_value(state==LEFT_ON?!wings[0].reversed:wings[0].reversed);
+  }else if(state==RIGHT_OFF||state==RIGHT_ON){
+    wings[1].pneumatics->set_value(state==RIGHT_ON?!wings[1].reversed:wings[1].reversed);
   }
 }
 
