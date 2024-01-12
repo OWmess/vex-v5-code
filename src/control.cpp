@@ -14,7 +14,7 @@
  *        
 */
 #define CATA_READY_POS      65
-#define CATA_PERCENTAGE     100
+#define CATA_PERCENTAGE     60
 
 /**
  * @brief 发射架的PID参数
@@ -71,7 +71,7 @@ Control::Control(pros::Motor_Group &intake_motors,pros::Motor_Group &catapult_mo
   
   //配置光学传感器参数
   //LED最高亮度
-  optical.set_led_pwm(100);
+  optical.set_led_pwm(0);
   //禁用手势检测
   optical.disable_gesture();
 }

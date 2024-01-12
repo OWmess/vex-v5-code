@@ -17,10 +17,10 @@
  *              该函数在程序初始化时调用
 */
 void default_constants() {
-  chassis.set_slew_min_power(50, 50);//设置最小启动速度，用于缓加速
+  chassis.set_slew_min_power(40, 40);//设置最小启动速度，用于缓加速
   chassis.set_slew_distance(7, 7);//设置缓加速的距离
   ///设置PID参数，第一个参数为PID结构体，后面四个参数分别为P、I、D、积分初始值
-  chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 13, 0);
+  chassis.set_pid_constants(&chassis.headingPID,4, 0.000, 10, 0);
   chassis.set_pid_constants(&chassis.forward_drivePID, 1, 0, 2, 0);
   chassis.set_pid_constants(&chassis.backward_drivePID, 0.5, 0, 4, 0);
   chassis.set_pid_constants(&chassis.turnPID, 4, 0.05,25, 15);
@@ -324,37 +324,80 @@ void skill_match(){
   constexpr static int turn_speed=100;
   constexpr static int drive_speed=120;
   constexpr static int swing_speed=120;
-  control.set_wings_state(RIGHT_ON);
-  control.set_intake_state(STOP);
-  pros::delay(400);
-  control.set_wings_state(RIGHT_OFF);
-
   chassis.set_arc_turn_pid(90,120,30);
+  // chassis.set_swing_pid(ez::LEFT_SWING,90,-120);
+  control.set_intake_state(OUTTAKE);
   chassis.wait_drive();
 
-  chassis.set_drive_pid(10,drive_speed);
+  chassis.set_drive_pid(15,drive_speed);
   chassis.wait_drive();
   pros::delay(200);
-  chassis.set_drive_pid(-10,drive_speed);
+  chassis.set_drive_pid(-15,drive_speed);
   chassis.wait_drive();
   
   chassis.set_turn_pid(160,turn_speed);
   chassis.wait_drive();
-
   chassis.set_drive_pid(-5,35);
   chassis.wait_drive();
 
   auto start_t=pros::millis();
-  chassis.set_mode(ez::DISABLE);
-  pros::delay(500);
+  // chassis.set_mode(ez::DISABLE);
   // cata_motor_reference.move(120);
   control.set_catapult_state(LAUNCH);
-  while(pros::millis()-start_t<3000){//30000ms=30s
+  while(pros::millis()-start_t<2000){//30000ms=30s
     pros::delay(100);
   }
+  control.set_catapult_state(RELEASE);
+  chassis.set_drive_pid(15,drive_speed);
+  chassis.wait_drive();
+  chassis.set_swing_pid(ez::RIGHT_SWING,90,120);
+  chassis.wait_drive();
+  chassis.set_arc_turn_pid(180,120,45);
+  chassis.wait_drive();
+  chassis.set_drive_pid_with_incline_check(60,120,true,true,10,90);
+  chassis.wait_drive();
+  pros::delay(200);
+  chassis.set_drive_pid_with_incline_check(-70,120,true,true,10,90);
+
+  chassis.wait_drive();
+  pros::delay(200);
+  // chassis.set_drive_pid(10,drive_speed);
+  // chassis.wait_drive();
+  chassis.set_turn_pid(90,turn_speed);
+  chassis.wait_drive();
+  
+  chassis.set_drive_pid(-10,drive_speed);
+  chassis.wait_drive();
+
+  chassis.set_arc_turn_pid(160,-40,-120);
+  chassis.wait_drive();
+  chassis.set_drive_pid(-32,40);
+  chassis.wait_drive();
+  start_t=pros::millis();
+  control.set_catapult_state(LAUNCH);
+  while(pros::millis()-start_t<2000){//30000ms=30s
+    pros::delay(100);
+  }
+  control.set_catapult_state(RELEASE);
+
+  //第二次
+  chassis.set_drive_pid(10,drive_speed);
+  chassis.wait_drive();
+  chassis.set_swing_pid(ez::RIGHT_SWING,90,120);
+  chassis.wait_drive();
+  chassis.set_arc_turn_pid(180,120,55);
+  chassis.wait_drive();
+  chassis.set_drive_pid_with_incline_check(60,120,true,true,10,90);
+  chassis.wait_drive();
+  pros::delay(200);
+  chassis.set_drive_pid_with_incline_check(-20,120,true,true,10,90);
+  chassis.wait_drive();
 
 
 
+  chassis.set_mode(DISABLE);
+  chassis.set_tank(0,0);
+  pros::delay(5000);
 
 }
 

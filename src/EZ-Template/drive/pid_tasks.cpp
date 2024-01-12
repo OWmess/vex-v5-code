@@ -44,7 +44,9 @@ void Drive::drive_pid_task() {
 
   //inclined check
   bool incline=false;
-  float degree=abs(fmod(imu_initial_heading,180)==0?imu.get_pitch():imu.get_roll());
+  // float degree=abs(fmod(imu_initial_heading,180)==0?imu.get_pitch():imu.get_roll());
+  float degree=abs(std::max(imu.get_pitch(),imu.get_roll()));
+
   double delta_l_sensor=l_sensor-prev_l_sensor;
   double delta_r_sensor=r_sensor-prev_r_sensor;
   if(incline_check){
@@ -52,7 +54,7 @@ void Drive::drive_pid_task() {
 
     incline_deg_vec.push_back(degree);
     //保证incline_deg_vec的长度不超过5
-    if(incline_deg_vec.size()>5)
+    if(incline_deg_vec.size()>20)
       incline_deg_vec.pop_front();
     //求队列最大项
     float max_element=*std::max_element(incline_deg_vec.begin(),incline_deg_vec.end());
