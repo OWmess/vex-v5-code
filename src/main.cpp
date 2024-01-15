@@ -203,11 +203,19 @@ void competition_initialize() {
  */
 
 void autonomous() {
-  chassis.reset_pid_targets(); // 重置所有PID期望为0
-  chassis.reset_gyro(); // 重置陀螺仪
-  chassis.reset_drive_sensor(); // 重置电机编码器
-  chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
-  ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
+//  chassis.reset_pid_targets(); // 重置所有PID期望为0
+//  chassis.reset_gyro(); // 重置陀螺仪
+//  chassis.reset_drive_sensor(); // 重置电机编码器
+//  chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
+//  ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
+  // example movement: Move to x: 20 and y: 15, and face heading 90. Timeout set to 4000 ms
+  odom.moveToPose(10, 5, 90, 4000);
+  // example movement: Move to x: 0 and y: 0 and face heading 270, going backwards. Timeout set to 4000ms
+  odom.moveToPose(0, 0, 270, 4000, {.forwards = false});
+  // cancel the movement after it has travelled 10 inches
+  odom.waitUntil(10);
+  odom.waitUntilDone();
+  pros::lcd::print(4, "pure pursuit finished!");
 }
 
 
