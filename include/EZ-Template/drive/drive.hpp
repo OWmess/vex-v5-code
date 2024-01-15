@@ -64,26 +64,6 @@ class Drive {
   pros::Imu imu;
 
   /**
-   * Left tracking wheel.
-   */
-  pros::ADIEncoder left_tracker;
-
-  /**
-   * Right tracking wheel.
-   */
-  pros::ADIEncoder right_tracker;
-
-  /**
-   * Left rotation tracker.
-   */
-  pros::Rotation left_rotation;
-
-  /**
-   * Right rotation tracker.
-   */
-  pros::Rotation right_rotation;
-
-  /**
    * PID objects.
    */
   PID headingPID;
@@ -136,72 +116,6 @@ class Drive {
    *        External gear ratio, wheel gear / motor gear.
    */
   Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio);
-
-  /**
-   * Creates a Drive Controller using encoders plugged into the brain.
-   *
-   * \param left_motor_ports
-   *        Input {1, -2...}.  Make ports negative if reversed!
-   * \param right_motor_ports
-   *        Input {-3, 4...}.  Make ports negative if reversed!
-   * \param imu_port
-   *        Port the IMU is plugged into.
-   * \param wheel_diameter
-   *        Diameter of your sensored wheels.  Remember 4" is 4.125"!
-   * \param ticks
-   *        Ticks per revolution of your encoder.
-   * \param ratio
-   *        External gear ratio, wheel gear / sensor gear.
-   * \param left_tracker_ports
-   *        Input {1, 2}.  Make ports negative if reversed!
-   * \param right_tracker_ports
-   *        Input {3, 4}.  Make ports negative if reversed!
-   */
-  Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio, std::vector<int> left_tracker_ports, std::vector<int> right_tracker_ports);
-
-  /**
-   * Creates a Drive Controller using encoders plugged into a 3 wire expander.
-   *
-   * \param left_motor_ports
-   *        Input {1, -2...}.  Make ports negative if reversed!
-   * \param right_motor_ports
-   *        Input {-3, 4...}.  Make ports negative if reversed!
-   * \param imu_port
-   *        Port the IMU is plugged into.
-   * \param wheel_diameter
-   *        Diameter of your sensored wheels.  Remember 4" is 4.125"!
-   * \param ticks
-   *        Ticks per revolution of your encoder.
-   * \param ratio
-   *        External gear ratio, wheel gear / sensor gear.
-   * \param left_tracker_ports
-   *        Input {1, 2}.  Make ports negative if reversed!
-   * \param right_tracker_ports
-   *        Input {3, 4}.  Make ports negative if reversed!
-   * \param expander_smart_port
-   *        Port the expander is plugged into.
-   */
-  Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio, std::vector<int> left_tracker_ports, std::vector<int> right_tracker_ports, int expander_smart_port);
-
-  /**
-   * Creates a Drive Controller using rotation sensors.
-   *
-   * \param left_motor_ports
-   *        Input {1, -2...}.  Make ports negative if reversed!
-   * \param right_motor_ports
-   *        Input {-3, 4...}.  Make ports negative if reversed!
-   * \param imu_port
-   *        Port the IMU is plugged into.
-   * \param wheel_diameter
-   *        Diameter of your sensored wheels.  Remember 4" is 4.125"!
-   * \param ratio
-   *        External gear ratio, wheel gear / sensor gear.
-   * \param left_tracker_port
-   *        Make ports negative if reversed!
-   * \param right_tracker_port
-   *        Make ports negative if reversed!
-   */
-  Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ratio, int left_rotation_port, int right_rotation_port);
 
   /**
    * Sets drive defaults.
@@ -770,18 +684,6 @@ class Drive {
    *        left and right wheel distance
    */
   Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio,double wheel_distance);
-  /**
-   * odometry variables and functions
-   */
-
-  /**
-   * initialize odometry variables
-   */
-  Drive &with_odom(const float &ForwardTracker_center_distance,const float &SidewaysTracker_center_distance);
-
-  void drive_to_point(double x, double y,int speed,bool ibackwards=false ,bool slew_on = false, bool toggle_heading = true);
-
-  void trun_to_point(double x, double y,int speed);
 
   /**
    * 设置最小行驶功率
@@ -859,10 +761,7 @@ class Drive {
 #define DRIVE_ADI_ENCODER 2
 #define DRIVE_ROTATION 3
 
-  /**
-   * Is tracking?
-   */
-  int is_tracker = DRIVE_INTEGRATED;
+
 
   /**
    * Save input to sd card
