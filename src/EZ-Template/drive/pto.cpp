@@ -42,19 +42,23 @@ void Drive::pto_remove(std::vector<int> pto_list) {
     int index = std::distance(pto_active.begin(), does_exist);
     pto_active.erase(pto_active.begin() + index);
     //将电机设置为默认的制动模式和电流限制
-    auto it=find_if(left_motors.begin(),left_motors.end(),[i](pros::Motor &motor){
-      return motor.get_port()==i;
-    });
-    if(it!=left_motors.end()){
-      it->set_brake_mode(CURRENT_BRAKE); // Set the motor to the brake type of the drive
-      it->set_current_limit(CURRENT_MA); // Set the motor to the mA of the drive
+    for(index=0;i<left_motors.size();index++){
+      if(left_motors[index].get_port()==i){
+        break;
+      }
+    }
+    if(index!=left_motors.size()){
+      left_motors[index].set_brake_mode(CURRENT_BRAKE); // Set the motor to the brake type of the drive
+      left_motors[index].set_current_limit(CURRENT_MA); // Set the motor to the mA of the drive
     }else {
-      it=find_if(right_motors.begin(),right_motors.end(),[i](pros::Motor &motor){
-        return motor.get_port()==i;
-      });
-      if(it!=right_motors.end()){
-        it->set_brake_mode(CURRENT_BRAKE); // Set the motor to the brake type of the drive
-        it->set_current_limit(CURRENT_MA); // Set the motor to the mA of the drive
+      for(index=0;i<right_motors.size();index++){
+        if(right_motors[index].get_port()==i){
+          break;
+        }
+      }
+      if(index!=right_motors.size()){
+        right_motors[index].set_brake_mode(CURRENT_BRAKE); // Set the motor to the brake type of the drive
+        right_motors[index].set_current_limit(CURRENT_MA); // Set the motor to the mA of the drive
       }
     }
   }
@@ -76,48 +80,53 @@ void Drive::with_pto(std::initializer_list<int> list) {
   }
   std::cout<<"\n";
   for (auto i : pto_list) {
-    auto comp = [i](pros::Motor &motor) {
-      return motor.get_port() == i;
-    };
-    auto it = std::find_if(left_motors.begin(), left_motors.end(), comp);
-    if (it == left_motors.end()) {
-      it = std::find_if(right_motors.begin(), right_motors.end(), comp);
-      if (it == right_motors.end()) {  // 如果PTO电机不在左右电机中，抛出异常
+    int j=0;
+    for(j=0;j<left_motors.size();j++){
+      if(left_motors[j].get_port()==i){
+        break;
+      }
+    }
+    if(j==left_motors.size()){
+      for(j=0;j<right_motors.size();j++){
+        if(right_motors[j].get_port()==i){
+          break;
+        }
+      }
+      if(j==right_motors.size()){
         throw runtime_error("Invalid PTO motor.");
       }
     }
   }
   //pto电机不可用于获取底盘相关的信息（如过载、编码值等）
   //查找并保存非pto电机的索引
-  auto it = std::find_if(left_motors.begin(), left_motors.end(), [this](pros::Motor &motor) {
-    return std::any_of(pto_list.begin(), pto_list.end(), [&motor](int pto_port) {
-      return pto_port != motor.get_port();
-    });
-  });
-  left_condition_index = std::distance(left_motors.begin(), it);
+  for(int i=0;i<left_motors.size();i++){
+    if(std::find(pto_list.begin(),pto_list.end(),left_motors[i].get_port())==pto_list.end()){
+      left_condition_index=i;
+    }
+  }
   std::cout<<"left_condition_index: "<<left_condition_index<<"\n";
-  it = std::find_if(right_motors.begin(), right_motors.end(), [this](pros::Motor &motor) {
-    return std::any_of(pto_list.begin(), pto_list.end(), [&motor](int pto_port) {
-      return pto_port != motor.get_port();
-    });
-  });
-  right_condition_index = std::distance(right_motors.begin(), it);
+
+  for(int i=0;i<right_motors.size();i++){
+    if(std::find(pto_list.begin(),pto_list.end(),right_motors[i].get_port())==pto_list.end()){
+      right_condition_index=i;
+    }
+  }
   std::cout<<"right_condition_index: "<<right_condition_index<<"\n";
 }
 
 std::vector<pros::Motor> Drive::get_pto_motors() {
   std::vector<pros::Motor> motors;
   for(auto port:pto_list){
-    auto comp=[port](pros::Motor &motor){
-      return motor.get_port()==port;
-    };
-    auto it=find_if(left_motors.begin(),left_motors.end(),comp);
-    if(it!=left_motors.end()){
-      motors.push_back(*it);
-    }else {
-      it=find_if(right_motors.begin(),right_motors.end(),comp);
-      if(it!=right_motors.end()){
-        motors.push_back(*it);
+    for(int i=0;i<left_motors.size();i++){
+      if(left_motors[i].get_port()==port){
+        motors.push_back(left_motors[i]);
+        break;
+      }
+    }
+    for(int i=0;i<right_motors.size();i++){
+      if(right_motors[i].get_port()==port){
+        motors.push_back(right_motors[i]);
+        break;
       }
     }
   }

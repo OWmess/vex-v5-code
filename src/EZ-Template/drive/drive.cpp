@@ -16,20 +16,11 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 using namespace ez;
 
 // Constructor for integrated encoders
-Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports,
-             int imu_port, double wheel_diameter, double ticks, double ratio)
-    : imu(imu_port),
+Drive::Drive(pros::MotorGroup &left_group, pros::MotorGroup &right_group,
+             pros::Imu &imu_ref, double wheel_diameter, double ticks, double ratio)
+    : imu(imu_ref),left_motors(left_group), right_motors(right_group),
       ez_auto([this] { this->ez_auto_task(); }) {
 
-  // Set ports to a global vector
-  for (auto i : left_motor_ports) {
-    pros::Motor temp(abs(i), util::is_reversed(i));
-    left_motors.push_back(temp);
-  }
-  for (auto i : right_motor_ports) {
-    pros::Motor temp(abs(i), util::is_reversed(i));
-    right_motors.push_back(temp);
-  }
 
   // Set constants for tick_per_inch calculation
   WHEEL_DIAMETER = wheel_diameter;
@@ -39,8 +30,8 @@ Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_por
   set_defaults();
 }
 
-Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio,double wheel_distance)
-:Drive(std::move(left_motor_ports),std::move(right_motor_ports),imu_port,wheel_diameter,ticks,ratio){
+Drive::Drive(pros::MotorGroup &left_group, pros::MotorGroup &right_group,pros::Imu &imu_ref, double wheel_diameter, double ticks, double ratio,double wheel_distance)
+:Drive(left_group,right_group,imu_ref,wheel_diameter,ticks,ratio){
   this->WHEEL_DISTANCE=wheel_distance;
 }
 
@@ -96,11 +87,11 @@ void Drive::set_pid_constants(PID* pid, double p, double i, double d, double p_s
 void Drive::set_tank(int left, int right) {
   if (pros::millis() < 1500) return;
 
-  for (auto i : left_motors) {
-    if (!pto_active_check(i)) i.move_voltage(left * (12000.0 / 127.0));  // If the motor is in the pto list, don't do anything to the motor.
+  for(int i=0;i<left_motors.size();i++){
+    if (!pto_active_check(left_motors[i])) left_motors[i].move_voltage(left * (12000.0 / 127.0));  // If the motor is in the pto list, don't do anything to the motor.
   }
-  for (auto i : right_motors) {
-    if (!pto_active_check(i)) i.move_voltage(right * (12000.0 / 127.0));  // If the motor is in the pto list, don't do anything to the motor.
+  for(int i=0;i<right_motors.size();i++){
+    if (!pto_active_check(right_motors[i])) right_motors[i].move_voltage(right * (12000.0 / 127.0));  // If the motor is in the pto list, don't do anything to the motor.
   }
 }
 
@@ -109,11 +100,11 @@ void Drive::set_drive_current_limit(int mA) {
     mA = 2500;
   }
   CURRENT_MA = mA;
-  for (auto i : left_motors) {
-    if (!pto_active_check(i)) i.set_current_limit(abs(mA));  // If the motor is in the pto list, don't do anything to the motor.
+  for(int i=0;i<left_motors.size();i++){
+    if (!pto_active_check(left_motors[i])) left_motors[i].set_current_limit(abs(mA));  // If the motor is in the pto list, don't do anything to the motor.
   }
-  for (auto i : right_motors) {
-    if (!pto_active_check(i)) i.set_current_limit(abs(mA));  // If the motor is in the pto list, don't do anything to the motor.
+  for(int i=0;i<right_motors.size();i++){
+    if (!pto_active_check(right_motors[i])) right_motors[i].set_current_limit(abs(mA));  // If the motor is in the pto list, don't do anything to the motor.
   }
 }
 
@@ -121,22 +112,20 @@ void Drive::set_drive_current_limit(int mA) {
 void Drive::reset_drive_sensor() {
   // left_motors.front().tare_position();
   // right_motors.front().tare_position();
-  for(auto &i:left_motors)
-    i.tare_position();
-  for(auto &i:right_motors)
-    i.tare_position();
-  
-
+  left_motors.tare_position();
+  right_motors.tare_position();
 }
 
 double Drive::right_sensor() {
   double position=right_motors[right_condition_index].get_position();
   if(std::isinf(position)){
-    auto it = std::find_if(right_motors.begin(), right_motors.end(), [this](pros::Motor &motor) {
-      cout<<motor.get_flags()<<"\n";
-      return !std::isinf(motor.get_position());
-    });
-    right_condition_index = std::distance(right_motors.begin(), it);
+    for(int i=0;i<right_motors.size();i++){
+      cout<<"new right motor index: "<<right_motors[i].get_flags()<<"\n";
+      if(!std::isinf(right_motors[i].get_position())){
+        right_condition_index=i;
+        break;
+      }
+    }
     position=right_motors[right_condition_index].get_position();
   }
   
@@ -150,13 +139,15 @@ bool Drive::right_over_current() { return right_motors[right_condition_index].is
 double Drive::left_sensor() {
   double position=left_motors[left_condition_index].get_position();
   if(std::isinf(position)){
-    auto it = std::find_if(left_motors.begin(), left_motors.end(), [this](pros::Motor &motor) {
-      return !std::isinf(motor.get_position());
-    });
-    left_condition_index = std::distance(left_motors.begin(), it);
+    for(int i=0;i<left_motors.size();i++){
+      cout<<"new left motor index: "<<left_motors[i].get_flags()<<"\n";
+      if(!std::isinf(left_motors[i].get_position())){
+        left_condition_index=i;
+        break;
+      }
+    }
     position=left_motors[left_condition_index].get_position();
   }
-  
   return position;
 }
 
@@ -226,11 +217,11 @@ bool Drive::imu_calibrate(bool run_loading_animation) {
 // Brake modes
 void Drive::set_drive_brake(pros::motor_brake_mode_e_t brake_type) {
   CURRENT_BRAKE = brake_type;
-  for (auto i : left_motors) {
-    if (!pto_active_check(i)) i.set_brake_mode(brake_type);  // If the motor is in the pto list, don't do anything to the motor.
+  for(int i=0;i<left_motors.size();i++){
+    if (!pto_active_check(left_motors[i])) left_motors[i].set_brake_mode(brake_type);  // If the motor is in the pto list, don't do anything to the motor.
   }
-  for (auto i : right_motors) {
-    if (!pto_active_check(i)) i.set_brake_mode(brake_type);  // If the motor is in the pto list, don't do anything to the motor.
+  for(int i=0;i<right_motors.size();i++){
+    if (!pto_active_check(right_motors[i])) right_motors[i].set_brake_mode(brake_type);  // If the motor is in the pto list, don't do anything to the motor.
   }
 }
 

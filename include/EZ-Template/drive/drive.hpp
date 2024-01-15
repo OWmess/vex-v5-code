@@ -41,12 +41,12 @@ class Drive {
   /**
    * Vector of pros motors for the left chassis.
    */
-  std::vector<pros::Motor> left_motors;
+  pros::MotorGroup& left_motors;
 
   /**
    * Vector of pros motors for the right chassis.
    */
-  std::vector<pros::Motor> right_motors;
+  pros::MotorGroup& right_motors;
 
   /**
    * Vector of pros motors that are disconnected from the drive.
@@ -61,7 +61,7 @@ class Drive {
   /**
    * Inertial sensor.
    */
-  pros::Imu imu;
+  pros::Imu &imu;
 
   /**
    * PID objects.
@@ -102,9 +102,9 @@ class Drive {
   /**
    * Creates a Drive Controller using internal encoders.
    *
-   * \param left_motor_ports
+   * \param left_group
    *        Input {1, -2...}.  Make ports negative if reversed!
-   * \param right_motor_ports
+   * \param right_group
    *        Input {-3, 4...}.  Make ports negative if reversed!
    * \param imu_port
    *        Port the IMU is plugged into.
@@ -115,7 +115,7 @@ class Drive {
    * \param ratio
    *        External gear ratio, wheel gear / motor gear.
    */
-  Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio);
+  Drive(pros::MotorGroup &left_group, pros::MotorGroup &right_group,pros::Imu &imu_ref, double wheel_diameter, double ticks, double ratio);
 
   /**
    * Sets drive defaults.
@@ -668,9 +668,9 @@ class Drive {
   /**
    * Creates a Drive Controller using internal encoders.
    *
-   * \param left_motor_ports
+   * \param left_group
    *        Input {1, -2...}.  Make ports negative if reversed!
-   * \param right_motor_ports
+   * \param right_group
    *        Input {-3, 4...}.  Make ports negative if reversed!
    * \param imu_port
    *        Port the IMU is plugged into.
@@ -683,7 +683,7 @@ class Drive {
    * \param wheel_distance
    *        left and right wheel distance
    */
-  Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio,double wheel_distance);
+  Drive(pros::MotorGroup &left_group, pros::MotorGroup &right_group,pros::Imu &imu_ref, double wheel_diameter, double ticks, double ratio,double wheel_distance);
 
   /**
    * 设置最小行驶功率

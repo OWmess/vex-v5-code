@@ -3,17 +3,30 @@
 #include "control.hpp"
 #include "pros/misc.h"
 
+
+
+pros::Imu imu(12);
+pros::Motor LF(1, pros::E_MOTOR_GEAR_600, false, pros::E_MOTOR_ENCODER_DEGREES);
+pros::Motor LM(2, pros::E_MOTOR_GEAR_600, false, pros::E_MOTOR_ENCODER_DEGREES);
+pros::Motor LB(3, pros::E_MOTOR_GEAR_600, true, pros::E_MOTOR_ENCODER_DEGREES);
+
+pros::Motor RF(8, pros::E_MOTOR_GEAR_600, false, pros::E_MOTOR_ENCODER_DEGREES);
+pros::Motor RM(9, pros::E_MOTOR_GEAR_600, true, pros::E_MOTOR_ENCODER_DEGREES);
+pros::Motor RB(10, pros::E_MOTOR_GEAR_600, true, pros::E_MOTOR_ENCODER_DEGREES);
+pros::MotorGroup left_group({LF,LM,LB});
+pros::MotorGroup right_group({RF,RM,RB});
+
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {1, 2, -3}
+  left_group
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{8,-9, -10}
+  ,right_group
   
 
   // 陀螺仪端口
-  ,12
+  ,imu
 
   // 车轮直径（英寸）
   ,4.0
@@ -24,7 +37,7 @@ Drive chassis=Drive(
   //外齿轮比（必须是小数）
   //例如。如果您的齿比是 84:36，其中 36t 连接电机，则您的 齿比 将为 2.333。
   //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
-  ,72.0/36.0
+  ,60.0/36.0
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
   ,10.5
