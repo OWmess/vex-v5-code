@@ -1,12 +1,3 @@
-/**
- * @file src/lemlib/chassis/pursuit.cpp
- * @author LemLib Team
- * @brief Pure Pursuit implementation
- * @version 0.4.5
- * @date 2023-02-09
- * @copyright Copyright (c) 2023
- *
- */
 
 // The implementation below is mostly based off of
 // the document written by Dawgma
@@ -138,23 +129,20 @@ float circleIntersect(lemlib::Pose p1, lemlib::Pose p2, lemlib::Pose pose, float
  * @param lastLookahead - the last lookahead point
  * @param pose - the current position of the robot
  * @param path - the path to follow
+ * @param closest - the index of the point closest to the robot
  * @param lookaheadDist - the lookahead distance of the algorithm
  */
-lemlib::Pose lookaheadPoint(lemlib::Pose lastLookahead, lemlib::Pose pose, std::vector<lemlib::Pose> path,
+lemlib::Pose lookaheadPoint(lemlib::Pose lastLookahead, lemlib::Pose pose, std::vector<lemlib::Pose> path, int closest,
                             float lookaheadDist) {
-    // find the furthest lookahead point on the path
-
     // optimizations applied:
-    // - made the starting index the one after lastLookahead's index,
-    // as anything before would be discarded
-    // - searched the path in reverse, as the first hit would be
-    // the garunteed farthest lookahead point
-    for (int i = path.size() - 1; i > lastLookahead.theta; i--) {
-        // since we are searching in reverse, instead of getting
-        // the current pose and the next one, we should get the
-        // current pose and the *last* one
-        lemlib::Pose lastPathPose = path.at(i - 1);
-        lemlib::Pose currentPathPose = path.at(i);
+    // only consider intersections that have an index greater than or equal to the point closest
+    // to the robot
+    // and intersections that have an index greater than or equal to the index of the last
+    // lookahead point
+    const int start = std::max(closest, int(lastLookahead.theta));
+    for (int i = start; i < path.size() - 1; i++) {
+        lemlib::Pose lastPathPose = path.at(i);
+        lemlib::Pose currentPathPose = path.at(i + 1);
 
         float t = circleIntersect(lastPathPose, currentPathPose, pose, lookaheadDist);
 
@@ -193,24 +181,21 @@ float findLookaheadCurvature(lemlib::Pose pose, float heading, lemlib::Pose look
 /**
  * @brief Move the chassis along a path
  *
- * @param filePath the filename of the path to follow
- * @param timeout the maximum time the robot can spend moving
+ * @param path the path asset to follow
  * @param lookahead the lookahead distance. Units in inches. Larger values will make the robot move faster but
  * will follow the path less accurately
- * @param async whether the function should be run asynchronously. false by default
+ * @param timeout the maximum time the robot can spend moving
  * @param forwards whether the robot should follow the path going forwards. true by default
- * @param maxSpeed the maximum speed the robot can move at
- * @param log whether the chassis should log the path on a log file. false by default.
+ * @param async whether the function should be run asynchronously. true by default
  */
-void lemlib::Chassis::follow(const asset& path, int timeout, float lookahead, bool async, bool forwards, float maxSpeed,
-                             bool log) {
-    // try to take the mutex
-    // if its unsuccessful after 10ms, return
-    if (!mutex.take(10)) return;
+void lemlib::Chassis::follow(const asset& path, float lookahead, int timeout, bool forwards, bool async) {
+    this->requestMotionStart();
+    // were all motions cancelled?
+    if (!this->motionRunning) return;
     // if the function is async, run it in a new task
     if (async) {
-        pros::Task task([&]() { follow(path, timeout, lookahead, false, forwards, maxSpeed, log); });
-        mutex.give();
+        pros::Task task([&]() { follow(path, lookahead, timeout, forwards, false); });
+        this->endMotion();
         pros::delay(10); // delay to give the task time to start
         return;
     }
@@ -228,11 +213,12 @@ void lemlib::Chassis::follow(const asset& path, int timeout, float lookahead, bo
     int closestPoint;
     float leftInput = 0;
     float rightInput = 0;
+    float prevVel = 0;
     int compState = pros::competition::get_status();
     distTravelled = 0;
 
     // loop until the robot is within the end tolerance
-    for (int i = 0; i < timeout / 10 && pros::competition::get_status() == compState; i++) {
+    for (int i = 0; i < timeout / 10 && pros::competition::get_status() == compState && this->motionRunning; i++) {
         // get the current position of the robot
         pose = this->getPose(true);
         if (!forwards) pose.theta -= M_PI;
@@ -247,7 +233,7 @@ void lemlib::Chassis::follow(const asset& path, int timeout, float lookahead, bo
         if (pathPoints.at(closestPoint).theta == 0) break;
 
         // find the lookahead point
-        lookaheadPose = lookaheadPoint(lastLookahead, pose, pathPoints, lookahead);
+        lookaheadPose = lookaheadPoint(lastLookahead, pose, pathPoints, closestPoint, lookahead);
         lastLookahead = lookaheadPose; // update last lookahead position
 
         // get the curvature of the arc between the robot and the lookahead point
@@ -256,13 +242,15 @@ void lemlib::Chassis::follow(const asset& path, int timeout, float lookahead, bo
 
         // get the target velocity of the robot
         targetVel = pathPoints.at(closestPoint).theta;
+        targetVel = slew(targetVel, prevVel, lateralSettings.slew);
+        prevVel = targetVel;
 
         // calculate target left and right velocities
         float targetLeftVel = targetVel * (2 + curvature * drivetrain.trackWidth) / 2;
         float targetRightVel = targetVel * (2 - curvature * drivetrain.trackWidth) / 2;
 
         // ratio the speeds to respect the max speed
-        float ratio = std::max(std::fabs(targetLeftVel), std::fabs(targetRightVel)) / maxSpeed;
+        float ratio = std::max(std::fabs(targetLeftVel), std::fabs(targetRightVel)) / 127;
         if (ratio > 1) {
             targetLeftVel /= ratio;
             targetRightVel /= ratio;
@@ -290,5 +278,5 @@ void lemlib::Chassis::follow(const asset& path, int timeout, float lookahead, bo
     // set distTravelled to -1 to indicate that the function has finished
     distTravelled = -1;
     // give the mutex back
-    mutex.give();
+    this->endMotion();
 }

@@ -1,13 +1,3 @@
-/**
- * @file src/lemlib/chassis/odom.cpp
- * @author LemLib Team
- * @brief Odometry source file. Contains odometry functions and global variables
- * @version 0.4.5
- * @date 2023-01-27
- *
- * @copyright Copyright (c) 2023
- *
- */
 
 // The implementation below is mostly based off of
 // the document written by 5225A (Pilons)
@@ -25,8 +15,8 @@
 pros::Task* trackingTask = nullptr;
 
 // global variables
-lemlib::OdomSensors_t odomSensors; // the sensors to be used for odometry
-lemlib::Drivetrain_t drive; // the drivetrain to be used for odometry
+lemlib::OdomSensors odomSensors(nullptr, nullptr, nullptr, nullptr, nullptr); // the sensors to be used for odometry
+lemlib::Drivetrain drive(nullptr, nullptr, 0, 0, 0, 0); // the drivetrain to be used for odometry
 lemlib::Pose odomPose(0, 0, 0); // the pose of the robot
 lemlib::Pose odomSpeed(0, 0, 0); // the speed of the robot
 lemlib::Pose odomLocalSpeed(0, 0, 0); // the local speed of the robot
@@ -45,7 +35,7 @@ float prevImu = 0;
  * @param sensors the sensors to be used
  * @param drivetrain drivetrain to be used
  */
-void lemlib::setSensors(lemlib::OdomSensors_t sensors, lemlib::Drivetrain_t drivetrain) {
+void lemlib::setSensors(lemlib::OdomSensors sensors, lemlib::Drivetrain drivetrain) {
     odomSensors = sensors;
     drive = drivetrain;
 }
@@ -161,17 +151,17 @@ void lemlib::update() {
     float heading = odomPose.theta;
     // calculate the heading using the horizontal tracking wheels
     if (odomSensors.horizontal1 != nullptr && odomSensors.horizontal2 != nullptr)
-        heading += (deltaHorizontal1 - deltaHorizontal2) /
+        heading -= (deltaHorizontal1 - deltaHorizontal2) /
                    (odomSensors.horizontal1->getOffset() - odomSensors.horizontal2->getOffset());
     // else, if both vertical tracking wheels aren't substituted by the drivetrain, use the vertical tracking wheels
     else if (!odomSensors.vertical1->getType() && !odomSensors.vertical2->getType())
-        heading += (deltaVertical1 - deltaVertical2) /
+        heading -= (deltaVertical1 - deltaVertical2) /
                    (odomSensors.vertical1->getOffset() - odomSensors.vertical2->getOffset());
     // else, if the inertial sensor exists, use it
     else if (odomSensors.imu != nullptr) heading += deltaImu;
     // else, use the the substituted tracking wheels
     else
-        heading += (deltaVertical1 - deltaVertical2) /
+        heading -= (deltaVertical1 - deltaVertical2) /
                    (odomSensors.vertical1->getOffset() - odomSensors.vertical2->getOffset());
     float deltaHeading = heading - odomPose.theta;
     float avgHeading = odomPose.theta + deltaHeading / 2;
@@ -221,7 +211,7 @@ void lemlib::update() {
     odomPose.y += localY * cos(avgHeading);
     odomPose.x += localX * -cos(avgHeading);
     odomPose.y += localX * sin(avgHeading);
-    odomPose.theta = heading;                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+    odomPose.theta = heading;
 
     // calculate speed
     odomSpeed.x = ema((odomPose.x - prevPose.x) / 0.01, odomSpeed.x, 0.95);
