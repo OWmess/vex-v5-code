@@ -24,7 +24,6 @@ Drive chassis=Drive(
   // 右侧电机组端口，（负端口将反转电机！）
   ,right_group
   
-
   // 陀螺仪端口
   ,imu
 
@@ -88,9 +87,6 @@ lemlib::OdomSensors sensors(nullptr, // vertical tracking wheel 1, set to null
 // create the chassis
 lemlib::Chassis odom(drivetrain, linearController, angularController, sensors);
 
-
-
-
 pros::Motor intake_motor1(4, pros::E_MOTOR_GEAR_200, false, pros::E_MOTOR_ENCODER_DEGREES);
 pros::MotorGroup intake_motor_group({intake_motor1});
 
@@ -152,8 +148,17 @@ void initialize() {
   });
   chassis.initialize();
   as::initialize();
+  odom.calibrate(false);//odom校准
 
-
+  pros::Task screenTask([=]() {
+        while (true) {
+            pros::lcd::print(0, "X: %f", odom.getPose().x);
+            pros::lcd::print(1, "Y: %f", odom.getPose().y);
+            pros::lcd::print(2, "Theta: %f", odom.getPose().theta);
+            lemlib::telemetrySink()->info("Chassis pose: {}", odom.getPose());
+            pros::delay(50);
+        }
+    });
 }
 
 
@@ -203,13 +208,14 @@ void competition_initialize() {
  */
 
 void autonomous() {
-//  chassis.reset_pid_targets(); // 重置所有PID期望为0
-//  chassis.reset_gyro(); // 重置陀螺仪
-//  chassis.reset_drive_sensor(); // 重置电机编码器
-//  chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
-//  ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
-  // example movement: Move to x: 20 and y: 15, and face heading 90. Timeout set to 4000 ms
-  odom.moveToPose(10, 5, 90, 4000);
+ chassis.reset_pid_targets(); // 重置所有PID期望为0
+ chassis.reset_gyro(); // 重置陀螺仪
+ chassis.reset_drive_sensor(); // 重置电机编码器
+ chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
+ ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
+  odom.moveToPose(10, 20, 90, 4000,{});
+  odom.waitUntilDone();
+
   // example movement: Move to x: 0 and y: 0 and face heading 270, going backwards. Timeout set to 4000ms
   odom.moveToPose(0, 0, 270, 4000, {.forwards = false});
   // cancel the movement after it has travelled 10 inches
@@ -237,7 +243,7 @@ void autonomous() {
 void opcontrol() {
   chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
   while (true){
-    chassis.arcade_standard(SPLIT);
+    // chassis.arcade_standard(SPLIT);
     // chassis.tank();
 
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
