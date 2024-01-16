@@ -10,7 +10,6 @@
 #include "lemlib/chassis/trackingWheel.hpp"
 #include "lemlib/timer.hpp"
 #include "pros/rtos.hpp"
-
 /**
  * @brief The variables are pointers so that they can be set to nullptr if they are not used
  * Otherwise the chassis class would have to have a constructor for each possible combination of sensors
@@ -134,7 +133,9 @@ void lemlib::Chassis::setPose(Pose pose, bool radians) { lemlib::setPose(pose, r
  * @return Pose
  */
 lemlib::Pose lemlib::Chassis::getPose(bool radians, bool standardPos) {
-    Pose pose = lemlib::getPose(true);
+    //TODO: 此处暂时用kf的pose代替
+    Pose pose=lemlib::getKFPose(true);
+//    Pose pose = lemlib::getPose(true);
     if (standardPos) pose.theta = M_PI_2 - pose.theta;
     if (!radians) pose.theta = radToDeg(pose.theta);
     return pose;

@@ -29,6 +29,18 @@ float prevHorizontal1 = 0;
 float prevHorizontal2 = 0;
 float prevImu = 0;
 
+
+/**
+ * @brief convert meter to inch
+ * @param meter
+ * @return inch
+ */
+template<typename T>
+inline T meter2Inch(const T &meter) {
+  return meter / 0.0254;
+}
+
+
 /**
  * @brief Set the sensors to be used for odometry
  *
@@ -163,8 +175,13 @@ void lemlib::update() {
     else
         heading -= (deltaVertical1 - deltaVertical2) /
                    (odomSensors.vertical1->getOffset() - odomSensors.vertical2->getOffset());
+
+    //TODO: 此处heading直接读gps的imu度数
+    heading= degToRad(gps.get_rotation());
     float deltaHeading = heading - odomPose.theta;
     float avgHeading = odomPose.theta + deltaHeading / 2;
+
+
 
     // choose tracking wheels to use
     // Prioritize non-powered tracking wheels
@@ -222,6 +239,17 @@ void lemlib::update() {
     odomLocalSpeed.x = ema(localX / 0.01, odomLocalSpeed.x, 0.95);
     odomLocalSpeed.y = ema(localY / 0.01, odomLocalSpeed.y, 0.95);
     odomLocalSpeed.theta = ema(deltaHeading / 0.01, odomLocalSpeed.theta, 0.95);
+
+    Eigen::VectorXd estimate(4);
+    Eigen::MatrixXd r(4,4);
+    auto [x,y,pitch,roll,yaw]=gps.get_status();
+    double gpsRMSError=gps.get_error();
+    estimate<< meter2Inch(x), meter2Inch(y),odomSpeed.x,odomSpeed.y;
+    r<<gpsRMSError,0,0,0,
+       0,gpsRMSError,0,0,
+       0,0,0.001,0,
+       0,0,0,0.001;
+    kalmanFilter.update(estimate,r);
 }
 
 /**
@@ -230,6 +258,7 @@ void lemlib::update() {
  */
 void lemlib::init() {
     if (trackingTask == nullptr) {
+        kalmanFilterInit();
         trackingTask = new pros::Task {[=] {
             while (true) {
                 update();
@@ -237,4 +266,55 @@ void lemlib::init() {
             }
         }};
     }
+}
+void lemlib::kalmanFilterInit() {
+  /**
+   * 状态向量 X(1,6)：[x, x', x'', y, y', y'']
+   */
+  /**
+   *  F:状态转移矩阵
+   */
+  F << 1, dt, 0.5 * pow(dt, 2), 0, 0, 0,
+      0, 1, dt, 0, 0, 0,
+      0, 0, 1, 0, 0, 0,
+      0, 0, 0, 1, dt, 0.5 * pow(dt, 2),
+      0, 0, 0, 0, 1, dt,
+      0, 0, 0, 0, 0, 1;
+  /**
+   * H:观测矩阵
+   */
+  H << 1, 0, 0, 0, 0, 0,
+      0, 0, 0, 1, 0, 0,
+      0, 1, 0, 0, 0, 0,
+      0, 0, 0, 0, 1, 0;
+
+  // 估计过程噪声协方差
+  Q << pow(dt, 4) / 4.f, pow(dt, 3) / 2.f, pow(dt, 2) / 2.f, 0, 0, 0,
+      pow(dt, 3) / 2.f, pow(dt, 2), dt, 0, 0, 0,
+      pow(dt, 2) / 2.f, dt, 1, 0, 0, 0,
+      0, 0, 0, pow(dt, 4) / 4.f, pow(dt, 3) / 2.f, pow(dt, 2) / 2.f,
+      0, 0, 0, pow(dt, 3) / 2.f, pow(dt, 2), dt,
+      0, 0, 0, pow(dt, 2) / 2.f, dt, 1;
+  Q = Q * 0.1;  // 乘上加速度方差
+  // 测量噪声协方差
+  R << 0.0001, 0,0,0,
+      0, 0.0001,0,0,
+      0,0,0.005,0,
+      0,0,0,0.005;
+  // 估计误差协方差
+  P << .05, .05, .05, 0, 0, 0,
+      .05, .05, .05, 0, 0, 0,
+      .05, .05, .05, 0, 0, 0,
+      0, 0, 0, .05, .05, .05,
+      0, 0, 0, .05, .05, .05,
+      0, 0, 0, .05, .05, .05;
+
+  kalmanFilter = KalmanFilter{dt, F, H, Q, R, P};
+
+  kalmanFilter.init();
+}
+lemlib::Pose lemlib::getKFPose(bool radians) {
+  Eigen::VectorXd state=kalmanFilter.state();
+  lemlib::Pose pose=lemlib::Pose(state(0),state(3),radians?odomPose.theta:radToDeg(odomPose.theta));
+  return pose;
 }
