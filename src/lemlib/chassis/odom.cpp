@@ -10,7 +10,7 @@
 #include "lemlib/chassis/odom.hpp"
 #include "lemlib/chassis/chassis.hpp"
 #include "lemlib/chassis/trackingWheel.hpp"
-
+#include "pros/llemu.hpp"
 // tracking thread
 pros::Task* trackingTask = nullptr;
 
@@ -20,6 +20,9 @@ lemlib::Drivetrain drive(nullptr, nullptr, 0, 0, 0, 0); // the drivetrain to be 
 lemlib::Pose odomPose(0, 0, 0); // the pose of the robot
 lemlib::Pose odomSpeed(0, 0, 0); // the speed of the robot
 lemlib::Pose odomLocalSpeed(0, 0, 0); // the local speed of the robot
+
+
+
 
 float prevVertical = 0;
 float prevVertical1 = 0;
@@ -38,6 +41,34 @@ float prevImu = 0;
 template<typename T>
 inline T meter2Inch(const T &meter) {
   return meter / 0.0254;
+}
+
+
+double calculateTotalRotation(){
+    // 计算自开机后的旋转度数，考虑循环情况
+    double currentAngle = lemlib::gps->get_heading();
+    static double totalRotation = 0;
+    static double prevAngle = 0;
+    if(prevAngle==0){
+        while(errno==EAGAIN){
+            pros::delay(10);
+        }
+        totalRotation=lemlib::gps->get_heading()-180;
+    }
+    if(prevAngle!=0&&errno!=EAGAIN){
+        totalRotation+=currentAngle-prevAngle;
+        if(prevAngle>300&&currentAngle<60){
+            totalRotation+=360;
+            printf("totalRotation+=360\n total:%lf\n",totalRotation);
+        }
+        if(prevAngle<60&&currentAngle>300){
+            totalRotation-=360;
+            printf("totalRotation-=360\n total:%lf\n",totalRotation);
+
+        }
+    }
+    prevAngle=currentAngle;
+    return totalRotation;
 }
 
 
@@ -138,13 +169,17 @@ void lemlib::update() {
     if (odomSensors.vertical2 != nullptr) vertical2Raw = odomSensors.vertical2->getDistanceTraveled();
     if (odomSensors.horizontal1 != nullptr) horizontal1Raw = odomSensors.horizontal1->getDistanceTraveled();
     if (odomSensors.horizontal2 != nullptr) horizontal2Raw = odomSensors.horizontal2->getDistanceTraveled();
-    if (odomSensors.imu != nullptr) imuRaw = degToRad(odomSensors.imu->get_rotation());
+    ///TODO: 此处暂时使用gps的yaw角度代替imu的yaw角度
+    if (odomSensors.imu != nullptr){ 
+        imuRaw = degToRad(calculateTotalRotation());
+    }
 
     // calculate the change in sensor values
     float deltaVertical1 = vertical1Raw - prevVertical1;
     float deltaVertical2 = vertical2Raw - prevVertical2;
     float deltaHorizontal1 = horizontal1Raw - prevHorizontal1;
     float deltaHorizontal2 = horizontal2Raw - prevHorizontal2;
+
     float deltaImu = imuRaw - prevImu;
 
     // update the previous sensor values
@@ -176,8 +211,6 @@ void lemlib::update() {
         heading -= (deltaVertical1 - deltaVertical2) /
                    (odomSensors.vertical1->getOffset() - odomSensors.vertical2->getOffset());
 
-    //TODO: 此处heading直接读gps的imu度数
-    heading= degToRad(gps.get_rotation());
     float deltaHeading = heading - odomPose.theta;
     float avgHeading = odomPose.theta + deltaHeading / 2;
 
@@ -242,8 +275,8 @@ void lemlib::update() {
 
     Eigen::VectorXd estimate(4);
     Eigen::MatrixXd r(4,4);
-    auto [x,y,pitch,roll,yaw]=gps.get_status();
-    double gpsRMSError=gps.get_error();
+    auto [x,y,pitch,roll,yaw]=gps->get_status();
+    double gpsRMSError=gps->get_error();
     estimate<< meter2Inch(x), meter2Inch(y),odomSpeed.x,odomSpeed.y;
     r<<gpsRMSError,0,0,0,
        0,gpsRMSError,0,0,
@@ -257,8 +290,7 @@ void lemlib::update() {
  *
  */
 void lemlib::init() {
-    if (trackingTask == nullptr) {
-        kalmanFilterInit();
+    if (trackingTask == nullptr) {        
         trackingTask = new pros::Task {[=] {
             while (true) {
                 update();
@@ -312,9 +344,14 @@ void lemlib::kalmanFilterInit() {
   kalmanFilter = KalmanFilter{dt, F, H, Q, R, P};
 
   kalmanFilter.init();
+
+//   odomSensors.imu->set_rotation(gps.get_heading());
 }
 lemlib::Pose lemlib::getKFPose(bool radians) {
   Eigen::VectorXd state=kalmanFilter.state();
-  lemlib::Pose pose=lemlib::Pose(state(0),state(3),radians?odomPose.theta:radToDeg(odomPose.theta));
+//   lemlib::Pose pose=lemlib::Pose(state(0),state(3),radians?odomPose.theta:radToDeg(odomPose.theta));
+
+  lemlib::Pose pose=lemlib::Pose(meter2Inch(gps->get_status().x),meter2Inch(gps->get_status().y),radians?odomPose.theta:radToDeg(odomPose.theta));
+
   return pose;
 }

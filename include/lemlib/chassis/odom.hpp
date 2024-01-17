@@ -60,19 +60,16 @@ void update();
  */
 void init();
 
-/**
- * @brief Get the Kalman Filter object
- */
-KalmanFilter kalmanFilter;
-
 // 初始化卡尔曼滤波器
 constexpr double dt = 0.01; // 测量周期
+inline Eigen::MatrixXd F(6, 6);  // 状态转移矩阵
+inline Eigen::MatrixXd H(4, 6);  // 观测矩阵
+inline Eigen::MatrixXd Q(6, 6);  // 过程噪声协方差
+inline Eigen::MatrixXd R(4, 4);  // 测量噪声协方差
+inline Eigen::MatrixXd P(6, 6);  // 估计误差协方差
+inline KalmanFilter kalmanFilter;
 
-Eigen::MatrixXd F(6, 6);  // 状态转移矩阵
-Eigen::MatrixXd H(4, 6);  // 观测矩阵
-Eigen::MatrixXd Q(6, 6);  // 过程噪声协方差
-Eigen::MatrixXd R(4, 4);  // 测量噪声协方差
-Eigen::MatrixXd P(6, 6);  // 估计误差协方差
+inline pros::GPS *gps;
 
 /**
  * @brief Initialize the Kalman Filter
@@ -81,5 +78,4 @@ Eigen::MatrixXd P(6, 6);  // 估计误差协方差
 void kalmanFilterInit();
 
 Pose getKFPose(bool radians);
-pros::GPS gps(13);
 } // namespace lemlib

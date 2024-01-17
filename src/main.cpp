@@ -3,7 +3,7 @@
 #include "control.hpp"
 #include "pros/misc.h"
 #include "lemlib/api.hpp"
-
+#include "lemlib/chassis/odom.hpp"
 
 pros::Imu imu(12);
 pros::Motor LF(1, pros::E_MOTOR_GEAR_600, false, pros::E_MOTOR_ENCODER_DEGREES);
@@ -146,16 +146,19 @@ void initialize() {
     Auton("attack_aggressive",attack_aggressive),
 
   });
+  lemlib::gps=new pros::GPS(13);
+  lemlib::gps->initialize_full(0,0,180,1.25*0.0254,-3.25*0.0254);
+  lemlib::gps->set_position(0.6,0,0);
+  lemlib::kalmanFilterInit();
   chassis.initialize();
   as::initialize();
-  odom.calibrate(false);//odom校准
-
+  odom.calibrate(false);//odom校准s
+  
   pros::Task screenTask([=]() {
         while (true) {
             pros::lcd::print(0, "X: %f", odom.getPose().x);
             pros::lcd::print(1, "Y: %f", odom.getPose().y);
             pros::lcd::print(2, "Theta: %f", odom.getPose().theta);
-            lemlib::telemetrySink()->info("Chassis pose: {}", odom.getPose());
             pros::delay(50);
         }
     });
@@ -208,18 +211,13 @@ void competition_initialize() {
  */
 
 void autonomous() {
- chassis.reset_pid_targets(); // 重置所有PID期望为0
- chassis.reset_gyro(); // 重置陀螺仪
- chassis.reset_drive_sensor(); // 重置电机编码器
- chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
- ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
-  odom.moveToPose(10, 20, 90, 4000,{});
-  odom.waitUntilDone();
-
-  // example movement: Move to x: 0 and y: 0 and face heading 270, going backwards. Timeout set to 4000ms
-  odom.moveToPose(0, 0, 270, 4000, {.forwards = false});
-  // cancel the movement after it has travelled 10 inches
-  odom.waitUntil(10);
+//  chassis.reset_pid_targets(); // 重置所有PID期望为0
+//  chassis.reset_gyro(); // 重置陀螺仪
+//  chassis.reset_drive_sensor(); // 重置电机编码器
+//  chassis.set_drive_brake(MOTOR_BRAKE_HOLD); // 将所有底盘电机设置为制动模式
+//  ez::as::auton_selector.call_selected_auton(); // 执行程序选择器所选的自动程序
+  pros::delay(10000);
+  odom.moveToPose(24, 24, 0, 40000,{.lead=0.3,.maxSpeed=40,.minSpeed=40});
   odom.waitUntilDone();
   pros::lcd::print(4, "pure pursuit finished!");
 }
@@ -243,7 +241,7 @@ void autonomous() {
 void opcontrol() {
   chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
   while (true){
-    // chassis.arcade_standard(SPLIT);
+    chassis.arcade_standard(SPLIT);
     // chassis.tank();
 
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
