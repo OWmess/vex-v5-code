@@ -11,7 +11,6 @@ Drive chassis=Drive(
   // 右侧电机组端口，（负端口将反转电机！）
   ,{8,-9, -10}
   
-
   // 陀螺仪端口
   ,12
 
@@ -167,6 +166,7 @@ void autonomous() {
  */
 void opcontrol() {
   chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
+
   while (true){
     chassis.arcade_standard(SPLIT);
     // chassis.tank();

@@ -209,7 +209,7 @@ void Control::controller_event_handling(){
   static Control_State wings_state=OFF;
   static Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   static bool launch=false;
-  static pros::ADIDigitalOut hanger_pneumatics('D');
+  static pros::ADIDigitalOut hanger_pneumatics('D');//被动挂的电磁阀
   //根据按钮状态控制机器人
   //intake状态控制
   if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
@@ -233,7 +233,7 @@ void Control::controller_event_handling(){
     control.set_wings_state(OFF);
   }
 
-  if(Controller_Button_State::X_new_press()){//A按下时，打开armer
+  if(Controller_Button_State::X_new_press()){//X键切换发射架状态
     launch=!launch;
     if(launch)
       control.set_catapult_state(LAUNCH);
@@ -241,13 +241,18 @@ void Control::controller_event_handling(){
       control.set_catapult_state(RELEASE);
   }
 
-  if(Controller_Button_State::RIGHT_new_press()){
+  if(Controller_Button_State::B_new_press()){//B键释放发射架
+    control.set_catapult_state(RELEASE);
+  }
+
+
+  if(Controller_Button_State::RIGHT_new_press()){//左右键切换侧挂的开关
     control.set_armer_state(ON);
   }else if(Controller_Button_State::LEFT_new_press()){
     control.set_armer_state(OFF);
   }
 
-  if(Controller_Button_State::UP_new_press()){
+  if(Controller_Button_State::UP_new_press()){//上下键切换被动挂的开古岸
     hanger_pneumatics.set_value(ON);
   }else if(Controller_Button_State::DOWN_new_press()){
     hanger_pneumatics.set_value(OFF);
