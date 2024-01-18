@@ -331,6 +331,7 @@ bool Drive::imu_calibrate(bool run_loading_animation) {
 
     if (iter >= 2000) {
       if (!(imu.get_status() & pros::c::E_IMU_STATUS_CALIBRATING)) {
+        imu.tare();
         break;
       }
       if (iter >= 3000) {

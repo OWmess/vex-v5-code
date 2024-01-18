@@ -6,12 +6,11 @@
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {-1, 2, -3}
+  {1, 2, -3}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{8,-9, 10}
+  ,{8,-9, -10}
   
-
   // 陀螺仪端口
   ,12
 
@@ -27,7 +26,7 @@ Drive chassis=Drive(
   ,72.0/36.0
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
-  ,12.0
+  ,10.5
 );
 
 pros::Motor intake_motor1(4, pros::E_MOTOR_GEAR_200, false, pros::E_MOTOR_ENCODER_DEGREES);
@@ -76,19 +75,18 @@ void initialize() {
   chassis.toggle_modify_curve_with_controller(false); //是否允许使用操纵杆上的按钮（左右键）修改控制器曲线
   chassis.set_active_brake(0.1); // 设置主动制动kP，建议为0.1。
   chassis.set_curve_default(0, 0); //控制器曲线的默认值。如果使用Tank模式，则仅使用第一个参数。（如果您有 SD 卡，请注释掉此行！）
-  chassis.set_joystick_threshold(5);//设置摇杆死区的阈值，摇杆的范围在[-127,127]
+  chassis.set_joystick_threshold(10);//设置摇杆死区的阈值，摇杆的范围在[-127,127]
   chassis.set_tank_min_power(30,30);//设置坦克模式下的最小功率，范围在[0,127],当摇杆输出值小于该值时，底盘将以最小功率运行
   default_constants(); // 设置PID参数。
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
-    Auton("Guard.", guard_1),
-    Auton("Attack.", attack),
+    Auton("skill match classic (右通道)",skill_match_classic),
     Auton("skill match",skill_match),
+    Auton("Guard.", guard),
+    Auton("Attack.", attack),
     Auton("guard_aggressive",guard_aggressive),
     Auton("attack_aggressive",attack_aggressive),
-    Auton("Conservatively attack. ", conservatively_attack),
-    Auton("test_function.", test_pid),
 
   });
   chassis.initialize();
@@ -108,6 +106,7 @@ void initialize() {
  */
 void disabled() {
   // . . .
+
   printf("disabled\n");
 }
 
@@ -168,6 +167,7 @@ void autonomous() {
  */
 void opcontrol() {
   chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
+
   while (true){
     chassis.arcade_standard(SPLIT);
     // chassis.tank();

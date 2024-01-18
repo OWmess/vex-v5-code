@@ -12,14 +12,10 @@ void conservatively_attack();
 
 void default_constants();
 
-void test_pid();
-
 void skill_match();
 
-void guard_1();
+void skill_match_classic();
 
 void attack_aggressive();
 
 void guard_aggressive();
-
-void get_sensor_data();
