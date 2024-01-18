@@ -94,7 +94,6 @@ void Control::set_intake(int speed,Control_State state){
   }
   speed=(state==INTAKE)?speed:-speed;
   intake_motors.move(speed);
-
 }
 
 
@@ -199,7 +198,9 @@ void Control::catapult_task_fn(){
 
 void Control::control_task_fn(){
   while(true){
-    controller_event_handling();
+    if(!pros::competition::is_autonomous()){
+      controller_event_handling();
+    }
     drive_event_handling();
     pros::delay(20);
   }
@@ -282,7 +283,7 @@ void Control::cata_temp_watchdog_fn(){
     double temperature=std::max(this->catapult_motors[0].get_temperature(),this->catapult_motors[1].get_temperature());
     if(flag){
       master_controller.print(0, 0,"cata temp %lf",temperature);
-    }else{
+    }else if(!isinf(temperature)){
       if(temperature>=54.9){
         master_controller.rumble(". . . .");
       }else if(temperature>=49.9){

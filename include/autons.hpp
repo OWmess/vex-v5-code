@@ -14,6 +14,8 @@ void default_constants();
 
 void skill_match();
 
+void skill_match_classic();
+
 void attack_aggressive();
 
 void guard_aggressive();
