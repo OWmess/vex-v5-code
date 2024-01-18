@@ -6,13 +6,13 @@
 // 底盘构造
 Drive chassis=Drive(
   // 左侧电机组端口，（负端口将反转电机！）
-  {1, 2, -3}
+  {-1, 2, -3}
 
   // 右侧电机组端口，（负端口将反转电机！）
-  ,{8,-9, -10}
+  ,{8,-9, 10}
   
   // 陀螺仪端口
-  ,12
+  ,11
 
   // 车轮直径（英寸）
   ,4.0
@@ -23,7 +23,7 @@ Drive chassis=Drive(
   //外齿轮比（必须是小数）
   //例如。如果您的齿比是 84:36，其中 36t 连接电机，则您的 齿比 将为 2.333。
   //例如。如果您的齿比是 36:60，其中 60t 连接电机，则您的 齿比 将为 0.6。
-  ,72.0/36.0
+  ,84.0/48.0
 
   // 左右两侧轮组的距离(不使用陀螺仪控制底盘时需要用到该参数(英寸))
   ,10.5
@@ -81,7 +81,7 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
-    Auton("skill match classic (右通道)",skill_match_classic),
+    Auton("skill match classic",skill_match_classic),
     Auton("skill match",skill_match),
     Auton("Guard.", guard),
     Auton("Attack.", attack),
