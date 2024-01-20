@@ -181,9 +181,9 @@ class PID {
   double derivative;
   long time;
   long prev_time;
+  double velocity_out=0.05;
 
  private:
-  double velocity_out=0.05;
   int i = 0, j = 0, k = 0, l = 0;//用于退出条件的计时
   bool is_mA = false;
   void reset_timers();//重置所有计时器的函数

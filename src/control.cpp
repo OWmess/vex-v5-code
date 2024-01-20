@@ -14,7 +14,7 @@
  *        
 */
 #define CATA_READY_POS      65
-#define CATA_PERCENTAGE     60
+#define CATA_PERCENTAGE     70
 
 /**
  * @brief 发射架的PID参数
@@ -133,10 +133,15 @@ void Control::set_catapult(int percentage,Catapult_State state) {
     catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
     cata_move_rpm(percentage);
     if(cata_rotation.get_position()/100.f>CATA_READY_POS-15){
-      while(cata_rotation.get_position()/100.f>CATA_READY_POS*0.5){
+      auto start=pros::millis();
+      while(cata_rotation.get_position()/100.f>CATA_READY_POS*0.8){
         // if(drive_catapult){
         //   return;
         // }
+        if(pros::millis()-start>1000){
+          catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_BRAKE);
+          break;
+        }
         pros::delay(5);
       }
     }
@@ -258,7 +263,7 @@ void Control::controller_event_handling(){
     control.set_armer_state(OFF);
   }
 
-  if(Controller_Button_State::UP_new_press()){//上下键切换被动挂的开古岸
+  if(Controller_Button_State::UP_new_press()){//上下键切换被动挂的开关
     hanger_pneumatics.set_value(ON);
   }else if(Controller_Button_State::DOWN_new_press()){
     hanger_pneumatics.set_value(OFF);
