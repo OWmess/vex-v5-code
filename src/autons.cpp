@@ -26,7 +26,11 @@ void default_constants() {
   chassis.set_pid_constants(&chassis.turnPID, 4, 0.05,25, 15);
   chassis.set_pid_constants(&chassis.swingPID, 7, 0, 45, 0);
   chassis.set_pid_constants(&chassis.turnPID_gyro_free, 0.45, 0, 2, 0);
-
+  chassis.set_exit_condition(chassis.drive_exit,30,50, 30, 100, 500, 500);
+  chassis.set_exit_velocity_out(chassis.drive_exit,1);
+  chassis.set_exit_condition(chassis.turn_exit, 30, 3, 30, 7, 2000, 500);
+  chassis.set_exit_condition(chassis.swing_exit, 30, 3, 30, 7, 2000, 500);
+  
 }
 
 
@@ -35,100 +39,64 @@ void default_constants() {
 * 防守方自动程序
 */
 void guard() {
-  ///init catapult
-  control.set_armer_state(ON);
-  pros::delay(500);
-
-  chassis.set_drive_pid(-12,40,true);
+  chassis.set_angle(-45);
+  control.set_intake_state(INTAKE);
+  chassis.set_swing_pid(ez::RIGHT_SWING,0,60);
   chassis.wait_drive();
 
-  chassis.set_turn_pid(95,35);
+  chassis.set_drive_pid(-3,DRIVE_SPEED);
   chassis.wait_drive();
+
+
+  control.set_wings_state(RIGHT_ON);
+
+
   
-  control.set_armer_state(OFF);
-  chassis.set_drive_pid(-30, DRIVE_SPEED,true);//-53
-  chassis.wait_drive();
-  // control.set_armer_state(ON);
+  pros::delay(100);
 
-  chassis.set_turn_pid(65,35);
+  chassis.set_swing_pid(ez::RIGHT_SWING,-55,60);
   chassis.wait_drive();
-  chassis.set_drive_pid(-22, DRIVE_SPEED,true);//-53
+  control.set_wings_state(RIGHT_OFF);
+  pros::delay(100);
+  chassis.set_swing_pid(ez::RIGHT_SWING,0,SWING_SPEED);
   chassis.wait_drive();
-  pros::delay(200);
-  chassis.set_turn_pid(130, TURN_SPEED);
-  chassis.wait_drive();
-  // control.set_armer_state(OFF);
-
-  chassis.set_drive_pid(28,DRIVE_SPEED,true);
+  pros::delay(100);
+  chassis.set_turn_pid(180, TURN_SPEED);
   chassis.wait_drive();
 
-  pros::delay(200);
-  chassis.set_drive_pid(-10, DRIVE_SPEED);
+  chassis.set_drive_pid(15, DRIVE_SPEED,true);
   chassis.wait_drive();
 
-  chassis.set_turn_pid(45, DRIVE_SPEED);
+  chassis.set_swing_pid(ez::LEFT_SWING, 235, SWING_SPEED);
   chassis.wait_drive();
-
-  chassis.set_drive_pid(40,DRIVE_SPEED,true);
-  chassis.wait_drive();
-
-  chassis.set_turn_pid(-45, DRIVE_SPEED);
-  chassis.wait_drive();
-
   control.set_intake_state(OUTTAKE);
-
-  chassis.set_drive_pid(28,DRIVE_SPEED,true);
+  pros::delay(100);
+  chassis.set_drive_pid(-7, DRIVE_SPEED,true);
   chassis.wait_drive();
-}
-
-
-void guard_1() {
-  chassis.set_drive_pid(18, DRIVE_SPEED,true);
+  chassis.set_drive_pid(17, DRIVE_SPEED,true);
   chassis.wait_drive();
-  control.set_wings_state(ON);
-  pros::delay(500);
-  control.set_intake_state(OUTTAKE);
-
-  chassis.set_swing_pid(ez::LEFT_SWING,45,80);
+  chassis.set_drive_pid(-12, DRIVE_SPEED,true);
   chassis.wait_drive();
-  pros::delay(300);
-  control.set_intake_state(STOP);
-  control.catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_BRAKE);
-  chassis.set_drive_pid(12, DRIVE_SPEED,true);
-  chassis.wait_drive();
-  pros::delay(200);
-
-  chassis.set_drive_pid(-5, DRIVE_SPEED,true);
-  chassis.wait_drive();
-  pros::delay(200);
 
   chassis.set_drive_pid(10, DRIVE_SPEED,true);
   chassis.wait_drive();
-  control.set_wings_state(ON);
-  chassis.set_drive_pid(-5, DRIVE_SPEED,true);
-  chassis.wait_drive();
-  
-  pros::delay(300);
-  control.set_wings_state(OFF);
+  pros::delay(100);
 
-  chassis.set_turn_pid(90, TURN_SPEED);
-  chassis.wait_drive();
-  chassis.set_drive_pid(45,50,true);
+  chassis.set_drive_pid(-10, DRIVE_SPEED,true);
   chassis.wait_drive();
 
-  
-
-  // chassis.set_turn_pid(0, TURN_SPEED);
-  // chassis.wait_drive();
-  // chassis.set_drive_pid(24, DRIVE_SPEED);
-  // chassis.wait_drive();
-  // chassis.set_turn_pid(-45, TURN_SPEED);
-  // chassis.wait_drive();
-  // control.set_intake_state(OUTTAKE);
-  // chassis.set_drive_pid(32,80,true);
-  // chassis.wait_drive();
+  chassis.set_turn_pid(360, TURN_SPEED);
+  chassis.wait_drive();
+  chassis.set_drive_pid(24, DRIVE_SPEED);
+  chassis.wait_drive();
+  chassis.set_turn_pid(360-45, TURN_SPEED);
+  chassis.wait_drive();
+  control.set_intake_state(OUTTAKE);
+  chassis.set_drive_pid(28,80,true);//28
+  chassis.wait_drive();
 
 }
+
 
 
 void attack() {

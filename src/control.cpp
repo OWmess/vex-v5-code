@@ -252,10 +252,6 @@ void Control::controller_event_handling(){
     control.set_catapult_state(READY);
   }
 
-  if(Controller_Button_State::B_new_press()){//B键释放发射架
-    control.set_catapult_state(RELEASE);
-  }
-
 
   if(Controller_Button_State::RIGHT_new_press()){//左右键切换侧挂的开关
     control.set_armer_state(ON);

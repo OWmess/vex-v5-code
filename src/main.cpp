@@ -81,17 +81,16 @@ void initialize() {
   
   // 初始化底盘和自动阶段程序选择器
   ez::as::auton_selector.add_autons({
+    Auton("Guard.", guard),
+
     Auton("skill match classic",skill_match_classic),
     Auton("skill match",skill_match),
-    Auton("Guard.", guard),
     Auton("Attack.", attack),
     Auton("guard_aggressive",guard_aggressive),
     Auton("attack_aggressive",attack_aggressive),
-
   });
   chassis.initialize();
   as::initialize();
-
 
 }
 
@@ -168,10 +167,10 @@ void autonomous() {
 void opcontrol() {
   chassis.set_drive_brake(pros::E_MOTOR_BRAKE_COAST);
 
-  while (true){
+  while (true) {
     chassis.arcade_standard(SPLIT);
     // chassis.tank();
-
+    // chassis.arcade_standard(SINGLE);
     pros::delay(ez::util::DELAY_TIME); // 让代码休眠一下以防止过度占用处理器资源
   }
 
