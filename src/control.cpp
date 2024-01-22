@@ -260,9 +260,9 @@ void Control::controller_event_handling(){
   }
 
   if(Controller_Button_State::UP_new_press()){//上下键切换被动挂的开关
-    hanger_pneumatics.set_value(ON);
+    hanger_pneumatics.set_value(HIGH);
   }else if(Controller_Button_State::DOWN_new_press()){
-    hanger_pneumatics.set_value(OFF);
+    hanger_pneumatics.set_value(LOW);
   }
 }
 
