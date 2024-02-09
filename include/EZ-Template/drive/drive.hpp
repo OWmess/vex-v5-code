@@ -679,6 +679,7 @@ class Drive {
    */
   void set_exit_condition(int type, int p_small_exit_time, double p_small_error, int p_big_exit_time, double p_big_error, int p_velocity_exit_time, int p_mA_timeout);
 
+  void set_exit_velocity_out(int type,double p_velocity_out);
   /**
    * Exit condition for turning.
    */
@@ -770,18 +771,6 @@ class Drive {
    *        left and right wheel distance
    */
   Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_ports, int imu_port, double wheel_diameter, double ticks, double ratio,double wheel_distance);
-  /**
-   * odometry variables and functions
-   */
-
-  /**
-   * initialize odometry variables
-   */
-  Drive &with_odom(const float &ForwardTracker_center_distance,const float &SidewaysTracker_center_distance);
-
-  void drive_to_point(double x, double y,int speed,bool ibackwards=false ,bool slew_on = false, bool toggle_heading = true);
-
-  void trun_to_point(double x, double y,int speed);
 
   /**
    * 设置最小行驶功率
@@ -945,6 +934,7 @@ class Drive {
 
   int left_condition_index=0;
   int right_condition_index=0;
+  double gyro_data;
 public:
   /**
    * 用于记录pid数据

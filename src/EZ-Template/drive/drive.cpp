@@ -142,6 +142,7 @@ Drive::Drive(std::vector<int> left_motor_ports, std::vector<int> right_motor_por
   TICK_PER_INCH = get_tick_per_inch();
 
   set_defaults();
+
 }
 
 void Drive::set_defaults() {
@@ -247,12 +248,18 @@ double Drive::right_sensor() {
     return right_tracker.get_value();
   else if (is_tracker == DRIVE_ROTATION)
     return right_rotation.get_position();
-  // double position=0;
-  // for_each(right_motors.begin(),right_motors.end(),[&position](pros::Motor m){
-  //   position+=m.get_position();});
-  // position/=right_motors.size();
-  // return position;
-  return right_motors[right_condition_index].get_position();
+  
+  double position=right_motors[right_condition_index].get_position();
+  if(std::isinf(position)){
+    auto it = std::find_if(right_motors.begin(), right_motors.end(), [this](pros::Motor &motor) {
+      cout<<motor.get_flags()<<"\n";
+      return !std::isinf(motor.get_position());
+    });
+    right_condition_index = std::distance(right_motors.begin(), it);
+    position=right_motors[right_condition_index].get_position();
+  }
+  
+  return position;
 }
 
 int Drive::right_velocity() { return right_motors[right_condition_index].get_actual_velocity(); }
@@ -264,12 +271,17 @@ double Drive::left_sensor() {
     return left_tracker.get_value();
   else if (is_tracker == DRIVE_ROTATION)
     return left_rotation.get_position();
-  // double position=0;
-  // for_each(left_motors.begin(),left_motors.end(),[&position](pros::Motor m){
-  //   position+=m.get_position();});
-  // position/=left_motors.size();
-  // return position;
-  return left_motors[left_condition_index].get_position();
+
+  double position=left_motors[left_condition_index].get_position();
+  if(std::isinf(position)){
+    auto it = std::find_if(left_motors.begin(), left_motors.end(), [this](pros::Motor &motor) {
+      return !std::isinf(motor.get_position());
+    });
+    left_condition_index = std::distance(left_motors.begin(), it);
+    position=left_motors[left_condition_index].get_position();
+  }
+  
+  return position;
 }
 
 int Drive::left_velocity() { return left_motors[left_condition_index].get_actual_velocity(); }
@@ -277,7 +289,18 @@ double Drive::left_mA() { return left_motors[left_condition_index].get_current_d
 bool Drive::left_over_current() { return left_motors[left_condition_index].is_over_current(); }
 
 void Drive::reset_gyro(double new_heading) { imu.set_rotation(new_heading); }
-double Drive::get_gyro() { return imu.get_rotation(); }
+double Drive::get_gyro() {
+  //   //中值滤波
+  // constexpr static int windows_size=5;
+  // static std::deque<double> windows;
+  // windows.push_back(imu.get_rotation());
+  // if(windows.size()>windows_size)
+  //   windows.pop_front();
+  // std::sort(windows.begin(),windows.end());
+  // gyro_data=std::accumulate(windows.begin(),windows.end(),0.0)/windows.size();
+  return imu.get_rotation(); 
+
+}
 
 void Drive::imu_loading_display(int iter) {
   // If the lcd is already initialized, don't run this function
@@ -320,6 +343,7 @@ bool Drive::imu_calibrate(bool run_loading_animation) {
 
     if (iter >= 2000) {
       if (!(imu.get_status() & pros::c::E_IMU_STATUS_CALIBRATING)) {
+        imu.tare();
         break;
       }
       if (iter >= 3000) {
