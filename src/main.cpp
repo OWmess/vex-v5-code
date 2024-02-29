@@ -7,6 +7,7 @@
 
 /**
 修改自EZ-Template、Lemlib，Odometry、gps、KalmanFilter在lemlib中修改实现，drivepid相关函数均在ez-template中实现
+了解KalmanFilter知识，可参考《Alex Becker - Kalman Filter from the Ground Up》
 下为以上两个项目地址：
 EZ-Template：
 https://github.com/EZ-Robotics/EZ-Template
@@ -162,13 +163,14 @@ void initialize() {
     Auton("guard_aggressive",guard_aggressive),
     Auton("attack_aggressive",attack_aggressive),
   });
+  //初始化gps相关
   lemlib::gps=new pros::GPS(13);
   lemlib::gps->initialize_full(0,0,180,1.25*0.0254,-3.25*0.0254);
   lemlib::gps->set_position(0.6,0,0);
   lemlib::kalmanFilterInit();
   chassis.initialize();
   as::initialize();
-  odom.calibrate(false);//odom校准s
+  odom.calibrate(false);//在ez-template初始化时已校准过imu，此处无需再次校准
   
   pros::Task screenTask([=]() {
         while (true) {
