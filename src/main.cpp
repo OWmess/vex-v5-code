@@ -5,6 +5,22 @@
 #include "lemlib/api.hpp"
 #include "lemlib/chassis/odom.hpp"
 
+/**
+修改自EZ-Template、Lemlib，Odometry、gps、KalmanFilter在lemlib中修改实现，drivepid相关函数均在ez-template中实现
+下为以上两个项目地址：
+EZ-Template：
+https://github.com/EZ-Robotics/EZ-Template
+Lemlib：
+https://github.com/LemLib/LemLib
+
+
+*/
+
+
+
+
+
+
 pros::Imu imu(12);
 pros::Motor LF(1, pros::E_MOTOR_GEAR_600, false, pros::E_MOTOR_ENCODER_DEGREES);
 pros::Motor LM(2, pros::E_MOTOR_GEAR_600, false, pros::E_MOTOR_ENCODER_DEGREES);
