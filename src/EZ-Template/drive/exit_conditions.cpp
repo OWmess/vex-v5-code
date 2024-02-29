@@ -24,6 +24,20 @@ void Drive::set_exit_condition(int type, int p_small_exit_time, double p_small_e
   }
 }
 
+void Drive::set_exit_velocity_out(int type,double p_velocity_out){
+  if (type == drive_exit) {
+    leftPID.set_velocity_out(p_velocity_out);
+    rightPID.set_velocity_out(p_velocity_out);
+  }
+
+  if (type == turn_exit) {
+    turnPID.set_velocity_out(p_velocity_out);
+  }
+
+  if (type == swing_exit) {
+    swingPID.set_velocity_out(p_velocity_out);
+  }
+}
 // User wrapper for exit condition
 void Drive::wait_drive(){
   // Let the PID run at least 1 iteration

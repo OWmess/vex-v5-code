@@ -19,6 +19,7 @@ enum Control_State{
     RIGHT_OFF,
 };
 
+//重载运算符!，用于切换状态
 inline Control_State operator!(Control_State state) {
     switch (state) {
         case ON:
@@ -54,35 +55,32 @@ enum Catapult_State{
 class Control {
 public:
     /**
-     * \param intake_motor_ports ports of the intake motors (negative port will reverse it!)
-     * \param intake_gearset gearset of the intake motors
-     * \param catapult_motor_port port of the catapult motor (negative port will reverse it!)
-     * \param catapult_gearset gearset of the catapult motor
-     * \param catapult_press_button_port port of the catapult press button
-     * \param wings_ports ports of the wings (negative port will reverse it!)
-     * \param armer_ports ports of the armer (negative port will reverse it!)
-    */
-
+     * @brief Construct a new Control object
+     * 
+     * @param intake_motors 
+     * @param catapult_motor 
+     * @param catapult_rotation 
+     * @param optical 
+     * @param wings_ports 
+     * @param armer_ports 
+     */
     Control(pros::Motor_Group &intake_motors,pros::Motor_Group &catapult_motor,pros::Rotation &catapult_rotation,pros::Optical &optical,const std::vector<int8_t> &wings_ports,
     const std::vector<int8_t> &armer_ports);
     /**
      * \param 设置投石机在下方的位置
     */
-   void set_catapult_down_pos(double pos);
+   [[maybe_unused]]void set_catapult_down_pos(double pos);
 
     /**
      *  \param 设置投石机在升起时的位置
     */
-    void set_catapult_up_pos(double pos);
+    [[maybe_unused]]void set_catapult_up_pos(double pos);
     
     /**
      * \param 设置投石机在中间时的位置
     */
-    void set_catapult_middle_pos(double pos);
+    [[maybe_unused]]void set_catapult_middle_pos(double pos);
 
-    inline static Control_State reverse_intake(Control_State loggle){
-        return loggle==INTAKE?OUTTAKE:INTAKE;
-    }
     /**
      * \param state 设置intake的模式
      * - INTAKE: 吸取
@@ -146,7 +144,7 @@ public:
     /**
      * \param time 设置投石机的超时时间,默认值为2000ms
     */
-    inline void set_time_out(int time=2000){
+    [[maybe_unused]]inline void set_time_out(int time=2000){
         time_out=time;
     }
     /**
@@ -177,10 +175,14 @@ public:
      * @param d 
      * @param p_start_i 
      */
-    inline void set_pid_constants(PID *pid, double p, double i, double d, double p_start_i){
+    [[maybe_unused]]inline void set_pid_constants(PID *pid, double p, double i, double d, double p_start_i){
         pid->set_constants(p,i,d,p_start_i);
     }
 
+    /**
+     * @brief 切换pto模式，需初始化pto电磁阀
+     * 
+     */
     void pto_chassis_mode(){
         chassis_piston->set_value(LOW);
         // arm_piston->set_value(LOW);
@@ -192,6 +194,10 @@ public:
         cout<<"\n";
     }
 
+    /**
+     * @brief 切换pto模式，需初始化pto电磁阀
+     * 
+     */
     void pto_cata_mode(){
         chassis_piston->set_value(HIGH);
         // arm_piston->set_value(LOW);
@@ -204,6 +210,10 @@ public:
 
     }
 
+    /**
+     * @brief 切换pto模式，需初始化pto电磁阀
+     * 
+     */
     void pto_arm_mode(){
         chassis_piston->set_value(HIGH);
         // arm_piston->set_value(HIGH);
@@ -294,24 +304,34 @@ private:
     */
     void set_armer(Control_State state);
 
+    /**
+     * @brief 处理遥控按键事件
+     * 
+     */
     void controller_event_handling();
 
+    /**
+     * @brief 处理各结构运行事件
+     * 
+     */
     void drive_event_handling();
 public:
+    //PID实例
     PID cata_PID;
+    //pto气动阀指针
     std::unique_ptr<pros::ADIDigitalOut> chassis_piston;
     std::unique_ptr<pros::ADIDigitalOut> arm_piston;
     std::unique_ptr<pros::ADIDigitalOut> armlock_piston;
     pros::Motor_Group &catapult_motors;
 
 private:
-    //气动结构体
+    //气动结构体,包含气动阀指针和是否反转（只是略微封装了一下）
     struct PneumaticsStruct{
         std::shared_ptr<pros::ADIDigitalOut> pneumatics;
         bool reversed;
 
     };
-    //电机及电磁阀的智能指针或实例
+    //电机、旋转传感器、电磁阀的智能指针或引用
     pros::Optical &optical;
     pros::Rotation &cata_rotation;
     pros::Motor_Group &intake_motors;
@@ -321,8 +341,6 @@ private:
     double catapult_up_pos;
     double catapult_middle_pos;
     double catapult_down_pos;
-    bool armer_reversed;
-    bool cata_exit_condition=false;
     bool drive_catapult;
     bool drive_intake;
     bool drive_wings;
@@ -334,9 +352,6 @@ private:
     static Control_State wings_state;
     static Catapult_State catapult_state;
     static Control_State armer_state;
-    bool enable_pto=false;
-
-
 };
 
 

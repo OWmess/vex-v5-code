@@ -14,7 +14,7 @@
  *        
 */
 #define CATA_READY_POS      65
-#define CATA_PERCENTAGE     60
+#define CATA_PERCENTAGE     70
 
 /**
  * @brief 发射架的PID参数
@@ -94,7 +94,6 @@ void Control::set_intake(int speed,Control_State state){
   }
   speed=(state==INTAKE)?speed:-speed;
   intake_motors.move(speed);
-
 }
 
 
@@ -134,10 +133,15 @@ void Control::set_catapult(int percentage,Catapult_State state) {
     catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_HOLD);
     cata_move_rpm(percentage);
     if(cata_rotation.get_position()/100.f>CATA_READY_POS-15){
-      while(cata_rotation.get_position()/100.f>CATA_READY_POS*0.5){
+      auto start=pros::millis();
+      while(cata_rotation.get_position()/100.f>CATA_READY_POS*0.8){
         // if(drive_catapult){
         //   return;
         // }
+        if(pros::millis()-start>1000){
+          catapult_motors.set_brake_modes(pros::E_MOTOR_BRAKE_BRAKE);
+          break;
+        }
         pros::delay(5);
       }
     }
@@ -199,7 +203,9 @@ void Control::catapult_task_fn(){
 
 void Control::control_task_fn(){
   while(true){
-    controller_event_handling();
+    if(!pros::competition::is_autonomous()){
+      controller_event_handling();
+    }
     drive_event_handling();
     pros::delay(20);
   }
@@ -209,7 +215,7 @@ void Control::controller_event_handling(){
   static Control_State wings_state=OFF;
   static Control_State default_intake_state=INTAKE;//r1按下时，intake的默认状态
   static bool launch=false;
-  static pros::ADIDigitalOut hanger_pneumatics('D');
+  static pros::ADIDigitalOut hanger_pneumatics('D');//被动挂的电磁阀
   //根据按钮状态控制机器人
   //intake状态控制
   if(Controller_Button_State::R1_new_press()){//R1按下时，打开或关闭intake
@@ -233,24 +239,30 @@ void Control::controller_event_handling(){
     control.set_wings_state(OFF);
   }
 
-  if(Controller_Button_State::X_new_press()){//A按下时，打开armer
+  if(Controller_Button_State::X_new_press()){//X键切换发射架状态
     launch=!launch;
     if(launch)
       control.set_catapult_state(LAUNCH);
     else
       control.set_catapult_state(RELEASE);
+  }else if(Controller_Button_State::B_new_press()){//B按下时，关闭armer
+    launch=false;
+    control.set_catapult_state(RELEASE);
+  }else if(Controller_Button_State::A_new_press()){//Y按下时，关闭armer
+    control.set_catapult_state(READY);
   }
 
-  if(Controller_Button_State::RIGHT_new_press()){
+
+  if(Controller_Button_State::RIGHT_new_press()){//左右键切换侧挂的开关
     control.set_armer_state(ON);
   }else if(Controller_Button_State::LEFT_new_press()){
     control.set_armer_state(OFF);
   }
 
-  if(Controller_Button_State::UP_new_press()){
-    hanger_pneumatics.set_value(ON);
+  if(Controller_Button_State::UP_new_press()){//上下键切换被动挂的开关
+    hanger_pneumatics.set_value(HIGH);
   }else if(Controller_Button_State::DOWN_new_press()){
-    hanger_pneumatics.set_value(OFF);
+    hanger_pneumatics.set_value(LOW);
   }
 }
 
@@ -277,11 +289,13 @@ void Control::cata_temp_watchdog_fn(){
     double temperature=std::max(this->catapult_motors[0].get_temperature(),this->catapult_motors[1].get_temperature());
     if(flag){
       master_controller.print(0, 0,"cata temp %lf",temperature);
-    }else{
+    }else if(!isinf(temperature)){
       if(temperature>=54.9){
-        master_controller.rumble(". . . .");
+          master_controller.rumble(". . ");
       }else if(temperature>=49.9){
-        master_controller.rumble("- - - -");
+        master_controller.rumble("- - ");
+      }else{
+        master_controller.print(0, 0,"cata temp %lf",temperature);
       }
     }
     pros::delay(2000);

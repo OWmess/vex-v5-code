@@ -593,6 +593,7 @@ class Drive {
    */
   void set_exit_condition(int type, int p_small_exit_time, double p_small_error, int p_big_exit_time, double p_big_error, int p_velocity_exit_time, int p_mA_timeout);
 
+  void set_exit_velocity_out(int type,double p_velocity_out);
   /**
    * Exit condition for turning.
    */
@@ -844,6 +845,7 @@ class Drive {
 
   int left_condition_index=0;
   int right_condition_index=0;
+  double gyro_data;
 public:
   /**
    * 用于记录pid数据

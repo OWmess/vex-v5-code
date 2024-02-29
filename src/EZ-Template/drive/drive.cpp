@@ -156,7 +156,18 @@ double Drive::left_mA() { return left_motors[left_condition_index].get_current_d
 bool Drive::left_over_current() { return left_motors[left_condition_index].is_over_current(); }
 
 void Drive::reset_gyro(double new_heading) { imu.set_rotation(new_heading); }
-double Drive::get_gyro() { return imu.get_rotation(); }
+double Drive::get_gyro() {
+  //   //中值滤波
+  // constexpr static int windows_size=5;
+  // static std::deque<double> windows;
+  // windows.push_back(imu.get_rotation());
+  // if(windows.size()>windows_size)
+  //   windows.pop_front();
+  // std::sort(windows.begin(),windows.end());
+  // gyro_data=std::accumulate(windows.begin(),windows.end(),0.0)/windows.size();
+  return imu.get_rotation(); 
+
+}
 
 void Drive::imu_loading_display(int iter) {
   // If the lcd is already initialized, don't run this function
